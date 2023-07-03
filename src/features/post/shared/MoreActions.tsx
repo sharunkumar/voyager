@@ -263,9 +263,7 @@ export default function MoreActions({
               break;
             }
             case "share": {
-              if (share.current != null) {
-                share.current();
-              }
+              share.current?.();
               break;
             }
             case "report": {
