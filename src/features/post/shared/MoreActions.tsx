@@ -23,6 +23,7 @@ import {
   copyOutline,
   textOutline,
   trashOutline,
+  linkOutline,
 } from "ionicons/icons";
 import { useContext, useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../store";
@@ -86,6 +87,8 @@ export default function MoreActions({
 
   const isMyPost = getRemoteHandle(post.creator) === myHandle;
 
+  const postUrl = post.post.url;
+
   const buttons = useMemo(
     () =>
       [
@@ -146,10 +149,15 @@ export default function MoreActions({
             }
           : undefined,
         {
-          text: "Share",
-          data: "share",
+          text: "Share Post",
+          data: "sharepost",
           icon: shareOutline,
         },
+        postUrl ? {
+          text: "Share Link",
+          data: "sharelink",
+          icon: linkOutline,
+        } : undefined,
         {
           text: "Copy Link",
           data: "copylink",
@@ -165,7 +173,7 @@ export default function MoreActions({
           role: "cancel",
         },
       ].filter(notEmpty),
-    [isHidden, myVote, mySaved, post.community, post.creator, onFeed, isMyPost]
+    [isHidden, myVote, mySaved, post.community, post.creator, onFeed, isMyPost, postUrl]
   );
 
   const Button = onFeed ? ActionButton : IonButton;
@@ -267,6 +275,16 @@ export default function MoreActions({
             }
             case "share": {
               navigator.share({ url: post.post.url ?? post.post.ap_id });
+
+              break;
+            }
+            case "sharelink": {
+              navigator.share({ url: post.post.url });
+
+              break;
+            }
+            case "sharepost": {
+              navigator.share({ url: post.post.ap_id });
 
               break;
             }
