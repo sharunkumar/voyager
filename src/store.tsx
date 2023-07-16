@@ -14,9 +14,10 @@ import communitySlice, {
 } from "./features/community/communitySlice";
 import userSlice from "./features/user/userSlice";
 import inboxSlice from "./features/inbox/inboxSlice";
-import appearanceSlice, {
+import settingsSlice, {
   fetchSettingsFromDatabase,
-} from "./features/settings/appearance/appearanceSlice";
+  getBlurNsfw,
+} from "./features/settings/settingsSlice";
 
 const store = configureStore({
   reducer: {
@@ -26,7 +27,7 @@ const store = configureStore({
     community: communitySlice,
     user: userSlice,
     inbox: inboxSlice,
-    appearance: appearanceSlice,
+    settings: settingsSlice,
   },
 });
 export type RootState = ReturnType<typeof store.getState>;
@@ -42,20 +43,26 @@ const activeHandleChange = () => {
   const state = store.getState();
   const activeHandle = handleSelector(state);
 
-  if (activeHandle !== lastActiveHandle) {
-    store.dispatch(getFavoriteCommunities());
-    lastActiveHandle = activeHandle;
-  }
+  if (activeHandle === lastActiveHandle) return;
+
+  lastActiveHandle = activeHandle;
+
+  store.dispatch(getFavoriteCommunities());
+  store.dispatch(getBlurNsfw());
 };
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
-    // Load settings from DB into the store
-    store.dispatch(fetchSettingsFromDatabase());
-
-    // Subscribe to actions to handle handle changes, this can be used to react to other changes as well
-    // to coordinate side effects between slices.
-    store.subscribe(activeHandleChange);
+    (async () => {
+      try {
+        // Load initial settings from DB into the store
+        await store.dispatch(fetchSettingsFromDatabase());
+      } finally {
+        // Subscribe to actions to handle handle changes, this can be used to react to other changes as well
+        // to coordinate side effects between slices.
+        store.subscribe(activeHandleChange);
+      }
+    })();
   }, []);
 
   return <Provider store={store}>{children}</Provider>;
