@@ -56,6 +56,8 @@ import { scrollUpIfNeeded } from "./helpers/scrollUpIfNeeded";
 import BlocksSettingsPage from "./pages/settings/BlocksSettingsPage";
 import { getDefaultServer } from "./services/app";
 import GeneralPage from "./pages/settings/GeneralPage";
+import HidingSettingsPage from "./pages/settings/HidingSettingsPage";
+import DeviceModeSettingsPage from "./pages/settings/DeviceModeSettingsPage";
 
 const Interceptor = styled.div`
   position: absolute;
@@ -328,8 +330,14 @@ export default function TabbedRoutes() {
           <Route exact path="/settings/general">
             <GeneralPage />
           </Route>
+          <Route exact path="/settings/general/hiding">
+            <HidingSettingsPage />
+          </Route>
           <Route exact path="/settings/appearance">
             <AppearancePage />
+          </Route>
+          <Route exact path="/settings/appearance/mode">
+            <DeviceModeSettingsPage />
           </Route>
           <Route exact path="/settings/blocks">
             <BlocksSettingsPage />
