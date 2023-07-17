@@ -198,10 +198,17 @@ export default function LargePost({ post, communityMode }: PostProps) {
                 prefix="by"
               />
             ) : (
-              <CommunityLink
-                community={post.community}
-                showInstanceWhenRemote
-              />
+              <>
+                <CommunityLink
+                  community={post.community}
+                  showInstanceWhenRemote
+                />
+                <PersonLink
+                  person={post.creator}
+                  showInstanceWhenRemote
+                  prefix=" by"
+                />
+              </>
             )}
           </CommunityName>
 
