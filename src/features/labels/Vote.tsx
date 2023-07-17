@@ -7,10 +7,9 @@ import { useContext } from "react";
 import { voteOnComment } from "../comment/commentSlice";
 import { voteError } from "../../helpers/toastMessages";
 import { PageContext } from "../auth/PageContext";
-import { calculateCurrentVotesCount } from "../../helpers/vote";
 import { CommentView, PostView } from "lemmy-js-client";
 
-const Container = styled.div<{ vote: 1 | -1 | 0 | undefined }>`
+const UpvoteContainer = styled.div<{ vote: 1 | -1 | 0 | undefined }>`
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -20,6 +19,19 @@ const Container = styled.div<{ vote: 1 | -1 | 0 | undefined }>`
       switch (vote) {
         case 1:
           return "var(--ion-color-primary)";
+      }
+    }};
+  }
+`;
+
+const DownvoteContainer = styled.div<{ vote: 1 | -1 | 0 | undefined }>`
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  && {
+    color: ${({ vote }) => {
+      switch (vote) {
         case -1:
           return "var(--ion-color-danger)";
       }
@@ -43,37 +55,72 @@ export default function Vote({ item, className }: VoteProps) {
   const id = "comment" in item ? item.comment.id : item.post.id;
 
   const myVote = votesById[id] ?? item.my_vote;
-  const score = calculateCurrentVotesCount(item, votesById);
 
   const { presentLoginIfNeeded } = useContext(PageContext);
 
+  const upvotes = item.counts.upvotes + (myVote == 1 ? 1 : 0);
+  const downvotes = item.counts.downvotes + (myVote == -1 ? 1 : 0);
+
+  const upvotesDisplay = upvotes == 0 ? "" : upvotes;
+  const downvotesDisplay = downvotes == 0 ? "" : downvotes;
+
   return (
-    <Container
-      className={className}
-      vote={myVote as 1 | 0 | -1}
-      onClick={async (e) => {
-        e.stopPropagation();
-        e.preventDefault();
+    <>
+      <UpvoteContainer
+        className={className}
+        vote={myVote as 1 | 0 | -1}
+        onClick={async (e) => {
+          e.stopPropagation();
+          e.preventDefault();
 
-        if (presentLoginIfNeeded()) return;
+          if (presentLoginIfNeeded()) return;
 
-        let dispatcherFn;
-        if ("comment" in item) {
-          dispatcherFn = voteOnComment;
-        } else {
-          dispatcherFn = voteOnPost;
-        }
+          let dispatcherFn;
+          if ("comment" in item) {
+            dispatcherFn = voteOnComment;
+          } else {
+            dispatcherFn = voteOnPost;
+          }
 
-        try {
-          await dispatch(dispatcherFn(id, myVote ? 0 : 1));
-        } catch (error) {
-          present(voteError);
+          try {
+            await dispatch(dispatcherFn(id, myVote == 1 ? 0 : 1));
+          } catch (error) {
+            present(voteError);
 
-          throw error;
-        }
-      }}
-    >
-      <IonIcon icon={myVote === -1 ? arrowDownSharp : arrowUpSharp} /> {score}
-    </Container>
+            throw error;
+          }
+        }}
+      >
+        <IonIcon icon={arrowUpSharp} /> {upvotesDisplay}
+      </UpvoteContainer>
+
+      <DownvoteContainer
+        className={className}
+        vote={myVote as 1 | 0 | -1}
+        onClick={async (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+
+          if (presentLoginIfNeeded()) return;
+
+          let dispatcherFn;
+          if ("comment" in item) {
+            dispatcherFn = voteOnComment;
+          } else {
+            dispatcherFn = voteOnPost;
+          }
+
+          try {
+            await dispatch(dispatcherFn(id, myVote == -1 ? 0 : -1));
+          } catch (error) {
+            present(voteError);
+
+            throw error;
+          }
+        }}
+      >
+        <IonIcon icon={arrowDownSharp} /> {downvotesDisplay}
+      </DownvoteContainer>
+    </>
   );
 }
