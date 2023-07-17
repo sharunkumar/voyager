@@ -92,21 +92,6 @@ export default function MoreActions({
   const buttons = useMemo(
     () =>
       [
-        // {
-        //   text: myVote !== 1 ? "Upvote" : "Undo Upvote",
-        //   data: "upvote",
-        //   icon: arrowUpOutline,
-        // },
-        // {
-        //   text: myVote !== -1 ? "Downvote" : "Undo Downvote",
-        //   data: "downvote",
-        //   icon: arrowDownOutline,
-        // },
-        // {
-        //   text: !mySaved ? "Save" : "Unsave",
-        //   data: "save",
-        //   icon: bookmarkOutline,
-        // },
         isMyPost
           ? {
               text: "Delete",
