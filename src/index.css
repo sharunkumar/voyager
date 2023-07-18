@@ -23,6 +23,16 @@ ion-tab-button {
     .action-sheet-group-cancel
   ) {
   justify-content: flex-start;
+  font-size: 1rem;
+}
+
+.action-sheet-icon {
+  font-size: 1.2rem !important;
+}
+
+.action-sheet-button {
+  font-size: 1rem !important;
+  height: 1rem !important;
 }
 
 ion-modal.small {

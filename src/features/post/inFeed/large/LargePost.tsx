@@ -19,6 +19,7 @@ import { PostProps } from "../Post";
 import Save from "../../../labels/Save";
 import { Image } from "./Image";
 import { useAppSelector } from "../../../../store";
+import { SaveButton } from "../../shared/SaveButton";
 
 const Container = styled.div`
   display: flex;
@@ -197,10 +198,17 @@ export default function LargePost({ post, communityMode }: PostProps) {
                 prefix="by"
               />
             ) : (
-              <CommunityLink
-                community={post.community}
-                showInstanceWhenRemote
-              />
+              <>
+                <CommunityLink
+                  community={post.community}
+                  showInstanceWhenRemote
+                />
+                <PersonLink
+                  person={post.creator}
+                  showInstanceWhenRemote
+                  prefix=" by"
+                />
+              </>
             )}
           </CommunityName>
 
@@ -208,6 +216,7 @@ export default function LargePost({ post, communityMode }: PostProps) {
         </LeftDetails>
         <RightDetails>
           <MoreActions post={post} onFeed />
+          <SaveButton postId={post.post.id} />
           <VoteButton type="up" postId={post.post.id} />
           <VoteButton type="down" postId={post.post.id} />
         </RightDetails>

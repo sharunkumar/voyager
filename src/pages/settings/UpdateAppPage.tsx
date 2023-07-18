@@ -101,6 +101,13 @@ export default function UpdateAppPage() {
               >
                 <IonLabel>Release notes</IonLabel>
               </InsetIonItem>
+              <InsetIonItem
+                href="https://github.com/aeharding/voyager/compare/main...sharunkumar:voyager:custom"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <IonLabel>Changes in this fork</IonLabel>
+              </InsetIonItem>
             </IonList>
 
             {status === "outdated" && (
