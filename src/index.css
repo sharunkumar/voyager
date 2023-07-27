@@ -114,3 +114,7 @@ ion-action-sheet ion-icon {
 .pswp {
   --pswp-root-z-index: 100;
 }
+
+.ion-content-scroll-host {
+  overflow-y: auto;
+}
