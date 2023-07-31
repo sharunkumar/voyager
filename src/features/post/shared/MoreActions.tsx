@@ -35,13 +35,16 @@ import {
   savePost,
   deletePost,
 } from "../postSlice";
-import { getHandle, getRemoteHandle } from "../../../helpers/lemmy";
+import { getHandle, getRemoteHandle, share } from "../../../helpers/lemmy";
 import { useBuildGeneralBrowseLink } from "../../../helpers/routes";
 import { notEmpty } from "../../../helpers/array";
 import { PageContext } from "../../auth/PageContext";
 import { saveError, voteError } from "../../../helpers/toastMessages";
 import { ActionButton } from "../actions/ActionButton";
-import { handleSelector } from "../../auth/authSlice";
+import {
+  handleSelector,
+  isDownvoteEnabledSelector,
+} from "../../auth/authSlice";
 
 interface MoreActionsProps {
   post: PostView;
@@ -79,6 +82,7 @@ export default function MoreActions({
   const mySaved = postSavedById[post.post.id] ?? post.saved;
 
   const isMyPost = getRemoteHandle(post.creator) === myHandle;
+  const downvoteAllowed = useAppSelector(isDownvoteEnabledSelector);
 
   const postUrl = post.post.url;
 
@@ -133,11 +137,13 @@ export default function MoreActions({
           data: "sharepost",
           icon: shareOutline,
         },
-        postUrl ? {
-          text: "Share Link",
-          data: "sharelink",
-          icon: linkOutline,
-        } : undefined,
+        postUrl
+          ? {
+              text: "Share Link",
+              data: "sharelink",
+              icon: linkOutline,
+            }
+          : undefined,
         {
           text: "Copy Link",
           data: "copylink",
@@ -158,11 +164,12 @@ export default function MoreActions({
       myVote,
       mySaved,
       isMyPost,
-      post.creator,
-      post.community,
-      post.post.body,
+      mySaved,
+      myVote,
       onFeed,
-      isHidden,
+      post.community,
+      post.creator,
+      post.post.body,
     ]
   );
 
@@ -266,7 +273,7 @@ export default function MoreActions({
               break;
             }
             case "share": {
-              navigator.share({ url: post.post.url ?? post.post.ap_id });
+              share(post.post);
 
               break;
             }
@@ -293,7 +300,7 @@ export default function MoreActions({
               presentActionSheet({
                 buttons: [
                   {
-                    text: "Delete",
+                    text: "Delete Post",
                     role: "destructive",
                     handler: () => {
                       (async () => {

@@ -14,6 +14,7 @@ import {
   bagCheckOutline,
   cog,
   colorPalette,
+  gitCompareOutline,
   logoGithub,
   mailOutline,
   openOutline,
@@ -31,7 +32,7 @@ import { useAppSelector } from "../../store";
 import { handleSelector } from "../../features/auth/authSlice";
 import { isNative } from "../../helpers/device";
 
-const IconBg = styled.div<{ color: string }>`
+export const IconBg = styled.div<{ color: string }>`
   width: 30px;
   height: 30px;
 
@@ -168,6 +169,20 @@ export default function SettingsPage() {
               </sup>
             </SettingLabel>
           </InsetIonItem>
+          {isNative() && (
+            <InsetIonItem
+              href="https://github.com/aeharding/voyager/releases"
+              target="_blank"
+              rel="noopener noreferrer"
+              detail={false}
+            >
+              <IonIcon icon={gitCompareOutline} color="medium" />
+              <SettingLabel>Release</SettingLabel>
+              <SettingLabel color="medium" slot="end">
+                {APP_VERSION}
+              </SettingLabel>
+            </InsetIonItem>
+          )}
         </IonList>
       </AppContent>
     </IonPage>
