@@ -1,4 +1,4 @@
-name: Build Apps
+name: Build Apps and Create Release
 
 on:
   push:
@@ -20,6 +20,7 @@ jobs:
           certificate: Distribution
           build-stack: macOS - 2023.03
           destinations: Voyager App Store
+          filename: iOS-${{ github.ref_name }}-${{ github.run_id }}
           upload-artifact: iOS-Build.zip
 
   build_android:
@@ -35,4 +36,32 @@ jobs:
           build-type: release
           certificate: Voyager Play Store
           destinations: Voyager Play Store
+          filename: Android-${{ github.ref_name }}-${{ github.run_id }}
           upload-artifact: Android-Build.zip
+
+  create_release:
+    needs: [build_ios, build_android]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download iOS Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: iOS-Build.zip
+          path: artifacts/ios
+
+      - name: Download Android Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: Android-Build.zip
+          path: artifacts/android
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/ios/*
+            artifacts/android/*
