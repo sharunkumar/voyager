@@ -102,7 +102,7 @@ export default function UpdateAppPage() {
                 <IonLabel>Release notes</IonLabel>
               </InsetIonItem>
               <InsetIonItem
-                href="https://github.com/aeharding/voyager/compare/main...sharunkumar:voyager:custom"
+                href="https://github.com/aeharding/voyager/compare/main...sharunkumar:voyager:main"
                 target="_blank"
                 rel="noopener noreferrer"
               >
