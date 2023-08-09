@@ -1,0 +1,14 @@
+# Spacefile Docs: https://go.deta.dev/docs/spacefile/v0
+v: 0
+micros:
+  - name: voyager
+    src: ./
+    include:
+      - dist/
+      - node_modules/
+    engine: custom
+    primary: true
+    commands:
+      - yarn install
+      - yarn build
+    run: NODE_ENV=production node ./server.mjs
