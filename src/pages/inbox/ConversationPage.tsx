@@ -13,7 +13,6 @@ import {
 } from "@ionic/react";
 import { useAppDispatch, useAppSelector } from "../../store";
 import { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
-import MarkAllAsReadButton from "./MarkAllAsReadButton";
 import { jwtPayloadSelector, jwtSelector } from "../../features/auth/authSlice";
 import {
   receivedMessages,
@@ -36,6 +35,7 @@ import { getUser } from "../../features/user/userSlice";
 import { PageContentIonSpinner } from "../../features/user/AsyncProfile";
 import { StyledLink } from "../../features/labels/links/shared";
 import { useBuildGeneralBrowseLink } from "../../helpers/routes";
+import ConversationsMoreActions from "../../features/feed/ConversationsMoreActions";
 
 const MaxSizeContainer = styled(MaxWidthContainer)`
   height: 100%;
@@ -236,7 +236,7 @@ export default function ConversationPage() {
           </IonTitle>
 
           <IonButtons slot="end">
-            <MarkAllAsReadButton />
+            <ConversationsMoreActions />
           </IonButtons>
         </IonToolbar>
       </IonHeader>
