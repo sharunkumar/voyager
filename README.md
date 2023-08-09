@@ -12,7 +12,7 @@ A mobile-first Lemmy web client
 
 <p align="center">
 &nbsp;<a href="https://vger.app"><img src="public/badges/pwa.svg" height="45"></a>&nbsp;&#8203;&nbsp;
-<!-- <a href="https://apps.apple.com/app/6451429762"><img src="public/badges/ios.svg" height="45"></a>&nbsp;&nbsp; -->
+<a href="https://apps.apple.com/us/app/voyager-for-lemmy/id6451429762"><img src="public/badges/ios.svg" height="45"></a>&nbsp;&nbsp;
 <a href="https://play.google.com/store/apps/details?id=app.vger.voyager"><img src="public/badges/play.svg" height="45"></a>&nbsp;
 </p>
 <p align="center">
@@ -118,6 +118,7 @@ NODE_ENV=production PORT=5106 node server.mjs
 - 🇫🇮 [m.lemmy.world](https://m.lemmy.world) - Voyager hosted by the mastodon.world team. [Contact/privacy](https://mastodon.world/about)
 - 🇸🇬 [v.opnxng.com](https://v.opnxng.com) - Voyager hosted by Opnxng in Singapore. [Contact/privacy](https://about.opnxng.com)
 - 🇲🇽 [voyager.nohost.network](https://voyager.nohost.network) - Voyager hosted by Nohost in Mexico. [Contact/privacy](https://nohost.network)
+- 🇺🇸 [vger.thesanewriter.com](https://vger.thesanewriter.com) - Voyager hosted by the lemmy.thesanewriter.com team. [Contact/privacy](https://lemmy.thesanewriter.com/legal)
 
 > **Note**: Community deployments are **NOT** maintained by the Voyager team. They may not be synced with Voyager's source code. Please do your own research about the host servers before using them.
 
