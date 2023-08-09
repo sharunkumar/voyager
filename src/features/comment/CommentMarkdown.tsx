@@ -8,17 +8,17 @@ interface CommentMarkdownProps {
 export default function CommentMarkdown({ children }: CommentMarkdownProps) {
   return (
     <Markdown
-      components={{
-        img: (props) => (
-          <InAppExternalLink
-            href={props.src}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {props.alt || "Image"}
-          </InAppExternalLink>
-        ),
-      }}
+    // components={{
+    //   img: (props) => (
+    //     <InAppExternalLink
+    //       href={props.src}
+    //       target="_blank"
+    //       rel="noopener noreferrer"
+    //     >
+    //       {props.alt || "Image"}
+    //     </InAppExternalLink>
+    //   ),
+    // }}
     >
       {children}
     </Markdown>
