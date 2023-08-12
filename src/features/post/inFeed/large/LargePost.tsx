@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import { css } from "@emotion/react";
-import { megaphone, shareOutline } from "ionicons/icons";
+import { megaphone, shareSocialOutline } from "ionicons/icons";
 import PreviewStats from "../PreviewStats";
 import Embed from "../../shared/Embed";
 import { useMemo } from "react";
@@ -221,7 +221,7 @@ export default function LargePost({ post, communityMode }: PostProps) {
           <MoreActions post={post} onFeed />
           <ActionButton>
             <IonIcon
-              icon={shareOutline}
+              icon={shareSocialOutline}
               onClick={(e) => {
                 e.stopPropagation();
                 share(post.post);
