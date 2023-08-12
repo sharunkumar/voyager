@@ -1,11 +1,11 @@
 import styled from "@emotion/styled";
 import { css } from "@emotion/react";
-import { megaphone } from "ionicons/icons";
+import { megaphone, shareOutline } from "ionicons/icons";
 import PreviewStats from "../PreviewStats";
 import Embed from "../../shared/Embed";
 import { useMemo } from "react";
 import { findLoneImage } from "../../../../helpers/markdown";
-import { isUrlImage, isUrlVideo } from "../../../../helpers/lemmy";
+import { isUrlImage, isUrlVideo, share } from "../../../../helpers/lemmy";
 import { maxWidthCss } from "../../../shared/AppContent";
 import Nsfw, { isNsfw, isNsfwBlurred } from "../../../labels/Nsfw";
 import { VoteButton } from "../../shared/VoteButton";
@@ -20,6 +20,8 @@ import Save from "../../../labels/Save";
 import { Image } from "./Image";
 import { useAppSelector } from "../../../../store";
 import { SaveButton } from "../../shared/SaveButton";
+import { ActionButton } from "../../actions/ActionButton";
+import { IonIcon } from "@ionic/react";
 
 const Container = styled.div`
   display: flex;
@@ -217,9 +219,12 @@ export default function LargePost({ post, communityMode }: PostProps) {
         </LeftDetails>
         <RightDetails>
           <MoreActions post={post} onFeed />
+          <ActionButton>
+            <IonIcon icon={shareOutline} onClick={() => share(post.post)} />
+          </ActionButton>
           <SaveButton postId={post.post.id} />
-          <VoteButton type="up" postId={post.post.id} />
-          <VoteButton type="down" postId={post.post.id} />
+          {/* <VoteButton type="up" postId={post.post.id} /> */}
+          {/* <VoteButton type="down" postId={post.post.id} /> */}
         </RightDetails>
       </Details>
 
