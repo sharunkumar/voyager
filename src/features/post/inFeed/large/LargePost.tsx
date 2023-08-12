@@ -220,7 +220,13 @@ export default function LargePost({ post, communityMode }: PostProps) {
         <RightDetails>
           <MoreActions post={post} onFeed />
           <ActionButton>
-            <IonIcon icon={shareOutline} onClick={() => share(post.post)} />
+            <IonIcon
+              icon={shareOutline}
+              onClick={(e) => {
+                e.stopPropagation();
+                share(post.post);
+              }}
+            />
           </ActionButton>
           <SaveButton postId={post.post.id} />
           {/* <VoteButton type="up" postId={post.post.id} /> */}
