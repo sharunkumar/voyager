@@ -35,6 +35,11 @@ ion-tab-button {
   height: 1rem !important;
 }
 
+/* https://github.com/ionic-team/ionic-framework/issues/27777#issuecomment-1631522283 */
+.action-sheet-height-fix {
+  --height: 100%;
+}
+
 ion-modal.small {
   --height: 50%;
   --width: 85%;

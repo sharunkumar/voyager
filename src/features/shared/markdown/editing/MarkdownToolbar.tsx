@@ -11,14 +11,15 @@ import {
 import {
   ellipsisHorizontal,
   glassesOutline,
+  happyOutline,
   image,
   link,
 } from "ionicons/icons";
 import "@github/markdown-toolbar-element";
-import useKeyboardHeight from "../../../../helpers/useKeyboardHeight";
 import PreviewModal from "./PreviewModal";
 import {
   Dispatch,
+  MouseEvent,
   RefObject,
   SetStateAction,
   useEffect,
@@ -30,6 +31,8 @@ import { uploadImage } from "../../../../services/lemmy";
 import { useAppSelector } from "../../../../store";
 import { jwtSelector, urlSelector } from "../../../auth/authSlice";
 import { insert } from "../../../../helpers/string";
+import useKeyboardOpen from "../../../../helpers/useKeyboardOpen";
+import textFaces from "./textFaces.txt?raw";
 
 export const TOOLBAR_TARGET_ID = "toolbar-target";
 export const TOOLBAR_HEIGHT = "50px";
@@ -41,7 +44,7 @@ const ToolbarContainer = styled.div`
   pointer-events: none;
 `;
 
-const Toolbar = styled.div<{ keyboardHeight: number }>`
+const Toolbar = styled.div<{ keyboardOpen: boolean }>`
   pointer-events: all;
 
   position: absolute;
@@ -50,12 +53,14 @@ const Toolbar = styled.div<{ keyboardHeight: number }>`
   height: ${TOOLBAR_HEIGHT};
 
   @media screen and (max-width: 767px) {
-    height: ${({ keyboardHeight }) =>
-      !keyboardHeight
-        ? `calc(${TOOLBAR_HEIGHT} + env(safe-area-inset-bottom))`
+    height: ${({ keyboardOpen }) =>
+      !keyboardOpen
+        ? `calc(${TOOLBAR_HEIGHT} + var(--ion-safe-area-bottom, env(safe-area-inset-bottom)))`
         : TOOLBAR_HEIGHT};
-    padding-bottom: ${({ keyboardHeight }) =>
-      !keyboardHeight ? "env(safe-area-inset-bottom)" : 0};
+    padding-bottom: ${({ keyboardOpen }) =>
+      !keyboardOpen
+        ? "var(--ion-safe-area-bottom, env(safe-area-inset-bottom))"
+        : 0};
   }
 
   width: 100%;
@@ -104,8 +109,9 @@ export default function MarkdownToolbar({
   slot,
 }: MarkdownToolbarProps) {
   const [presentActionSheet] = useIonActionSheet();
+  const [presentTextFaceActionSheet] = useIonActionSheet();
   const [presentAlert] = useIonToast();
-  const keyboardHeight = useKeyboardHeight();
+  const keyboardOpen = useKeyboardOpen();
   const [imageUploading, setImageUploading] = useState(false);
   const jwt = useAppSelector(jwtSelector);
   const instanceUrl = useAppSelector(urlSelector);
@@ -130,7 +136,9 @@ export default function MarkdownToolbar({
     };
   }, [textareaRef]);
 
-  function presentMoreOptions() {
+  function presentMoreOptions(e: MouseEvent) {
+    e.preventDefault();
+
     presentActionSheet({
       cssClass: "left-align-buttons",
       buttons: [
@@ -138,6 +146,11 @@ export default function MarkdownToolbar({
           text: "Preview",
           icon: glassesOutline,
           handler: presentPreview,
+        },
+        {
+          text: "Text Faces",
+          icon: happyOutline,
+          handler: presentTextFaces,
         },
         {
           text: "Cancel",
@@ -176,12 +189,49 @@ export default function MarkdownToolbar({
     );
   }
 
+  function presentTextFaces() {
+    presentTextFaceActionSheet({
+      cssClass: "left-align-buttons action-sheet-height-fix",
+      keyboardClose: false,
+      buttons: [
+        ...textFaces.split("\n").map((face) => ({
+          text: formatTextFace(face),
+          data: face,
+        })),
+        {
+          text: "Cancel",
+          role: "cancel",
+        },
+      ],
+      onWillDismiss: (event) => {
+        if (!event.detail.data) return;
+
+        const currentSelectionLocation =
+          selectionLocation.current + event.detail.data.length;
+
+        setText((text) =>
+          insert(text, selectionLocation.current, event.detail.data)
+        );
+
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+
+          setTimeout(() => {
+            if (!textareaRef.current) return;
+
+            textareaRef.current.selectionEnd = currentSelectionLocation;
+          }, 10);
+        }
+      },
+    });
+  }
+
   return (
     <>
       <IonLoading isOpen={imageUploading} message="Uploading image..." />
 
       <ToolbarContainer className="fixed-toolbar-container" slot={slot}>
-        <Toolbar keyboardHeight={keyboardHeight} ref={toolbarRef}>
+        <Toolbar keyboardOpen={keyboardOpen} ref={toolbarRef}>
           <markdown-toolbar for={TOOLBAR_TARGET_ID}>
             <label htmlFor="photo-upload">
               <Button as="div" onClick={() => textareaRef.current?.focus()}>
@@ -219,15 +269,16 @@ export default function MarkdownToolbar({
               </Button>
             </md-italic>
             <Button onClick={presentMoreOptions}>
-              <IonIcon
-                icon={ellipsisHorizontal}
-                color="primary"
-                onClick={(e) => e.preventDefault()}
-              />
+              <IonIcon icon={ellipsisHorizontal} color="primary" />
             </Button>
           </markdown-toolbar>
         </Toolbar>
       </ToolbarContainer>
     </>
   );
+}
+
+// Rudimentary parsing to remove recurring back slashes for display
+function formatTextFace(input: string): string {
+  return input.replace(/(?:\\(.))/g, "$1");
 }
