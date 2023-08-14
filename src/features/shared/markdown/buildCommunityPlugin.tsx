@@ -16,8 +16,8 @@ export default function buildCommunityPlugin(connectedInstance: string) {
     const transformer: CustomTransformer = (tree) => {
       const visitor = (
         node: CustomNode | Parent,
-        index: number | null,
-        parent: Parent | undefined
+        index: number | undefined,
+        parent: Parent | undefined,
       ) => {
         if (node?.type === "text" && parent) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,7 +71,7 @@ export default function buildCommunityPlugin(connectedInstance: string) {
               });
             }
 
-            if (index !== null) {
+            if (index !== undefined) {
               parent.children.splice(index, 1, ...newTextNodes);
             } else {
               parent.children.push(...newTextNodes);
@@ -81,7 +81,7 @@ export default function buildCommunityPlugin(connectedInstance: string) {
       };
 
       visit(tree, "text", (node, index, parent) =>
-        visitor(node as CustomNode, index, parent as Parent)
+        visitor(node as CustomNode, index, parent as Parent),
       );
     };
 

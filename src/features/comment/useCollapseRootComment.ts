@@ -6,10 +6,10 @@ import { AppContext } from "../auth/AppContext";
 
 export default function useCollapseRootComment(
   item: CommentView | undefined,
-  rootIndex: number | undefined
+  rootIndex: number | undefined,
 ) {
   const dispatch = useAppDispatch();
-  const { activePage } = useContext(AppContext);
+  const { activePageRef } = useContext(AppContext);
 
   return useCallback(() => {
     if (!item || !rootIndex) return;
@@ -18,12 +18,12 @@ export default function useCollapseRootComment(
 
     dispatch(toggleCommentCollapseState(rootCommentId));
 
-    const currentActivePage = activePage?.current;
+    const currentActivePage = activePageRef?.current?.current;
     if (!currentActivePage || !("scrollToIndex" in currentActivePage)) return;
 
     currentActivePage.scrollToIndex({
       index: rootIndex,
       behavior: "smooth",
     });
-  }, [activePage, dispatch, item, rootIndex]);
+  }, [activePageRef, dispatch, item, rootIndex]);
 }

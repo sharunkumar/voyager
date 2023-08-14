@@ -14,6 +14,7 @@ export const OAppThemeType = {
   Pistachio: "pistachio",
   SpookyPumpkin: "pumpkin",
   UV: "uv",
+  Mint: "mint",
 } as const;
 
 export type AppThemeType = (typeof OAppThemeType)[keyof typeof OAppThemeType];
@@ -278,7 +279,7 @@ export class WefwefDB extends Dexie {
     user_handle: string,
     page: number,
     limit: number,
-    lastPageItems?: IPostMetadata[]
+    lastPageItems?: IPostMetadata[],
   ) {
     const filterFn = (metadata: IPostMetadata) =>
       metadata.user_handle === user_handle && metadata.hidden === 1;
@@ -340,7 +341,7 @@ export class WefwefDB extends Dexie {
     specificity?: {
       user_handle?: string;
       community?: string;
-    }
+    },
   ) {
     const { user_handle = "", community = "" } = specificity || {};
 
@@ -378,7 +379,7 @@ export class WefwefDB extends Dexie {
     specificity?: {
       user_handle?: string;
       community?: string;
-    }
+    },
   ) {
     const { user_handle = "", community = "" } = specificity || {};
 
