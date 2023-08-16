@@ -1,7 +1,7 @@
 import { IonIcon, useIonRouter } from "@ionic/react";
 import { VoteButton } from "../post/shared/VoteButton";
 import { PostView } from "lemmy-js-client";
-import { chatbubbleOutline, shareOutline } from "ionicons/icons";
+import { chatbubbleOutline, shareSocialOutline } from "ionicons/icons";
 import styled from "@emotion/styled";
 import { useAppSelector } from "../../store";
 import { useBuildGeneralBrowseLink } from "../../helpers/routes";
@@ -72,7 +72,7 @@ export default function GalleryPostActions({
           <Amount>{post.counts.comments}</Amount>
         </Section>
       </div>
-      <IonIcon icon={shareOutline} onClick={() => share(post.post)} />
+      <IonIcon icon={shareSocialOutline} onClick={() => share(post.post)} />
       {isNative() ? (
         <GalleryMoreActions post={post} imgSrc={imgSrc} />
       ) : (

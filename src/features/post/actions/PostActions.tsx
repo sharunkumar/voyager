@@ -1,6 +1,10 @@
 import styled from "@emotion/styled";
 import { IonIcon } from "@ionic/react";
-import { arrowUndoOutline, linkOutline, shareOutline } from "ionicons/icons";
+import {
+  arrowUndoOutline,
+  linkOutline,
+  shareSocialOutline,
+} from "ionicons/icons";
 import { PostView } from "lemmy-js-client";
 import { VoteButton } from "../shared/VoteButton";
 import { ActionButton } from "./ActionButton";
@@ -42,7 +46,7 @@ export default function PostActions({ post, onReply }: PostActionsProps) {
         <IonIcon icon={arrowUndoOutline} />
       </ActionButton>
       <ActionButton>
-        <IonIcon icon={shareOutline} onClick={() => share(post.post)} />
+        <IonIcon icon={shareSocialOutline} onClick={() => share(post.post)} />
       </ActionButton>
     </Container>
   );

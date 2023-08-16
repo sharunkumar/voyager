@@ -13,7 +13,7 @@ import {
   addOutline,
   checkmarkCircleOutline,
   download,
-  shareOutline,
+  shareSocialOutline,
 } from "ionicons/icons";
 import AppContent from "../../features/shared/AppContent";
 import styled from "@emotion/styled";
@@ -112,7 +112,7 @@ export default function InstallAppPage() {
           <h3>How to get the App</h3>
           <ol>
             <li>
-              Tap <IonIcon icon={shareOutline} color="primary" /> from the
+              Tap <IonIcon icon={shareSocialOutline} color="primary" /> from the
               Safari tab bar
             </li>
             <li>

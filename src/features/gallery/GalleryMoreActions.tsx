@@ -12,7 +12,7 @@ import {
   ellipsisHorizontal,
   peopleOutline,
   personOutline,
-  shareOutline,
+  shareSocialOutline,
 } from "ionicons/icons";
 import { useBuildGeneralBrowseLink } from "../../helpers/routes";
 import { getHandle } from "../../helpers/lemmy";
@@ -53,7 +53,7 @@ export default function GalleryMoreActions({
       buttons: [
         {
           text: "Share",
-          icon: shareOutline,
+          icon: shareSocialOutline,
           handler: () => {
             Share.share({ url: imgSrc });
           },

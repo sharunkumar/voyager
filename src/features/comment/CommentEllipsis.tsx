@@ -15,7 +15,7 @@ import {
   flagOutline,
   pencilOutline,
   personOutline,
-  shareOutline,
+  shareSocialOutline,
   textOutline,
   trashOutline,
 } from "ionicons/icons";
@@ -229,7 +229,7 @@ export default function MoreActions({
         },
         {
           text: "Share",
-          icon: shareOutline,
+          icon: shareSocialOutline,
           handler: () => {
             share(comment);
           },
