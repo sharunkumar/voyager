@@ -2,7 +2,7 @@
   "name": "voyager",
   "description": "A progressive webapp Lemmy client",
   "private": true,
-  "version": "1.9.2",
+  "version": "1.11.0",
   "type": "module",
   "scripts": {
     "dev": "node server.mjs",
@@ -14,7 +14,8 @@
     "lint:formatting": "prettier --check .",
     "generate:splash:dark": "pwa-asset-generator --type png --index index.html --dark-mode --splash-only --path-override '/splash' public/splash.html public/splash/ && prettier -w index.html",
     "generate:splash:light": "pwa-asset-generator --type png --index index.html --splash-only --path-override '/splash' public/splash.html public/splash/ && prettier -w index.html",
-    "generate:splash": "pnpm generate:splash:dark && pnpm generate:splash:light"
+    "generate:splash": "pnpm generate:splash:dark && pnpm generate:splash:light",
+    "capacitor:copy:before": "rm -rf $CAPACITOR_WEB_DIR/splash && rm -rf $CAPACITOR_WEB_DIR/screenshots"
   },
   "pnpm": {
     "overrides": {
@@ -28,13 +29,14 @@
     "vite-express": "^0.9.2"
   },
   "devDependencies": {
+    "@capacitor-community/app-icon": "npm:voyager-capacitor-app-icon@^4.1.0",
     "@capacitor/android": "5.2.3",
     "@capacitor/app": "^5.0.6",
     "@capacitor/assets": "^2.0.4",
     "@capacitor/browser": "^5.0.6",
     "@capacitor/cli": "5.2.3",
     "@capacitor/core": "5.2.3",
-    "@capacitor/haptics": "^5.0.6",
+    "@capacitor/haptics": "npm:voyager-capacitor-haptics@^5.0.7",
     "@capacitor/ios": "5.2.3",
     "@capacitor/keyboard": "^5.0.6",
     "@capacitor/share": "^5.0.6",
@@ -87,13 +89,13 @@
     "jsdom": "^22.1.0",
     "lemmy-js-client": "0.18.0",
     "lodash": "^4.17.21",
-    "mdast-util-gfm-autolink-literal-lemmy": "^1.0.3",
-    "mdast-util-gfm-strikethrough": "^2.0.0",
-    "mdast-util-gfm-table": "^2.0.0",
-    "micromark": "^4.0.0",
-    "micromark-extension-gfm-strikethrough": "^2.0.0",
-    "micromark-extension-gfm-table": "^2.0.0",
-    "micromark-util-combine-extensions": "^2.0.0",
+    "mdast-util-gfm-autolink-literal-lemmy": "^1.0.0",
+    "mdast-util-gfm-strikethrough": "^1.0.0",
+    "mdast-util-gfm-table": "^1.0.0",
+    "micromark": "^3.0.0",
+    "micromark-extension-gfm-strikethrough": "^1.0.0",
+    "micromark-extension-gfm-table": "^1.0.0",
+    "micromark-util-combine-extensions": "^1.0.0",
     "photoswipe": "^5.3.8",
     "prettier": "^3.0.1",
     "pwa-asset-generator": "^6.3.1",

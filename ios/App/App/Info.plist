@@ -17,9 +17,9 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.9.2</string>
+    <string>1.11.0</string>
     <key>CFBundleVersion</key>
-    <string>15</string>
+    <string>18</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>UILaunchStoryboardName</key>
@@ -49,6 +49,108 @@
     <string>Attach photo to a new post</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
     <string>Save photos to device</string>
+    <key>CFBundleIcons</key>
+    <dict>
+      <key>CFBundleAlternateIcons</key>
+      <dict>
+        <key>planetary</key>
+        <dict>
+          <key>UIPrerenderedIcon</key>
+          <true/>
+          <key>CFBundleIconFiles</key>
+          <array>
+            <string>planetary</string>
+          </array>
+        </dict>
+        <key>psych</key>
+        <dict>
+          <key>UIPrerenderedIcon</key>
+          <true/>
+          <key>CFBundleIconFiles</key>
+          <array>
+            <string>psych</string>
+          </array>
+        </dict>
+        <key>space</key>
+        <dict>
+          <key>UIPrerenderedIcon</key>
+          <true/>
+          <key>CFBundleIconFiles</key>
+          <array>
+            <string>space</string>
+          </array>
+        </dict>
+        <key>original</key>
+        <dict>
+          <key>UIPrerenderedIcon</key>
+          <true/>
+          <key>CFBundleIconFiles</key>
+          <array>
+            <string>original</string>
+          </array>
+        </dict>
+        <key>galactic</key>
+        <dict>
+          <key>UIPrerenderedIcon</key>
+          <true/>
+          <key>CFBundleIconFiles</key>
+          <array>
+            <string>galactic</string>
+          </array>
+        </dict>
+      </dict>
+    </dict>
+    <key>CFBundleIcons~ipad</key>
+    <dict>
+      <key>CFBundleAlternateIcons</key>
+      <dict>
+        <key>planetary</key>
+        <dict>
+          <key>UIPrerenderedIcon</key>
+          <true/>
+          <key>CFBundleIconFiles</key>
+          <array>
+            <string>planetary</string>
+          </array>
+        </dict>
+        <key>psych</key>
+        <dict>
+          <key>UIPrerenderedIcon</key>
+          <true/>
+          <key>CFBundleIconFiles</key>
+          <array>
+            <string>psych</string>
+          </array>
+        </dict>
+        <key>space</key>
+        <dict>
+          <key>UIPrerenderedIcon</key>
+          <true/>
+          <key>CFBundleIconFiles</key>
+          <array>
+            <string>space</string>
+          </array>
+        </dict>
+        <key>original</key>
+        <dict>
+          <key>UIPrerenderedIcon</key>
+          <true/>
+          <key>CFBundleIconFiles</key>
+          <array>
+            <string>original</string>
+          </array>
+        </dict>
+        <key>galactic</key>
+        <dict>
+          <key>UIPrerenderedIcon</key>
+          <true/>
+          <key>CFBundleIconFiles</key>
+          <array>
+            <string>galactic</string>
+          </array>
+        </dict>
+      </dict>
+    </dict>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <true/>
   </dict>

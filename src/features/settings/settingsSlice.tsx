@@ -28,6 +28,10 @@ import {
   AppThemeType,
   CompactThumbnailSizeType,
   OCompactThumbnailSizeType,
+  LinkHandlerType,
+  OLinkHandlerType,
+  JumpButtonPositionType,
+  OJumpButtonPositionType,
 } from "../../services/db";
 import { get, set } from "./storage";
 import { Mode } from "@ionic/core";
@@ -76,6 +80,8 @@ interface SettingsState {
     comments: {
       collapseCommentThreads: CommentThreadCollapse;
       sort: CommentDefaultSort;
+      showJumpButton: boolean;
+      jumpButtonPosition: JumpButtonPositionType;
     };
     posts: {
       disableMarkingRead: boolean;
@@ -83,6 +89,7 @@ interface SettingsState {
       showHideReadButton: boolean;
     };
     enableHapticFeedback: boolean;
+    linkHandler: LinkHandlerType;
   };
 }
 
@@ -135,6 +142,8 @@ const initialState: SettingsState = {
     comments: {
       collapseCommentThreads: OCommentThreadCollapse.Never,
       sort: OCommentDefaultSort.Hot,
+      showJumpButton: false,
+      jumpButtonPosition: OJumpButtonPositionType.RightBottom,
     },
     posts: {
       disableMarkingRead: false,
@@ -142,6 +151,7 @@ const initialState: SettingsState = {
       showHideReadButton: false,
     },
     enableHapticFeedback: true,
+    linkHandler: OLinkHandlerType.InApp,
   },
 };
 
@@ -210,6 +220,17 @@ export const appearanceSlice = createSlice({
     setCommentsCollapsed(state, action: PayloadAction<CommentThreadCollapse>) {
       state.general.comments.collapseCommentThreads = action.payload;
       db.setSetting("collapse_comment_threads", action.payload);
+    },
+    setShowJumpButton(state, action: PayloadAction<boolean>) {
+      state.general.comments.showJumpButton = action.payload;
+      db.setSetting("show_jump_button", action.payload);
+    },
+    setJumpButtonPosition(
+      state,
+      action: PayloadAction<JumpButtonPositionType>,
+    ) {
+      state.general.comments.jumpButtonPosition = action.payload;
+      db.setSetting("jump_button_position", action.payload);
     },
     setPostAppearance(state, action: PayloadAction<PostAppearanceType>) {
       state.appearance.posts.type = action.payload;
@@ -285,6 +306,11 @@ export const appearanceSlice = createSlice({
 
       db.setSetting("enable_haptic_feedback", action.payload);
     },
+    setLinkHandler(state, action: PayloadAction<LinkHandlerType>) {
+      state.general.linkHandler = action.payload;
+
+      db.setSetting("link_handler", action.payload);
+    },
 
     resetSettings: () => ({
       ...initialState,
@@ -335,6 +361,8 @@ export const fetchSettingsFromDatabase = createAsyncThunk<SettingsState>(
       const collapse_comment_threads = await db.getSetting(
         "collapse_comment_threads",
       );
+      const show_jump_button = await db.getSetting("show_jump_button");
+      const jump_button_position = await db.getSetting("jump_button_position");
       const user_instance_url_display = await db.getSetting(
         "user_instance_url_display",
       );
@@ -362,6 +390,7 @@ export const fetchSettingsFromDatabase = createAsyncThunk<SettingsState>(
       const enable_haptic_feedback = await db.getSetting(
         "enable_haptic_feedback",
       );
+      const link_handler = await db.getSetting("link_handler");
 
       return {
         ...state.settings,
@@ -402,6 +431,11 @@ export const fetchSettingsFromDatabase = createAsyncThunk<SettingsState>(
               collapse_comment_threads ??
               initialState.general.comments.collapseCommentThreads,
             sort: default_comment_sort ?? initialState.general.comments.sort,
+            showJumpButton:
+              show_jump_button ?? initialState.general.comments.showJumpButton,
+            jumpButtonPosition:
+              jump_button_position ??
+              initialState.general.comments.jumpButtonPosition,
           },
           posts: {
             disableMarkingRead:
@@ -414,6 +448,7 @@ export const fetchSettingsFromDatabase = createAsyncThunk<SettingsState>(
               show_hide_read_button ??
               initialState.general.posts.showHideReadButton,
           },
+          linkHandler: link_handler ?? initialState.general.linkHandler,
           enableHapticFeedback:
             enable_haptic_feedback ?? initialState.general.enableHapticFeedback,
         },
@@ -437,6 +472,8 @@ export const {
   setUserInstanceUrlDisplay,
   setProfileLabel,
   setCommentsCollapsed,
+  setShowJumpButton,
+  setJumpButtonPosition,
   setNsfwBlur,
   setPostAppearance,
   setThumbnailPosition,
@@ -453,6 +490,7 @@ export const {
   setShowHideReadButton,
   setTheme,
   setEnableHapticFeedback,
+  setLinkHandler,
   setPureBlack,
 } = appearanceSlice.actions;
 
