@@ -55,6 +55,8 @@ function getThemeName(appTheme: AppThemeType): string {
       return "Ultraviolet";
     case "mint":
       return "Mint";
+    case "tangerine":
+      return "Tangerine";
   }
 }
 
@@ -72,5 +74,7 @@ function getThemeDescription(appTheme: AppThemeType): string {
       return "Windows logo jack-o-lantern?";
     case "mint":
       return "Life is mint to be refreshing!";
+    case "tangerine":
+      return "From the app that shall not be named...";
   }
 }
