@@ -65,15 +65,15 @@ export function getTheme(appTheme: AppThemeType): Theme {
           primary: "#53C391",
         },
       };
-      case "tangerine":
-        return {
-          light: {
-            primary: "#FF4500",
-          },
-          dark: {
-            primary: "#FF4500",
-          }
-        }
+    case "tangerine":
+      return {
+        light: {
+          primary: "#FF4500",
+        },
+        dark: {
+          primary: "#FF4500",
+        },
+      };
   }
 }
 
