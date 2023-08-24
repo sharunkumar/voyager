@@ -395,7 +395,7 @@ export default function PostEditorRoot({
 
                     <HiddenInput
                       type="file"
-                      accept="image/*"
+                      accept="image/*, video/*"
                       id="photo-upload"
                       onInput={(e) => {
                         const image = (e.target as HTMLInputElement).files?.[0];

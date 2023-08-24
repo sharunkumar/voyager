@@ -243,7 +243,7 @@ export default function MarkdownToolbar({
                   display: none;
                 `}
                 type="file"
-                accept="image/*"
+                accept="image/*, video/*"
                 id="photo-upload"
                 onInput={(e) => {
                   const image = (e.target as HTMLInputElement).files?.[0];
