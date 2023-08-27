@@ -1,4 +1,4 @@
-import { ToastOptions } from "@ionic/core";
+import { ToastButton, ToastOptions } from "@ionic/core";
 
 export const voteError: ToastOptions = {
   message: "Problem voting. Please try again.",
@@ -35,12 +35,22 @@ export const problemBlockingUser: ToastOptions = {
   color: "danger",
 };
 
-export function buildBlocked(blocked: boolean, handle: string): ToastOptions {
+export function buildBlocked(
+  blocked: boolean,
+  handle: string,
+  undoCallback: ToastButton["handler"],
+): ToastOptions {
   return {
     message: `${handle} has been ${blocked ? "blocked" : "unblocked"}`,
     duration: 3500,
     position: "bottom",
     color: "success",
+    buttons: [
+      {
+        text: "Undo",
+        handler: undoCallback,
+      },
+    ],
   };
 }
 
@@ -61,6 +71,7 @@ export function buildProblemSubscribing(
 export function buildSuccessSubscribing(
   isSubscribed: boolean,
   community: string,
+  undoCallback: ToastButton["handler"],
 ): ToastOptions {
   return {
     message: `${
@@ -69,5 +80,11 @@ export function buildSuccessSubscribing(
     duration: 3500,
     position: "bottom",
     color: "success",
+    buttons: [
+      {
+        text: "Undo",
+        handler: undoCallback,
+      },
+    ],
   };
 }
