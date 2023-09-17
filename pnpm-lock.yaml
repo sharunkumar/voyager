@@ -8,6 +8,9 @@ overrides:
   '@ionic/core': npm:voyager-ionic-core@^7.2.3-tweak.1
 
 dependencies:
+  '@types/react-hammerjs':
+    specifier: ^1.0.4
+    version: 1.0.4
   compression:
     specifier: ^1.7.4
     version: 1.7.4
@@ -17,6 +20,9 @@ dependencies:
   http-proxy-middleware:
     specifier: ^2.0.6
     version: 2.0.6
+  react-hammerjs:
+    specifier: ^1.0.1
+    version: 1.0.1(react@18.2.0)
   vite-express:
     specifier: ^0.9.2
     version: 0.9.2(express@4.18.2)(vite@4.4.9)
@@ -3130,6 +3136,10 @@ packages:
       '@types/node': 20.5.0
     dev: true
 
+  /@types/hammerjs@2.0.42:
+    resolution: {integrity: sha512-Xxk14BrwHnGi0xlURPRb+Y0UNn2w3cTkeFm7pKMsYOaNgH/kabbJLhcBoNIodwsbTz7Z8KcWjtDvlGH0nc0U9w==}
+    dev: false
+
   /@types/hast@2.3.5:
     resolution: {integrity: sha512-SvQi0L/lNpThgPoleH53cdjB3y9zpLlVjRbqB3rH8hx1jiRSBGAhyjV3H+URFjNVRqt2EdYNrbZE5IsGlNfpRg==}
     dependencies:
@@ -3254,13 +3264,19 @@ packages:
 
   /@types/prop-types@15.7.5:
     resolution: {integrity: sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==}
-    dev: true
 
   /@types/react-dom@18.2.7:
     resolution: {integrity: sha512-GRaAEriuT4zp9N4p1i8BDBYmEyfo+xQ3yHjJU4eiK5NDa1RmUZG+unZABUTK4/Ox/M+GaHwb6Ow8rUITrtjszA==}
     dependencies:
       '@types/react': 18.2.20
     dev: true
+
+  /@types/react-hammerjs@1.0.4:
+    resolution: {integrity: sha512-Un01Pc6ZiLkYW45tzsCLO0PQ82UOtbjrki3aiTPTm7q5jIvSWMuk4TkEKR6ecEITAcE+szvGvX666ERE9Qtu6A==}
+    dependencies:
+      '@types/hammerjs': 2.0.42
+      '@types/react': 18.2.20
+    dev: false
 
   /@types/react-router-dom@5.3.3:
     resolution: {integrity: sha512-kpqnYK4wcdm5UaWI3fLcELopqLrHgLqNsdpHauzlQktfkHL3npOSwtj1Uz9oKBAzs7lFtVkV8j83voAz2D8fhw==}
@@ -3283,7 +3299,6 @@ packages:
       '@types/prop-types': 15.7.5
       '@types/scheduler': 0.16.3
       csstype: 3.1.2
-    dev: true
 
   /@types/resolve@1.17.1:
     resolution: {integrity: sha512-yy7HuzQhj0dhGpD8RLXSZWEkLsV9ibvxvi6EiJ3bkqLAO1RGo0WbkWQiwpRlSFymTJRz0d3k5LM3kkx8ArDbLw==}
@@ -3293,7 +3308,6 @@ packages:
 
   /@types/scheduler@0.16.3:
     resolution: {integrity: sha512-5cJ8CB4yAx7BH1oMvdU0Jh9lrEXyPkar6F9G/ERswkCuvP4KQZfZkSjcMbAICCpQTN4OuZn8tz0HiKv9TGZgrQ==}
-    dev: true
 
   /@types/semver@7.5.0:
     resolution: {integrity: sha512-G8hZ6XJiHnuhQKR7ZmysCeJWE08o8T0AXtk5darsCaTVsYZhhgUrq53jizaR2FvsoeCwJhlmwTjkXBY5Pn/ZHw==}
@@ -4866,7 +4880,6 @@ packages:
 
   /csstype@3.1.2:
     resolution: {integrity: sha512-I7K1Uu0MBPzaFKg4nI5Q7Vs2t+3gWWW648spaF+Rg7pI9ds18Ugn+lvg4SHczUdKlHI5LWBXyqfS8+DufyBsgQ==}
-    dev: true
 
   /dargs@7.0.0:
     resolution: {integrity: sha512-2iy1EkLdlBzQGvbweYRFxmFath8+K7+AKB0TlhHWkNuH+TmovaMH/Wp7V7R4u7f4SnX3OgLsU9t1NI9ioDnUpg==}
@@ -6332,6 +6345,11 @@ packages:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
     dev: true
 
+  /hammerjs@2.0.8:
+    resolution: {integrity: sha512-tSQXBXS/MWQOn/RKckawJ61vvsDpCom87JgxiYdGwHdOa0ht0vzUWDlfioofFCRU0L+6NGDt6XzbgoJvZkMeRQ==}
+    engines: {node: '>=0.8.0'}
+    dev: false
+
   /handlebars@4.7.8:
     resolution: {integrity: sha512-vafaFqs8MZkRrSX7sFVUdo3ap/eNiLnb4IakshzvP56X5Nr1iGKAIqdX6tMlm6HcNRIkr6AxO5jFEoJzzpT8aQ==}
     engines: {node: '>=0.4.7'}
@@ -7199,7 +7217,6 @@ packages:
 
   /js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
-    dev: true
 
   /js-yaml@3.14.1:
     resolution: {integrity: sha512-okMH7OXXJ7YrN9Ok3/SXrnu4iX9yOk+25nqX4imS2npuvTYDmo/QEZoqwZkYaIDk3jVvBOTOIEgEhaLOynBS9g==}
@@ -7532,7 +7549,6 @@ packages:
     hasBin: true
     dependencies:
       js-tokens: 4.0.0
-    dev: true
 
   /loupe@2.3.6:
     resolution: {integrity: sha512-RaPMZKiMy8/JruncMU5Bt6na1eftNoo++R4Y+N2FrxkDVTrGvcyzFTsaGif4QTeKESheMGegbhw6iUAq+5A8zA==}
@@ -9244,6 +9260,15 @@ packages:
       scheduler: 0.23.0
     dev: true
 
+  /react-hammerjs@1.0.1(react@18.2.0):
+    resolution: {integrity: sha512-uyx7LAdy4rduPNm/PwXPTf/NxikNK4ak+0WiPOH4ZnrFjawA7kpeD27aEuYB7ybB/U8vLDXnooAiI5dSem+6nw==}
+    peerDependencies:
+      react: ^0.14.9 || ^15.3.0 || ^16.0.0-rc || ^16.0
+    dependencies:
+      hammerjs: 2.0.8
+      react: 18.2.0
+    dev: false
+
   /react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
     dev: true
@@ -9394,7 +9419,6 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       loose-envify: 1.4.0
-    dev: true
 
   /read-pkg-up@3.0.0:
     resolution: {integrity: sha512-YFzFrVvpC6frF1sz8psoHDBGF7fLPc+llq/8NB43oagqWkx8ar5zYtsTORtOjw9W2RHLpWP+zTWwBvf1bCmcSw==}
