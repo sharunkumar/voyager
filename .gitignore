@@ -33,3 +33,6 @@ yarn-error.log*
 .eslintcache
 
 vite.config.ts.timestamp-*
+
+# fly.io
+fly.toml

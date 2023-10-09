@@ -1,13 +1,15 @@
 import styled from "@emotion/styled";
-import { IonButton, IonIcon, IonItem } from "@ionic/react";
+import { IonItem } from "@ionic/react";
 import { CommunityView } from "lemmy-js-client";
 import { maxWidthCss } from "../shared/AppContent";
 import CommunityLink from "../labels/links/CommunityLink";
 import Ago from "../labels/Ago";
 import { getHandle } from "../../helpers/lemmy";
 import InlineMarkdown from "../shared/InlineMarkdown";
-import { heartDislikeOutline, heartOutline } from "ionicons/icons";
+import { heart, heartOutline } from "ionicons/icons";
 import useCommunityActions from "./useCommunityActions";
+import { ActionButton } from "../post/actions/ActionButton";
+import { PrimaryIcon } from "./PrimaryIcon";
 
 const Container = styled(IonItem)`
   ${maxWidthCss}
@@ -66,18 +68,15 @@ export default function CommunitySummary({ community }: CommunitySummaryProps) {
             subscribed={community.subscribed}
           />
           <RightContainer>
-            <IonButton
+            <ActionButton
               color={isSubscribed ? "danger" : "primary"}
-              size="small"
               onClick={(e) => {
                 subscribe();
                 e.stopPropagation();
               }}
             >
-              <IonIcon
-                icon={isSubscribed ? heartDislikeOutline : heartOutline}
-              />
-            </IonButton>
+              <PrimaryIcon icon={isSubscribed ? heart : heartOutline} />
+            </ActionButton>
           </RightContainer>
         </Title>
         <Stats onClick={view}>
