@@ -141,7 +141,7 @@ const initialState: SettingsState = {
   general: {
     comments: {
       collapseCommentThreads: OCommentThreadCollapse.Never,
-      sort: OCommentDefaultSort.Hot,
+      sort: OCommentDefaultSort.Top,
       showJumpButton: false,
       jumpButtonPosition: OJumpButtonPositionType.RightBottom,
     },
