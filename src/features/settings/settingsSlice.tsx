@@ -111,7 +111,7 @@ const initialState: SettingsState = {
   ready: false,
   appearance: {
     font: {
-      fontSizeMultiplier: 1,
+      fontSizeMultiplier: 0.8,
       useSystemFontSize: false,
     },
     general: {
