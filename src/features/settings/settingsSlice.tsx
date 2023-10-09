@@ -150,7 +150,7 @@ const initialState: SettingsState = {
       markReadOnScroll: true,
       showHideReadButton: true,
     },
-    enableHapticFeedback: true,
+    enableHapticFeedback: false,
     linkHandler: OLinkHandlerType.InApp,
   },
 };
