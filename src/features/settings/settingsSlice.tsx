@@ -147,8 +147,8 @@ const initialState: SettingsState = {
     },
     posts: {
       disableMarkingRead: false,
-      markReadOnScroll: false,
-      showHideReadButton: false,
+      markReadOnScroll: true,
+      showHideReadButton: true,
     },
     enableHapticFeedback: true,
     linkHandler: OLinkHandlerType.InApp,
