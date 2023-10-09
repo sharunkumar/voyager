@@ -79,7 +79,7 @@ export default function CommunitySummary({ community }: CommunitySummaryProps) {
                 e.stopPropagation();
               }}
             >
-              <HeartIcon icon={isSubscribed ? heart : heartOutline} />
+              <HeartIcon icon={isSubscribed ? heartDislike : heartOutline} />
             </ActionButton>
           </RightContainer>
         </Title>
