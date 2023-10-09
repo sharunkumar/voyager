@@ -116,7 +116,7 @@ const initialState: SettingsState = {
     },
     general: {
       userInstanceUrlDisplay: OInstanceUrlDisplayMode.Never,
-      profileLabel: OProfileLabelType.Instance,
+      profileLabel: OProfileLabelType.Handle,
     },
     posts: {
       blurNsfw: OPostBlurNsfw.InFeed,
