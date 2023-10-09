@@ -1,4 +1,3 @@
-import InAppExternalLink from "../shared/InAppExternalLink";
 import Markdown from "../shared/Markdown";
 
 interface CommentMarkdownProps {

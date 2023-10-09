@@ -13,7 +13,6 @@ import { FetchFn } from "../../../features/feed/Feed";
 import useClient from "../../../helpers/useClient";
 import { LIMIT } from "../../../services/lemmy";
 import { useParams } from "react-router";
-import PostSort from "../../../features/feed/PostSort";
 import { useAppSelector } from "../../../store";
 import { CommunityView, LemmyHttp, SortType } from "lemmy-js-client";
 import CommunityFeed from "../../../features/feed/CommunityFeed";

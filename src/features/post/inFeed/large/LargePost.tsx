@@ -8,7 +8,6 @@ import { findLoneImage } from "../../../../helpers/markdown";
 import { isUrlImage, isUrlVideo, share } from "../../../../helpers/lemmy";
 import { maxWidthCss } from "../../../shared/AppContent";
 import Nsfw, { isNsfw, isNsfwBlurred } from "../../../labels/Nsfw";
-import { VoteButton } from "../../shared/VoteButton";
 import MoreActions from "../../shared/MoreActions";
 import PersonLink from "../../../labels/links/PersonLink";
 import InlineMarkdown from "../../../shared/InlineMarkdown";
