@@ -136,7 +136,7 @@ const initialState: SettingsState = {
       pureBlack: true,
     },
     deviceMode: "ios",
-    theme: "default",
+    theme: "tangerine",
   },
   general: {
     comments: {
