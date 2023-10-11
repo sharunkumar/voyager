@@ -25,7 +25,7 @@ jobs:
       uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
       with:
         target_sync_branch: main
-        # REQUIRED 'target_repo_token' exactly like this!
+        # REQUIRED 'target_repo_token' exactly like this! This token is created automatically for each workflow run: https://docs.github.com/en/actions/security-guides/automatic-token-authentication
         target_repo_token: ${{ secrets.GITHUB_TOKEN }}
         upstream_sync_branch: main
         upstream_sync_repo: aeharding/voyager
