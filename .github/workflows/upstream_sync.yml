@@ -29,7 +29,6 @@ jobs:
         target_repo_token: ${{ secrets.GITHUB_TOKEN }}
         upstream_sync_branch: main
         upstream_sync_repo: aeharding/voyager
-        upstream_repo_access_token: ${{ secrets.UPSTREAM_REPO_SECRET }}
 
         # Set test_mode true to run tests instead of the true action!!
         test_mode: false
