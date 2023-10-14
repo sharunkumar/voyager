@@ -5,6 +5,7 @@ import Handle from "../Handle";
 import { StyledLink } from "./shared";
 import ItemIcon from "../img/ItemIcon";
 import { css } from "@emotion/react";
+import { useAppSelector } from "../../../store";
 import { useIonActionSheet } from "@ionic/react";
 import { useLongPress } from "use-long-press";
 import {
@@ -27,11 +28,23 @@ export default function CommunityLink({
   community,
   showInstanceWhenRemote,
   className,
+  subscribed,
 }: CommunityLinkProps) {
   const [present] = useIonActionSheet();
 
-  const { isBlocked, isSubscribed, block, subscribe, sidebar } =
-    useCommunityActions(getHandle(community));
+  const communityByHandle = useAppSelector(
+    (state) => state.community.communityByHandle,
+  );
+
+  const handle = getHandle(community);
+  const c = communityByHandle[handle];
+
+  const { isSubscribed, isBlocked, subscribe, block, sidebar } =
+    useCommunityActions({
+      blocked: c?.blocked ?? false,
+      community: community,
+      subscribed: subscribed,
+    });
 
   const bind = useLongPress(
     () => {
@@ -42,15 +55,16 @@ export default function CommunityLink({
             text: `${isBlocked ? "Unblock" : "Block"} Community`,
             icon: removeCircleOutline,
             role: "destructive",
-            handler: () => block(),
+            handler: block,
           },
           {
             text: !isSubscribed ? "Subscribe" : "Unsubscribe",
             icon: !isSubscribed ? heartOutline : heartDislikeOutline,
-            handler: () => subscribe(),
+            handler: subscribe,
           },
           {
             text: "Sidebar",
+            data: "sidebar",
             icon: tabletPortraitOutline,
             handler: sidebar,
           },
@@ -68,7 +82,7 @@ export default function CommunityLink({
 
   return (
     <StyledLink
-      to={buildGeneralBrowseLink(`/c/${getHandle(community)}`)}
+      to={buildGeneralBrowseLink(`/c/${handle}`)}
       onClick={(e) => e.stopPropagation()}
       className={className}
       {...bind()}

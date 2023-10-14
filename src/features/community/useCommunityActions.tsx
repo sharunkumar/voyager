@@ -1,19 +1,18 @@
-import { useIonActionSheet, useIonRouter, useIonToast } from "@ionic/react";
+import { CommunityView } from "lemmy-js-client";
+import { useContext, useMemo, useState } from "react";
+import { PageContext } from "../auth/PageContext";
 import { useAppDispatch, useAppSelector } from "../../store";
-import { useBuildGeneralBrowseLink } from "../../helpers/routes";
+import { checkIsMod, getHandle } from "../../helpers/lemmy";
+import { useIonActionSheet, useIonRouter } from "@ionic/react";
 import {
   isAdminSelector,
   localUserSelector,
   showNsfw,
 } from "../auth/authSlice";
-import { useContext, useEffect } from "react";
-import { PageContext } from "../auth/PageContext";
-import { checkIsMod } from "../../helpers/lemmy";
 import {
   addFavorite,
   blockCommunity,
   followCommunity,
-  getCommunity,
   removeFavorite,
 } from "./communitySlice";
 import {
@@ -22,58 +21,60 @@ import {
   buildProblemSubscribing,
   buildSuccessSubscribing,
 } from "../../helpers/toastMessages";
+import { useBuildGeneralBrowseLink } from "../../helpers/routes";
+import useAppToast from "../../helpers/useAppToast";
 
-export default function useCommunityActions(communityHandle: string) {
-  const [present] = useIonToast();
-  const router = useIonRouter();
+export default function useCommunityActions(
+  community: Pick<CommunityView, "community" | "subscribed" | "blocked">,
+) {
+  const presentToast = useAppToast();
+
+  // local state as source of truth for this hook
+  const [isSubscribed, setIsSubscribed] = useState(
+    community.subscribed === "Subscribed" || community.subscribed === "Pending",
+  );
+  const [isBlocked, setIsBlocked] = useState(community.blocked);
+
   const dispatch = useAppDispatch();
+  const communityHandle = getHandle(community.community);
+  const router = useIonRouter();
   const buildGeneralBrowseLink = useBuildGeneralBrowseLink();
+
   const site = useAppSelector((state) => state.auth.site);
   const isAdmin = useAppSelector(isAdminSelector);
-  const localUser = useAppSelector(localUserSelector);
-  const [presentActionSheet] = useIonActionSheet();
-  const { presentPostEditor } = useContext(PageContext);
 
   const { presentLoginIfNeeded } = useContext(PageContext);
+  const { presentPostEditor } = useContext(PageContext);
+  const communityId = community.community.id;
+  const localUser = useAppSelector(localUserSelector);
+  const [presentActionSheet] = useIonActionSheet();
 
-  const communityByHandle = useAppSelector(
-    (state) => state.community.communityByHandle,
-  );
+  const isNsfw = community.community.nsfw;
 
-  useEffect(() => {
-    if (communityByHandle[communityHandle]) return;
+  const canPost = useMemo(() => {
+    const isMod = site ? checkIsMod(communityHandle, site) : false;
 
-    dispatch(getCommunity(communityHandle));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [communityHandle]);
+    const canPost =
+      !community.community.posting_restricted_to_mods || isMod || isAdmin;
 
-  const isSubscribed =
-    communityByHandle[communityHandle]?.subscribed === "Subscribed" ||
-    communityByHandle[communityHandle]?.subscribed === "Pending";
-
-  const isBlocked = communityByHandle[communityHandle]?.blocked;
-  const communityId = communityByHandle[communityHandle]?.community.id;
+    return canPost;
+  }, [community, communityHandle, isAdmin, site]);
 
   const favoriteCommunities = useAppSelector(
     (state) => state.community.favorites,
   );
 
-  const isFavorite = favoriteCommunities.includes(communityHandle);
-
-  const isMod = site ? checkIsMod(communityHandle, site) : false;
-
-  const canPost =
-    !communityByHandle[communityHandle]?.community.posting_restricted_to_mods ||
-    isMod ||
-    isAdmin;
+  const isFavorite = useMemo(
+    () => favoriteCommunities.includes(communityHandle),
+    [favoriteCommunities, communityHandle],
+  );
 
   function post() {
     if (presentLoginIfNeeded()) return;
 
     if (!canPost) {
-      present({
+      presentToast({
         message: "This community has disabled new posts",
-        duration: 3500,
         position: "bottom",
         color: "warning",
       });
@@ -83,25 +84,26 @@ export default function useCommunityActions(communityHandle: string) {
     presentPostEditor(communityHandle);
   }
 
+  async function _subscribe() {
+    await dispatch(followCommunity(!isSubscribed, communityId));
+    setIsSubscribed(!isSubscribed);
+  }
+
+  async function _block() {
+    await dispatch(blockCommunity(!isBlocked, communityId));
+    setIsBlocked(!isBlocked);
+  }
+
   async function subscribe() {
     if (presentLoginIfNeeded()) return;
 
-    const communityId = communityByHandle[communityHandle]?.community.id;
-
-    if (communityId === undefined) throw new Error("community not found");
-
     try {
-      await dispatch(followCommunity(!isSubscribed, communityId));
+      await _subscribe();
+      presentToast(buildSuccessSubscribing(isSubscribed, communityHandle));
     } catch (error) {
-      present(buildProblemSubscribing(isSubscribed, communityHandle));
+      presentToast(buildProblemSubscribing(isSubscribed, communityHandle));
       throw error;
     }
-
-    present(
-      buildSuccessSubscribing(isSubscribed, communityHandle, () => {
-        dispatch(followCommunity(isSubscribed, communityId));
-      }),
-    );
   }
 
   function favorite() {
@@ -113,32 +115,19 @@ export default function useCommunityActions(communityHandle: string) {
       dispatch(removeFavorite(communityHandle));
     }
 
-    present({
+    presentToast({
       message: `${
         isFavorite ? "Unfavorited" : "Favorited"
       } c/${communityHandle}.`,
-      duration: 3500,
       position: "bottom",
       color: "success",
     });
   }
 
-  function sidebar() {
-    router.push(buildGeneralBrowseLink(`/c/${communityHandle}/sidebar`));
-  }
-
-  function view() {
-    router.push(buildGeneralBrowseLink(`/c/${communityHandle}`));
-  }
-
   async function block() {
     if (typeof communityId !== "number") return;
 
-    if (
-      !communityByHandle[communityHandle]?.blocked &&
-      communityByHandle[communityHandle]?.community.nsfw &&
-      localUser?.show_nsfw
-    ) {
+    if (!isBlocked && isNsfw && localUser?.show_nsfw) {
       // User wants to block a NSFW community when account is set to show NSFW. Ask them
       // if they want to hide all NSFW instead of blocking on a per community basis
       presentActionSheet({
@@ -153,7 +142,7 @@ export default function useCommunityActions(communityHandle: string) {
               (async () => {
                 await dispatch(showNsfw(false));
 
-                present(allNSFWHidden);
+                presentToast(allNSFWHidden);
               })();
             },
           },
@@ -162,13 +151,8 @@ export default function useCommunityActions(communityHandle: string) {
             role: "destructive",
             handler: () => {
               (async () => {
-                await dispatch(blockCommunity(!isBlocked, communityId));
-
-                present(
-                  buildBlocked(!isBlocked, communityHandle, () => {
-                    dispatch(blockCommunity(isBlocked!, communityId));
-                  }),
-                );
+                await _block();
+                presentToast(buildBlocked(!isBlocked, communityHandle));
               })();
             },
           },
@@ -179,26 +163,28 @@ export default function useCommunityActions(communityHandle: string) {
         ],
       });
     } else {
-      await dispatch(blockCommunity(!isBlocked, communityId));
-
-      present(
-        buildBlocked(!isBlocked, communityHandle, () => {
-          dispatch(blockCommunity(isBlocked!, communityId));
-        }),
-      );
+      await _block();
+      presentToast(buildBlocked(!isBlocked, communityHandle));
     }
   }
 
+  function sidebar() {
+    router.push(buildGeneralBrowseLink(`/c/${communityHandle}/sidebar`));
+  }
+
+  function view() {
+    router.push(buildGeneralBrowseLink(`/c/${communityHandle}`));
+  }
+
   return {
-    communityByHandle,
     isSubscribed,
-    isFavorite,
     isBlocked,
+    isFavorite,
     post,
     subscribe,
     favorite,
+    block,
     sidebar,
     view,
-    block,
   };
 }
