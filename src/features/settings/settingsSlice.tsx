@@ -132,7 +132,7 @@ const initialState: SettingsState = {
       thumbnailSize: OCompactThumbnailSizeType.Small,
     },
     voting: {
-      voteDisplayMode: OVoteDisplayMode.Total,
+      voteDisplayMode: OVoteDisplayMode.Separate,
     },
     dark: {
       usingSystemDarkMode: true,
