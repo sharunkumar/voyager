@@ -13,18 +13,21 @@ import { FetchFn } from "../../../features/feed/Feed";
 import useClient from "../../../helpers/useClient";
 import { LIMIT } from "../../../services/lemmy";
 import { useParams } from "react-router";
-import { useAppSelector } from "../../../store";
-import { CommunityView, LemmyHttp, SortType } from "lemmy-js-client";
+import PostSort from "../../../features/feed/PostSort";
+import { useAppDispatch, useAppSelector } from "../../../store";
+import { CommunityView, LemmyHttp } from "lemmy-js-client";
 import CommunityFeed from "../../../features/feed/CommunityFeed";
 import { jwtSelector } from "../../../features/auth/authSlice";
 import { notEmpty } from "../../../helpers/array";
+import { receivedCommunities } from "../../../features/community/communitySlice";
 
 export default function SearchCommunitiesPage() {
   const { search: _encodedSearch } = useParams<{ search: string }>();
   const buildGeneralBrowseLink = useBuildGeneralBrowseLink();
   const client = useClient();
-  const sort: SortType = "TopAll";
+  const sort = useAppSelector((state) => state.post.sort);
   const jwt = useAppSelector(jwtSelector);
+  const dispatch = useAppDispatch();
 
   const search = decodeURIComponent(_encodedSearch);
 
@@ -44,9 +47,11 @@ export default function SearchCommunitiesPage() {
         auth: jwt,
       });
 
+      dispatch(receivedCommunities(response.communities));
+
       return response.communities;
     },
-    [client, search, sort, jwt],
+    [client, search, sort, jwt, dispatch],
   );
 
   return (
@@ -62,7 +67,9 @@ export default function SearchCommunitiesPage() {
 
           <IonTitle>“{search}”</IonTitle>
 
-          <IonButtons slot="end">{/* <PostSort /> */}</IonButtons>
+          <IonButtons slot="end">
+            <PostSort />
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
       <IonContent>

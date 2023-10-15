@@ -7,7 +7,7 @@ import Ago from "../labels/Ago";
 import InlineMarkdown from "../shared/InlineMarkdown";
 import { heart } from "ionicons/icons";
 import { ActionButton } from "../post/actions/ActionButton";
-import { ToggleIcon } from "../../components/ToggleIcon";
+import { ToggleIcon } from "./ToggleIcon";
 import useCommunityActions from "./useCommunityActions";
 
 const Container = styled(IonItem)`
@@ -24,6 +24,12 @@ const Title = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+`;
+
+const StyledCommunityLink = styled(CommunityLink)`
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const Contents = styled.div`
@@ -54,13 +60,15 @@ interface CommunitySummaryProps {
 }
 
 export default function CommunitySummary({ community }: CommunitySummaryProps) {
-  const { isSubscribed, subscribe, view } = useCommunityActions(community);
+  const { isSubscribed, subscribe, view } = useCommunityActions(
+    community.community,
+  );
 
   return (
     <Container>
       <Contents>
         <Title>
-          <CommunityLink
+          <StyledCommunityLink
             community={community.community}
             showInstanceWhenRemote
             subscribed={community.subscribed}
