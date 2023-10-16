@@ -32,6 +32,8 @@ import {
   OLinkHandlerType,
   JumpButtonPositionType,
   OJumpButtonPositionType,
+  DefaultFeedType,
+  ODefaultFeedType,
 } from "../../services/db";
 import { get, set } from "./storage";
 import { Mode } from "@ionic/core";
@@ -83,6 +85,7 @@ interface SettingsState {
       showJumpButton: boolean;
       jumpButtonPosition: JumpButtonPositionType;
       highlightNewAccount: boolean;
+      touchFriendlyLinks: boolean;
     };
     posts: {
       disableMarkingRead: boolean;
@@ -91,6 +94,7 @@ interface SettingsState {
     };
     enableHapticFeedback: boolean;
     linkHandler: LinkHandlerType;
+    defaultFeed: DefaultFeedType | undefined;
   };
   blocks: {
     keywords: string[];
@@ -149,6 +153,7 @@ const initialState: SettingsState = {
       showJumpButton: false,
       jumpButtonPosition: OJumpButtonPositionType.RightBottom,
       highlightNewAccount: true,
+      touchFriendlyLinks: true,
     },
     posts: {
       disableMarkingRead: false,
@@ -157,6 +162,7 @@ const initialState: SettingsState = {
     },
     enableHapticFeedback: false,
     linkHandler: OLinkHandlerType.InApp,
+    defaultFeed: undefined,
   },
   blocks: {
     keywords: [],
@@ -244,6 +250,10 @@ export const appearanceSlice = createSlice({
       state.general.comments.highlightNewAccount = action.payload;
       db.setSetting("highlight_new_account", action.payload);
     },
+    setTouchFriendlyLinks(state, action: PayloadAction<boolean>) {
+      state.general.comments.touchFriendlyLinks = action.payload;
+      db.setSetting("touch_friendly_links", action.payload);
+    },
     setPostAppearance(state, action: PayloadAction<PostAppearanceType>) {
       state.appearance.posts.type = action.payload;
       db.setSetting("post_appearance_type", action.payload);
@@ -254,6 +264,10 @@ export const appearanceSlice = createSlice({
     },
     setFilteredKeywords(state, action: PayloadAction<string[]>) {
       state.blocks.keywords = action.payload;
+      // Per user setting is updated in StoreProvider
+    },
+    setDefaultFeed(state, action: PayloadAction<DefaultFeedType>) {
+      state.general.defaultFeed = action.payload;
       // Per user setting is updated in StoreProvider
     },
     setShowVotingButtons(state, action: PayloadAction<boolean>) {
@@ -382,6 +396,29 @@ export const getFilteredKeywords =
     );
   };
 
+export const getDefaultFeed =
+  () => async (dispatch: AppDispatch, getState: () => RootState) => {
+    const userHandle = getState().auth.accountData?.activeHandle;
+
+    const defaultFeed = await db.getSetting("default_feed", {
+      user_handle: userHandle,
+    });
+
+    dispatch(setDefaultFeed(defaultFeed ?? { type: ODefaultFeedType.Home }));
+  };
+
+export const updateDefaultFeed =
+  (defaultFeed: DefaultFeedType) =>
+  async (dispatch: AppDispatch, getState: () => RootState) => {
+    const userHandle = getState().auth.accountData?.activeHandle;
+
+    dispatch(setDefaultFeed(defaultFeed ?? initialState.general.defaultFeed));
+
+    db.setSetting("default_feed", defaultFeed, {
+      user_handle: userHandle,
+    });
+  };
+
 export const updateFilteredKeywords =
   (filteredKeywords: string[]) =>
   async (dispatch: AppDispatch, getState: () => RootState) => {
@@ -436,6 +473,7 @@ export const fetchSettingsFromDatabase = createAsyncThunk<SettingsState>(
       );
       const link_handler = await db.getSetting("link_handler");
       const filtered_keywords = await db.getSetting("filtered_keywords");
+      const touch_friendly_links = await db.getSetting("touch_friendly_links");
 
       return {
         ...state.settings,
@@ -484,6 +522,9 @@ export const fetchSettingsFromDatabase = createAsyncThunk<SettingsState>(
             highlightNewAccount:
               highlight_new_account ??
               initialState.general.comments.highlightNewAccount,
+            touchFriendlyLinks:
+              touch_friendly_links ??
+              initialState.general.comments.touchFriendlyLinks,
           },
           posts: {
             disableMarkingRead:
@@ -499,6 +540,7 @@ export const fetchSettingsFromDatabase = createAsyncThunk<SettingsState>(
           linkHandler: link_handler ?? initialState.general.linkHandler,
           enableHapticFeedback:
             enable_haptic_feedback ?? initialState.general.enableHapticFeedback,
+          defaultFeed: initialState.general.defaultFeed,
         },
         blocks: {
           keywords: filtered_keywords ?? initialState.blocks.keywords,
@@ -526,6 +568,7 @@ export const {
   setShowJumpButton,
   setJumpButtonPosition,
   setHighlightNewAccount,
+  setTouchFriendlyLinks,
   setNsfwBlur,
   setFilteredKeywords,
   setPostAppearance,
@@ -545,6 +588,7 @@ export const {
   setEnableHapticFeedback,
   setLinkHandler,
   setPureBlack,
+  setDefaultFeed,
 } = appearanceSlice.actions;
 
 export default appearanceSlice.reducer;
