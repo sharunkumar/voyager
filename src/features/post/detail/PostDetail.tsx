@@ -85,15 +85,6 @@ const StyledEmbed = styled(Embed)`
 const PostDeets = styled.div`
   margin: 0 8px;
   font-size: 0.9375em;
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-size: 1em;
-  }
 `;
 
 const Title = styled.div`
@@ -227,8 +218,7 @@ export default function PostDetail({
               </Title>
               {!collapsed && renderText()}
               <By>
-                {post.counts.featured_community ||
-                post.counts.featured_local ? (
+                {post.post.featured_community || post.post.featured_local ? (
                   <AnnouncementIcon icon={megaphone} />
                 ) : undefined}
                 <CommunityLink

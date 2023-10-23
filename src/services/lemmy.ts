@@ -21,13 +21,56 @@ export function getClient(url: string, jwt?: string): LemmyHttp {
   return new LemmyHttp(buildBaseUrl(url), {
     // Capacitor http plugin is not compatible with cross-fetch.
     // Bind to globalThis or lemmy-js-client will bind incorrectly
-    fetchFunction: fetch.bind(globalThis),
+    fetchFunction: buildCustomFetch(jwt),
     headers: jwt
       ? {
           Authorization: `Bearer ${jwt}`,
         }
       : undefined,
   });
+}
+
+// From https://github.com/Xyphyn/photon/blob/main/src/lib/lemmy.ts
+const isURL = (input: Parameters<typeof fetch>[0]): input is URL =>
+  typeof input == "object" && "searchParams" in input;
+
+const toURL = (input: Parameters<typeof fetch>[0]): URL | undefined => {
+  if (isURL(input)) return input;
+
+  try {
+    return new URL(input.toString());
+  } catch (e) {
+    return;
+  }
+};
+
+function buildCustomFetch(auth: string | undefined): typeof fetch {
+  return async (info, init) => {
+    if (init?.body && auth) {
+      try {
+        const json = JSON.parse(init.body.toString());
+        json.auth = auth;
+        init.body = JSON.stringify(json);
+      } catch (e) {
+        // It seems this isn't a JSON request. Ignore adding an auth parameter.
+      }
+    }
+
+    const url = toURL(info as never); // something is wrong with these types
+    if (auth && url) url.searchParams.set("auth", auth);
+
+    if (url?.pathname === "/pictrs/image") {
+      init = {
+        ...init,
+        headers: {
+          ...init?.headers,
+          Cookie: `jwt=${auth}`,
+        },
+      };
+    }
+
+    return await fetch(url ? url.toString() : (info as never), init); // something is wrong with these types
+  };
 }
 
 export const LIMIT = 30;
@@ -52,7 +95,7 @@ export async function uploadImage(url: string, auth: string, image: File) {
 
   // Cookie header can only be set by native code (Capacitor http plugin)
   if (isNative()) {
-    const response = await getClient(url).uploadImage({
+    const response = await getClient(url, auth).uploadImage({
       image: compressedImageIfNeeded as File,
       auth,
     });

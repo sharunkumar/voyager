@@ -58,6 +58,9 @@ export const postSlice = createSlice({
     receivedPostNotFound: (state, action: PayloadAction<number>) => {
       state.postById[action.payload] = "not-found";
     },
+    resetHidden: (state) => {
+      state.postHiddenById = {};
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -172,6 +175,7 @@ export const {
   updatePostSaved,
   updatePostRead,
   receivedPostNotFound,
+  resetHidden,
 } = postSlice.actions;
 
 export default postSlice.reducer;
@@ -183,15 +187,10 @@ export const savePost =
 
     dispatch(updatePostSaved({ postId, saved: save }));
 
-    const jwt = jwtSelector(getState());
-
-    if (!jwt) throw new Error("Not authorized");
-
     try {
       await clientSelector(getState())?.savePost({
         post_id: postId,
         save,
-        auth: jwt,
       });
     } catch (error) {
       dispatch(updatePostSaved({ postId, saved: oldSaved }));
@@ -203,17 +202,14 @@ export const savePost =
 export const setPostRead =
   (postId: number) =>
   async (dispatch: AppDispatch, getState: () => RootState) => {
+    if (!jwtSelector(getState())) return;
     if (getState().settings.general.posts.disableMarkingRead) return;
-
-    const jwt = jwtSelector(getState());
-    if (!jwt) return;
 
     dispatch(updatePostRead({ postId }));
 
     await clientSelector(getState())?.markPostAsRead({
       post_id: postId,
       read: true,
-      auth: jwt,
     });
   };
 
@@ -224,17 +220,12 @@ export const voteOnPost =
 
     dispatch(updatePostVote({ postId, vote }));
 
-    const jwt = jwtSelector(getState());
-
-    if (!jwt) throw new Error("Not authorized");
-
     dispatch(setPostRead(postId));
 
     try {
       await clientSelector(getState())?.likePost({
         post_id: postId,
         score: vote,
-        auth: jwt,
       });
     } catch (error) {
       dispatch(updatePostVote({ postId, vote: oldVote }));
@@ -244,14 +235,11 @@ export const voteOnPost =
 
 export const getPost =
   (id: number) => async (dispatch: AppDispatch, getState: () => RootState) => {
-    const jwt = jwtSelector(getState());
-
     let result;
 
     try {
       result = await clientSelector(getState()).getPost({
         id,
-        auth: jwt,
       });
     } catch (error) {
       // I think there is a bug in lemmy-js-client where it tries to parse 404 with non-json body
@@ -262,19 +250,16 @@ export const getPost =
       throw error;
     }
 
-    if (result) dispatch(receivedPosts([result.post_view]));
+    dispatch(receivedPosts([result.post_view]));
+    return result;
   };
 
 export const deletePost =
   (id: number) => async (dispatch: AppDispatch, getState: () => RootState) => {
-    const jwt = jwtSelector(getState());
-    if (!jwt) return;
-
     try {
       await clientSelector(getState()).deletePost({
         post_id: id,
         deleted: true,
-        auth: jwt,
       });
     } catch (error) {
       // I think there is a bug in lemmy-js-client where it tries to parse 404 with non-json body
@@ -302,6 +287,14 @@ export const hidePosts =
 export const unhidePost = (postId: number) => async (dispatch: AppDispatch) => {
   await dispatch(updatePostHidden({ postId, hidden: false }));
 };
+
+export const clearHidden =
+  () => async (dispatch: AppDispatch, getState: () => RootState) => {
+    const handle = handleSelector(getState());
+    if (!handle) return;
+    await db.clearHiddenPosts(handle);
+    await dispatch(resetHidden());
+  };
 
 export const postHiddenByIdSelector = (state: RootState) => {
   return state.post.postHiddenById;
