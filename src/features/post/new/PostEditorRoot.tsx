@@ -31,7 +31,7 @@ import { PostEditorProps } from "./PostEditor";
 import NewPostText from "./NewPostText";
 import { useBuildGeneralBrowseLink } from "../../../helpers/routes";
 import PhotoPreview from "./PhotoPreview";
-import { uploadImage } from "../../../services/lemmy";
+import { getTitle, uploadImage } from "../../../services/lemmy";
 import { receivedPosts } from "../postSlice";
 import useAppToast from "../../../helpers/useAppToast";
 
@@ -419,6 +419,35 @@ export default function PostEditorRoot({
                   value={url}
                   onIonInput={(e) => setUrl(e.detail.value ?? "")}
                 />
+                {!!url &&
+                  (() => {
+                    try {
+                      new URL(url);
+                      return true;
+                    } catch (_err) {
+                      return false;
+                    }
+                  })() && (
+                    <IonButton
+                      onClick={(e) => {
+                        e.preventDefault();
+                        async function fetchData() {
+                          const title = await getTitle(url);
+                          if (title === "") {
+                            return presentToast({
+                              message: "Unable to fetch title",
+                              color: "danger",
+                            });
+                          }
+                          setTitle(title);
+                        }
+
+                        fetchData();
+                      }}
+                    >
+                      FETCH TITLE
+                    </IonButton>
+                  )}
               </IonItem>
             )}
             {showNsfwToggle && (
