@@ -31,9 +31,10 @@ import { PostEditorProps } from "./PostEditor";
 import NewPostText from "./NewPostText";
 import { useBuildGeneralBrowseLink } from "../../../helpers/routes";
 import PhotoPreview from "./PhotoPreview";
-import { getTitle, uploadImage } from "../../../services/lemmy";
+import { getSiteMetadata, uploadImage } from "../../../services/lemmy";
 import { receivedPosts } from "../postSlice";
 import useAppToast from "../../../helpers/useAppToast";
+import { isValidUrl } from "../../../helpers/url";
 
 const Container = styled.div`
   position: absolute;
@@ -420,35 +421,26 @@ export default function PostEditorRoot({
                   value={url}
                   onIonInput={(e) => setUrl(e.detail.value ?? "")}
                 />
-                {!!url &&
-                  (() => {
-                    try {
-                      new URL(url);
-                      return true;
-                    } catch (_err) {
-                      return false;
-                    }
-                  })() && (
-                    <IonButton
-                      onClick={(e) => {
-                        e.preventDefault();
-                        async function fetchData() {
-                          const title = await getTitle(url);
-                          if (title === "") {
-                            return presentToast({
-                              message: "Unable to fetch title",
-                              color: "danger",
-                            });
-                          }
-                          setTitle(title);
-                        }
-
-                        fetchData();
-                      }}
-                    >
-                      FETCH TITLE
-                    </IonButton>
-                  )}
+                {!!jwt && !!url && isValidUrl(url) && (
+                  <IonButton
+                    onClick={(e) => {
+                      e.preventDefault();
+                      function toast() {
+                        presentToast({
+                          message: "Unable to fetch title",
+                          color: "danger",
+                        });
+                      }
+                      getSiteMetadata(url, instanceUrl, jwt)
+                        .then((data) =>
+                          data.title ? setTitle(data.title) : toast(),
+                        )
+                        .catch(toast);
+                    }}
+                  >
+                    FETCH TITLE
+                  </IonButton>
+                )}
               </IonItem>
             )}
             {showNsfwToggle && (
