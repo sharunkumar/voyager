@@ -45,6 +45,10 @@ ion-router-outlet > .ion-page > ion-header ion-title {
   min-height: unset !important;
 }
 
+.action-sheet-group {
+  border-radius: 5px !important;
+}
+
 /* https://github.com/ionic-team/ionic-framework/issues/27777#issuecomment-1631522283 */
 .action-sheet-height-fix {
   --height: 100%;
