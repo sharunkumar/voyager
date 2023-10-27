@@ -6,7 +6,8 @@ import ShowJumpButton from "./ShowJumpButton";
 import JumpButtonPosition from "./JumpButtonPosition";
 import HighlightNewAccount from "./HighlightNewAccount";
 import TouchFriendlyLinks from "./TouchFriendlyLinks";
-import RenderCommentImages from "./RenderCommentImages";
+import TapToCollapse from "./TapToCollapse";
+import ShowCommentImages from "./ShowCommentImages";
 
 export default function Comments() {
   return (
@@ -15,13 +16,14 @@ export default function Comments() {
         <IonLabel>Comments</IonLabel>
       </ListHeader>
       <IonList inset>
-        <CollapsedByDefault />
         <DefaultSort />
+        <CollapsedByDefault />
+        <TapToCollapse />
         <ShowJumpButton />
         <JumpButtonPosition />
         <HighlightNewAccount />
         <TouchFriendlyLinks />
-        <RenderCommentImages />
+        <ShowCommentImages />
       </IonList>
     </>
   );
