@@ -2,6 +2,8 @@ import express from "express";
 import compression from "compression";
 import ViteExpress from "vite-express";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import { fileURLToPath } from "url";
+import path from "path";
 
 const CUSTOM_LEMMY_SERVERS = process.env.CUSTOM_LEMMY_SERVERS
   ? process.env.CUSTOM_LEMMY_SERVERS.split(",").map((s) => s.trim())
@@ -34,8 +36,15 @@ INITIAL_VALID_LEMMY_SERVERS.forEach(
 const app = express();
 
 const PROXY_ENDPOINT = "/api/:actor";
+const PAW_MANIFEST = "/manifest.json";
 
 app.use(compression());
+
+app.get(PAW_MANIFEST, (req, res, next) => {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  res.sendFile(path.join(__dirname, "public", "manifest.json"));
+});
 
 app.use(PROXY_ENDPOINT, async (req, res, next) => {
   const actor = req.params.actor;
