@@ -230,13 +230,7 @@ export const getSiteIfNeeded =
 
 export const getSite =
   () => async (dispatch: AppDispatch, getState: () => RootState) => {
-    const jwtPayload = jwtPayloadSelector(getState());
-    const instance = jwtPayload?.iss ?? getState().auth.connectedInstance;
-
-    const details = await getClient(
-      instance,
-      jwtSelector(getState()),
-    ).getSite();
+    const details = await clientSelector(getState()).getSite();
 
     dispatch(updateUserDetails(details));
   };
@@ -368,3 +362,16 @@ function updateApplicationContextIfNeeded(
       : "",
   });
 }
+
+export const blockInstance =
+  (block: boolean, id: number) =>
+  async (dispatch: AppDispatch, getState: () => RootState) => {
+    if (!id) return;
+
+    await clientSelector(getState())?.blockInstance({
+      instance_id: id,
+      block,
+    });
+
+    await dispatch(getSite());
+  };

@@ -1,4 +1,4 @@
-import { LinkHTMLAttributes, MouseEvent, useCallback, useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import styled from "@emotion/styled";
 import InAppExternalLink from "../InAppExternalLink";
 import useLemmyUrlHandler from "../useLemmyUrlHandler";
@@ -8,11 +8,14 @@ const LinkInterceptor = styled(LinkInterceptorUnstyled)`
   -webkit-touch-callout: default;
 `;
 
-function LinkInterceptorUnstyled(props: LinkHTMLAttributes<HTMLAnchorElement>) {
+function LinkInterceptorUnstyled({
+  onClick: _onClick,
+  ...props
+}: React.JSX.IntrinsicElements["a"]) {
   const connectedInstance = useAppSelector(
     (state) => state.auth.connectedInstance,
   );
-  const { redirectToLemmyObjectIfNeeded: redirectTo } = useLemmyUrlHandler();
+  const { redirectToLemmyObjectIfNeeded } = useLemmyUrlHandler();
 
   const absoluteHref = useMemo(() => {
     if (!props.href) return;
@@ -25,13 +28,16 @@ function LinkInterceptorUnstyled(props: LinkHTMLAttributes<HTMLAnchorElement>) {
   }, [connectedInstance, props.href]);
 
   const onClick = useCallback(
-    async (e: MouseEvent) => {
+    async (e: React.MouseEvent<HTMLAnchorElement>) => {
+      _onClick?.(e);
+
       if (!props.href) return;
       if (e.metaKey || e.ctrlKey) return;
+      if (e.defaultPrevented) return;
 
-      redirectTo(props.href, e);
+      redirectToLemmyObjectIfNeeded(props.href, e);
     },
-    [props.href, redirectTo],
+    [props.href, redirectToLemmyObjectIfNeeded, _onClick],
   );
 
   // Sometimes markdown thinks things are URLs that aren't URLs
