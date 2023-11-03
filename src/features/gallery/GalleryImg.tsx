@@ -1,8 +1,10 @@
-import React, { FocusEvent, KeyboardEvent, useContext, useRef } from "react";
+import { FocusEvent, KeyboardEvent, useContext, useRef } from "react";
 import "photoswipe/dist/photoswipe.css";
 import { PostView } from "lemmy-js-client";
 import { GalleryContext } from "./GalleryProvider";
 import { PreparedPhotoSwipeOptions } from "photoswipe";
+import mime from "mime";
+import Video from "../shared/Video";
 
 export interface GalleryImgProps {
   src?: string;
@@ -33,7 +35,11 @@ export function GalleryImg({
   const imgRef = useRef<HTMLImageElement>(null);
   const { open } = useContext(GalleryContext);
 
-  return (
+  const mt = mime.getType(`${src}`);
+
+  const isVideo = mt?.startsWith("video/");
+
+  const InnerComponent = !isVideo ? (
     <img
       ref={imgRef}
       draggable="false"
@@ -54,5 +60,9 @@ export function GalleryImg({
         loaded.current = true;
       }}
     />
+  ) : (
+    <Video src={`${src}`} />
   );
+
+  return InnerComponent;
 }
