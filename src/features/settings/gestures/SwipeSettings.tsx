@@ -39,7 +39,7 @@ import {
   arrowDownOutline,
   arrowUndoOutline,
   arrowUpOutline,
-  shareOutline,
+  shareSocialOutline,
   bookmarkOutline,
   chevronCollapseOutline,
   eyeOffOutline,
@@ -174,7 +174,7 @@ const swipeIcons = {
   [OSwipeActionAll.CollapseToTop]: chevronCollapseOutline,
   [OSwipeActionAll.Collapse]: chevronDownOutline,
   [OSwipeActionAll.MarkUnread]: mailUnreadOutline,
-  [OSwipeActionAll.Share]: shareOutline,
+  [OSwipeActionAll.Share]: shareSocialOutline,
 };
 
 interface SwipeListProps {
