@@ -102,7 +102,7 @@ ion-action-sheet .action-sheet-selected .action-sheet-button-inner::after {
   content: "";
   z-index: 1;
   position: absolute;
-  right: -6px;
+  right: 14px;
   top: 50%;
   transform: translateY(-50%);
 
@@ -116,11 +116,24 @@ ion-action-sheet .action-sheet-selected .action-sheet-button-inner::after {
 ion-action-sheet
   .action-sheet-selected.detail
   .action-sheet-button-inner::after {
-  right: 26px;
+  right: 40px;
 }
 
 ion-action-sheet ion-icon {
+  flex-shrink: 0;
   margin-inline-end: 16px !important;
+}
+
+.action-sheet-button:not(.action-sheet-cancel) {
+  padding-inline-end: 0 !important;
+}
+.action-sheet-button-inner {
+  mask-image: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 1) calc(100% - 16px),
+    transparent 100%
+  );
 }
 
 /* photoswipe */

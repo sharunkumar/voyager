@@ -8,6 +8,7 @@ import {
   SwipeActions,
   OSwipeActionInbox,
   OSwipeActionAll,
+  OLongSwipeTriggerPointType,
 } from "../../../services/db";
 import SettingSelector from "../shared/SettingSelector";
 import {
@@ -26,9 +27,10 @@ import {
   setAllSwipesToDefault,
   setDisableLeftSwipes,
   setDisableRightSwipes,
+  setLongSwipeTriggerPoint,
 } from "./gestureSlice";
 import { ActionCreatorWithPayload } from "@reduxjs/toolkit";
-import { Dictionary } from "lodash";
+import { Dictionary, startCase } from "lodash";
 import { useState } from "react";
 import { IonActionSheetCustomEvent, OverlayEventDetail } from "@ionic/core";
 import ShortSwipeSvg from "./swipeShort.svg?react";
@@ -37,11 +39,14 @@ import {
   arrowDownOutline,
   arrowUndoOutline,
   arrowUpOutline,
+  shareOutline,
   bookmarkOutline,
   chevronCollapseOutline,
   eyeOffOutline,
   mailUnreadOutline,
+  chevronDownOutline,
 } from "ionicons/icons";
+import { isNative } from "../../../helpers/device";
 
 export default function SwipeSettings() {
   const [open, setOpen] = useState(false);
@@ -51,19 +56,27 @@ export default function SwipeSettings() {
   const comment = useAppSelector((state) => state.gesture.swipe.comment);
   const inbox = useAppSelector((state) => state.gesture.swipe.inbox);
 
-  const disableLeftSwipes = useAppSelector(
-    (state) => state.gesture.swipe.disableLeftSwipes,
-  );
-  const disableRightSwipes = useAppSelector(
-    (state) => state.gesture.swipe.disableRightSwipes,
-  );
+  const { disableLeftSwipes, disableRightSwipes, longSwipeTriggerPoint } =
+    useAppSelector((state) => state.gesture.swipe);
+
+  function filterCapableOptions(
+    options: Dictionary<SwipeAction>,
+  ): typeof options {
+    const filteredOptions = { ...options };
+
+    // Web clients rely on navigator.share, which requires initiating
+    // share with a gesture. That doesn't work super well, so disable
+    if (!isNative()) delete filteredOptions["Share"];
+
+    return filteredOptions;
+  }
 
   return (
     <>
       <SwipeList
         name="Posts"
         selector={post}
-        options={OSwipeActionPost}
+        options={filterCapableOptions(OSwipeActionPost)}
         farStart={setPostSwipeActionFarStart}
         start={setPostSwipeActionStart}
         end={setPostSwipeActionEnd}
@@ -72,7 +85,7 @@ export default function SwipeSettings() {
       <SwipeList
         name="Comments"
         selector={comment}
-        options={OSwipeActionComment}
+        options={filterCapableOptions(OSwipeActionComment)}
         farStart={setCommentSwipeActionFarStart}
         start={setCommentSwipeActionStart}
         end={setCommentSwipeActionEnd}
@@ -81,7 +94,7 @@ export default function SwipeSettings() {
       <SwipeList
         name="Inbox"
         selector={inbox}
-        options={OSwipeActionInbox}
+        options={filterCapableOptions(OSwipeActionInbox)}
         farStart={setInboxSwipeActionFarStart}
         start={setInboxSwipeActionStart}
         end={setInboxSwipeActionEnd}
@@ -110,6 +123,13 @@ export default function SwipeSettings() {
               }
             />
           </InsetIonItem>
+          <SettingSelector
+            title="Long Swipe Trigger Point"
+            openTitle="When the long swipe action should trigger..."
+            selected={longSwipeTriggerPoint}
+            setSelected={setLongSwipeTriggerPoint}
+            options={OLongSwipeTriggerPointType}
+          />
           <InsetIonItem button onClick={() => setOpen(true)}>
             <IonLabel>Reset All Gestures</IonLabel>
             <IonActionSheet
@@ -151,8 +171,10 @@ const swipeIcons = {
   [OSwipeActionAll.Reply]: arrowUndoOutline,
   [OSwipeActionAll.Save]: bookmarkOutline,
   [OSwipeActionAll.Hide]: eyeOffOutline,
-  [OSwipeActionAll.Collapse]: chevronCollapseOutline,
+  [OSwipeActionAll.CollapseToTop]: chevronCollapseOutline,
+  [OSwipeActionAll.Collapse]: chevronDownOutline,
   [OSwipeActionAll.MarkUnread]: mailUnreadOutline,
+  [OSwipeActionAll.Share]: shareOutline,
 };
 
 interface SwipeListProps {
@@ -183,6 +205,10 @@ function SwipeList({
     (state) => state.gesture.swipe.disableRightSwipes,
   );
 
+  function getSelectedLabel(option: string): string {
+    return option === "collapse-to-top" ? "Collapse Top" : startCase(option);
+  }
+
   return (
     <>
       <ListHeader>
@@ -197,6 +223,7 @@ function SwipeList({
           options={options}
           optionIcons={swipeIcons}
           disabled={disableLeftSwipes}
+          getSelectedLabel={getSelectedLabel}
         />
         <Selector
           icon={LongSwipeSvg}
@@ -206,6 +233,7 @@ function SwipeList({
           options={options}
           optionIcons={swipeIcons}
           disabled={disableLeftSwipes}
+          getSelectedLabel={getSelectedLabel}
         />
         <Selector
           icon={ShortSwipeSvg}
@@ -216,6 +244,7 @@ function SwipeList({
           options={options}
           optionIcons={swipeIcons}
           disabled={disableRightSwipes}
+          getSelectedLabel={getSelectedLabel}
         />
         <Selector
           icon={LongSwipeSvg}
@@ -226,6 +255,7 @@ function SwipeList({
           options={options}
           optionIcons={swipeIcons}
           disabled={disableRightSwipes}
+          getSelectedLabel={getSelectedLabel}
         />
       </IonList>
     </>

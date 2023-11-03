@@ -71,6 +71,7 @@ import AppIconPage from "./pages/settings/AppIconPage";
 import { DefaultFeedType, ODefaultFeedType } from "./services/db";
 import { AppContext } from "./features/auth/AppContext";
 import SearchFeedResultsPage from "./pages/search/results/SearchFeedResultsPage";
+import { resetSavedStatusTap } from "./statusTap";
 
 const Interceptor = styled.div`
   position: absolute;
@@ -132,6 +133,10 @@ export default function TabbedRoutes() {
       );
     };
   }, [router]);
+
+  useEffect(() => {
+    resetSavedStatusTap();
+  }, [location]);
 
   const userHandle = useAppSelector(handleSelector);
   const profileLabelType = useAppSelector(
@@ -341,6 +346,11 @@ export default function TabbedRoutes() {
             <SpecialFeedPage type="Local" />
           </ActorRedirect>
         </Route>
+        <Route exact path="/posts/:actor/mod">
+          <ActorRedirect>
+            <SpecialFeedPage type="ModeratorView" />
+          </ActorRedirect>
+        </Route>
         <Route exact path="/posts/:actor">
           <ActorRedirect>
             <CommunitiesPage />
@@ -539,6 +549,8 @@ function getPathForFeed(defaultFeed: DefaultFeedType): string {
       return "/home";
     case ODefaultFeedType.Local:
       return "/local";
+    case ODefaultFeedType.Moderating:
+      return "/mod";
     case ODefaultFeedType.CommunityList:
       return "";
     case ODefaultFeedType.Community:

@@ -149,7 +149,8 @@ export type DefaultFeedType =
         | typeof ODefaultFeedType.All
         | typeof ODefaultFeedType.Home
         | typeof ODefaultFeedType.Local
-        | typeof ODefaultFeedType.CommunityList;
+        | typeof ODefaultFeedType.CommunityList
+        | typeof ODefaultFeedType.Moderating;
     }
   | {
       type: typeof ODefaultFeedType.Community;
@@ -165,6 +166,7 @@ export const ODefaultFeedType = {
   Home: "home",
   All: "all",
   Local: "local",
+  Moderating: "moderating",
   CommunityList: "community-list",
   Community: "community",
 } as const;
@@ -195,12 +197,21 @@ export const OTapToCollapseType = {
 export type ProfileLabelType =
   (typeof OProfileLabelType)[keyof typeof OProfileLabelType];
 
+export const OLongSwipeTriggerPointType = {
+  Normal: "normal",
+  Later: "later",
+} as const;
+
+export type LongSwipeTriggerPointType =
+  (typeof OLongSwipeTriggerPointType)[keyof typeof OLongSwipeTriggerPointType];
+
 const OSwipeActionBase = {
   None: "none",
   Upvote: "upvote",
   Downvote: "downvote",
   Reply: "reply",
   Save: "save",
+  Share: "share",
 } as const;
 
 export const OSwipeActionPost = {
@@ -210,12 +221,13 @@ export const OSwipeActionPost = {
 
 export const OSwipeActionComment = {
   ...OSwipeActionBase,
+  CollapseToTop: "collapse-to-top",
   Collapse: "collapse",
 } as const;
 
 export const OSwipeActionInbox = {
   ...OSwipeActionBase,
-  MarkUnread: "mark_unread",
+  MarkUnread: "mark-unread",
 } as const;
 
 export const OSwipeActionAll = {
@@ -245,6 +257,8 @@ export type SettingValueTypes = {
   disable_marking_posts_read: boolean;
   mark_read_on_scroll: boolean;
   show_hide_read_button: boolean;
+  auto_hide_read: boolean;
+  disable_auto_hide_in_communities: boolean;
   gesture_swipe_post: SwipeActions;
   gesture_swipe_comment: SwipeActions;
   gesture_swipe_inbox: SwipeActions;
@@ -260,6 +274,9 @@ export type SettingValueTypes = {
   default_feed: DefaultFeedType;
   touch_friendly_links: boolean;
   show_comment_images: boolean;
+  long_swipe_trigger_point: LongSwipeTriggerPointType;
+  has_presented_block_nsfw_tip: boolean;
+  no_subscribed_in_feed: boolean;
 };
 
 export interface ISettingItem<T extends keyof SettingValueTypes> {
@@ -339,6 +356,38 @@ export class WefwefDB extends Dexie {
         &domain,
         updated
       `,
+    });
+
+    this.version(5).upgrade(async () => {
+      // Upgrade comment gesture "collapse" => "collapse-to-top"
+      await (async () => {
+        const gestures = await this.getSetting("gesture_swipe_comment");
+
+        if (!gestures) return;
+
+        Object.entries(gestures).map(([direction, gesture]) => {
+          if (!gestures) return;
+          if (gesture === "collapse")
+            gestures[direction as keyof typeof gestures] = "collapse-to-top";
+        });
+
+        await this.setSetting("gesture_swipe_comment", gestures);
+      })();
+
+      // Upgrade inbox gesture "mark_unread" => "mark-unread"
+      await (async () => {
+        const gestures = await this.getSetting("gesture_swipe_inbox");
+
+        if (!gestures) return;
+
+        Object.entries(gestures).map(([direction, gesture]) => {
+          if (!gestures) return;
+          if ((gesture as string) === "mark_unread")
+            gestures[direction as keyof typeof gestures] = "mark-unread";
+        });
+
+        await this.setSetting("gesture_swipe_inbox", gestures);
+      })();
     });
   }
 
