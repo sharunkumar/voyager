@@ -12,8 +12,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only -a $FLY_APP -r $FLY_REGION
+      - name: 🚀 Fly Deploy
+        run: flyctl deploy --remote-only -a $FLY_APP -r $FLY_REGION
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
           FLY_APP: ${{ secrets.FLY_APP }}
           FLY_REGION: ${{ secrets.FLY_REGION }}
+      - name: 🔃 Sync Tags
+        run: |
+          git remote add upstream https://github.com/aeharding/voyager.git
+          git fetch upstream
+          git push --tags
