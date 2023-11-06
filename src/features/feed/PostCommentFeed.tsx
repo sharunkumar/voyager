@@ -128,7 +128,9 @@ export default function PostCommentFeed({
 
   const fetchFn: FetchFn<PostCommentItem> = useCallback(
     async (page) => {
-      const items = await _fetchFn(page);
+      const result = await _fetchFn(page);
+
+      const items = Array.isArray(result) ? result : result.data;
 
       /* receivedPosts needs to be awaited so that we fetch post metadatas
          from the db before showing them to prevent flickering
@@ -136,7 +138,7 @@ export default function PostCommentFeed({
       await dispatch(receivedPosts(items.filter(isPost)));
       dispatch(receivedComments(items.filter(isComment)));
 
-      return items;
+      return result;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [_fetchFn, dispatch],
@@ -193,7 +195,7 @@ export default function PostCommentFeed({
   );
 
   function onRemovedFromTopOfViewport(items: PostCommentItem[]) {
-    items.forEach(onRead);
+    items.forEach(onAutoRead);
   }
 
   const shouldAutoHide = (() => {
@@ -204,8 +206,11 @@ export default function PostCommentFeed({
     return true; // setPostRead doesn't auto-hide if feature is turned completely off
   })();
 
-  function onRead(item: PostCommentItem) {
+  function onAutoRead(item: PostCommentItem) {
     if (!isPost(item)) return;
+
+    // Pinned posts should not be automatically hidden
+    if (item.post.featured_community || item.post.featured_local) return;
 
     dispatch(setPostRead(item.post.id, !shouldAutoHide));
   }
