@@ -1,5 +1,6 @@
 import {
   IonBackButton,
+  IonButton,
   IonButtons,
   IonHeader,
   IonInput,
@@ -16,6 +17,11 @@ import { InsetIonItem } from "../profile/ProfileFeedItemsPage";
 import { isValidUrl } from "../../helpers/url";
 import useAppToast from "../../helpers/useAppToast";
 import { useSetActivePage } from "../../features/auth/AppContext";
+import { useAppDispatch, useAppSelector } from "../../store";
+import {
+  addMigrationLink,
+  resetMigrationLinks,
+} from "../../features/community/migrationSlice";
 
 export default function RedditMigratePage() {
   const pageRef = useRef<HTMLElement>(null);
@@ -23,6 +29,10 @@ export default function RedditMigratePage() {
   const presentToast = useAppToast();
   const [subs, setSubs] = useState<string[] | undefined>();
   const [link, setLink] = useState("");
+
+  const links = useAppSelector((state) => state.migration.links);
+
+  const dispatch = useAppDispatch();
 
   useSetActivePage(pageRef);
 
@@ -42,8 +52,9 @@ export default function RedditMigratePage() {
       return;
     }
 
+    dispatch(addMigrationLink(link));
     setSubs(subs);
-  }, [link, presentToast]);
+  }, [link, presentToast, dispatch]);
 
   function renderUpload() {
     return (
@@ -87,6 +98,33 @@ export default function RedditMigratePage() {
             </InsetIonItem>
           </label>
         </IonList>
+        <IonList inset>
+          {links.length > 0 ? (
+            <IonItem>
+              <IonLabel>Previous Links</IonLabel>
+              <IonButton
+                fill="clear"
+                onClick={(e) => {
+                  e.preventDefault();
+                  dispatch(resetMigrationLinks());
+                }}
+              >
+                Clear
+              </IonButton>
+            </IonItem>
+          ) : undefined}
+          {links.map((link, idx) => (
+            <InsetIonItem
+              key={idx}
+              onClick={(e) => {
+                e.preventDefault();
+                setLink(link);
+              }}
+            >
+              <IonLabel>{link}</IonLabel>
+            </InsetIonItem>
+          ))}
+        </IonList>
       </>
     );
   }
@@ -108,7 +146,19 @@ export default function RedditMigratePage() {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/settings" text="Settings" />
+            {subs ? (
+              <IonButton
+                onClick={(e) => {
+                  e.preventDefault();
+                  setLink("");
+                  setSubs(undefined);
+                }}
+              >
+                Back
+              </IonButton>
+            ) : (
+              <IonBackButton defaultHref="/settings" text="Settings" />
+            )}
           </IonButtons>
 
           <IonTitle>Migrate</IonTitle>
