@@ -1,3 +1,8 @@
+import { ActionButton } from "../../actions/ActionButton";
+import { IonIcon } from "@ionic/react";
+import { share } from "../../../../helpers/lemmy";
+import { SaveButton } from "../../shared/SaveButton";
+import { shareSocialOutline } from "ionicons/icons";
 import styled from "@emotion/styled";
 import { css } from "@emotion/react";
 import { megaphone } from "ionicons/icons";
@@ -196,8 +201,18 @@ export default function LargePost({ post, communityMode }: PostProps) {
           <RightDetails>
             <MoreActions post={post} onFeed />
             <MoreModActions post={post} onFeed />
-            <VoteButton type="up" postId={post.post.id} />
-            <VoteButton type="down" postId={post.post.id} />
+            {/* <VoteButton type="up" postId={post.post.id} /> */}
+            {/* <VoteButton type="down" postId={post.post.id} /> */}
+            <ActionButton>
+              <IonIcon
+                icon={shareSocialOutline}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  share(post.post);
+                }}
+              />
+            </ActionButton>
+            <SaveButton postId={post.post.id} />
           </RightDetails>
         </Details>
 
