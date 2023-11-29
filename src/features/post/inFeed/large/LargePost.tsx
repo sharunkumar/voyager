@@ -27,6 +27,7 @@ import ModeratableItem, {
   ModeratableItemBannerOutlet,
 } from "../../../moderation/ModeratableItem";
 import MoreModActions from "../../shared/MoreModAction";
+import ModqueueItemActions from "../../../moderation/ModqueueItemActions";
 
 const Container = styled.div`
   display: flex;
@@ -111,7 +112,11 @@ const ImageContainer = styled.div`
   margin: 0 -12px;
 `;
 
-export default function LargePost({ post, communityMode }: PostProps) {
+export default function LargePost({
+  post,
+  communityMode,
+  modqueue,
+}: PostProps) {
   const hasBeenRead: boolean =
     useAppSelector((state) => state.post.postReadById[post.post.id]) ||
     post.read;
@@ -199,20 +204,15 @@ export default function LargePost({ post, communityMode }: PostProps) {
             <PreviewStats post={post} />
           </LeftDetails>
           <RightDetails>
+            {modqueue && <ModqueueItemActions item={post} />}
             <MoreActions post={post} onFeed />
-            <MoreModActions post={post} onFeed />
-            {/* <VoteButton type="up" postId={post.post.id} /> */}
-            {/* <VoteButton type="down" postId={post.post.id} /> */}
-            <ActionButton>
-              <IonIcon
-                icon={shareSocialOutline}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  share(post.post);
-                }}
-              />
-            </ActionButton>
-            <SaveButton postId={post.post.id} />
+            {!modqueue && (
+              <>
+                <MoreModActions post={post} onFeed />
+                <VoteButton type="up" postId={post.post.id} />
+                <VoteButton type="down" postId={post.post.id} />
+              </>
+            )}
           </RightDetails>
         </Details>
 
