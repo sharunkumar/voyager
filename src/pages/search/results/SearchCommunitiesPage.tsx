@@ -7,6 +7,7 @@ import {
   IonTitle,
   IonToolbar,
 } from "@ionic/react";
+import { SortType } from "lemmy-js-client";
 import { useBuildGeneralBrowseLink } from "../../../helpers/routes";
 import { useCallback } from "react";
 import { FetchFn, isFirstPage } from "../../../features/feed/Feed";
@@ -24,7 +25,7 @@ export default function SearchCommunitiesPage() {
   const { search: _encodedSearch } = useParams<{ search: string }>();
   const buildGeneralBrowseLink = useBuildGeneralBrowseLink();
   const client = useClient();
-  const sort = useAppSelector((state) => state.post.sort);
+  const sort: SortType = "TopAll";
 
   const search = decodeURIComponent(_encodedSearch);
 
