@@ -209,8 +209,18 @@ export default function LargePost({
             {!modqueue && (
               <>
                 <MoreModActions post={post} onFeed />
-                <VoteButton type="up" postId={post.post.id} />
-                <VoteButton type="down" postId={post.post.id} />
+                {/* <VoteButton type="up" postId={post.post.id} /> */}
+                {/* <VoteButton type="down" postId={post.post.id} /> */}
+                <ActionButton>
+                  <IonIcon
+                    icon={shareSocialOutline}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      share(post.post);
+                    }}
+                  />
+                </ActionButton>
+                <SaveButton postId={post.post.id} />
               </>
             )}
           </RightDetails>
