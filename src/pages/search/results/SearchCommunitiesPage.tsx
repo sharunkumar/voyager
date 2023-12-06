@@ -27,6 +27,8 @@ export default function SearchCommunitiesPage() {
   const client = useClient();
   const [sort, setSort] = usePostSort();
 
+  setSort("TopAll");
+
   const search = decodeURIComponent(_encodedSearch);
 
   const fetchFn: FetchFn<CommunityView> = useCallback(
@@ -63,7 +65,7 @@ export default function SearchCommunitiesPage() {
           <IonTitle>“{search}”</IonTitle>
 
           <IonButtons slot="end">
-            <PostSort sort={sort} setSort={setSort} />
+            {/* <PostSort sort={sort} setSort={setSort} /> */}
           </IonButtons>
         </IonToolbar>
       </IonHeader>
