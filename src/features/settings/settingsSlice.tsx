@@ -169,7 +169,7 @@ const initialState: SettingsState = {
       showCommentImages: true,
     },
     posts: {
-      sort: "Active",
+      sort: "TopDay",
       disableMarkingRead: false,
       markReadOnScroll: true,
       showHideReadButton: true,
