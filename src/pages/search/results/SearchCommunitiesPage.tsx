@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   IonBackButton,
   IonButtons,
@@ -27,7 +28,7 @@ export default function SearchCommunitiesPage() {
   const client = useClient();
   const [sort, setSort] = usePostSort();
 
-  setSort("TopAll");
+  useEffect(() => setSort("TopAll"));
 
   const search = decodeURIComponent(_encodedSearch);
 
