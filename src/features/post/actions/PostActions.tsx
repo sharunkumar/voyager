@@ -36,7 +36,6 @@ export default function PostActions({ post, onReply }: PostActionsProps) {
     <Container>
       <VoteButton type="up" postId={post.post.id} />
       <VoteButton type="down" postId={post.post.id} />
-      <SaveButton postId={post.post.id} />
       <ActionButton>
         <Link href={post.post.ap_id} target="_blank" rel="noopener noreferrer">
           <IonIcon icon={linkOutline} />
@@ -48,6 +47,7 @@ export default function PostActions({ post, onReply }: PostActionsProps) {
       <ActionButton>
         <IonIcon icon={shareSocialOutline} onClick={() => share(post.post)} />
       </ActionButton>
+      <SaveButton postId={post.post.id} />
     </Container>
   );
 }
