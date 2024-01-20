@@ -41,6 +41,8 @@ import imageSlice from "./features/post/inFeed/large/imageSlice";
 import feedSortSlice from "./features/feed/sort/feedSortSlice";
 import siteSlice from "./features/auth/siteSlice";
 import { handleSelector } from "./features/auth/authSelectors";
+import pickJoinServerSlice from "./features/auth/login/pickJoinServer/pickJoinServerSlice";
+import joinSlice from "./features/auth/login/join/joinSlice";
 
 const store = configureStore({
   reducer: {
@@ -60,6 +62,8 @@ const store = configureStore({
     mod: modSlice,
     image: imageSlice,
     feedSort: feedSortSlice,
+    pickJoinServer: pickJoinServerSlice,
+    join: joinSlice,
     migration: migrationSlice,
   },
 });
@@ -78,6 +82,9 @@ export default store;
 let lastActiveHandle: string | undefined = undefined;
 const activeHandleChange = () => {
   const state = store.getState();
+
+  store.dispatch(getMigrationLinks());
+
   const activeHandle = handleSelector(state);
 
   if (activeHandle === lastActiveHandle) return;
@@ -85,7 +92,6 @@ const activeHandleChange = () => {
   lastActiveHandle = activeHandle;
 
   store.dispatch(getFavoriteCommunities());
-  store.dispatch(getMigrationLinks());
   store.dispatch(getBlurNsfw());
   store.dispatch(getFilteredKeywords());
   store.dispatch(getDefaultFeed());
