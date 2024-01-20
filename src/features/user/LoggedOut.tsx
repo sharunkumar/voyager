@@ -8,7 +8,6 @@ import { useState } from "react";
 import { updateConnectedInstance } from "../auth/authSlice";
 import { swapHorizontalOutline } from "ionicons/icons";
 import { getCustomServers } from "../../services/app";
-import { without } from "lodash";
 
 const Incognito = styled(IncognitoSvg)`
   opacity: 0.1;
@@ -21,15 +20,10 @@ const Incognito = styled(IncognitoSvg)`
 
 export default function LoggedOut() {
   const dispatch = useAppDispatch();
-  const { connectedInstance } = useAppSelector((state) => state.auth);
+  const connectedInstance = useAppSelector(
+    (state) => state.auth.connectedInstance,
+  );
   const [pickerOpen, setPickerOpen] = useState(false);
-
-  // push the currently connected instance to
-  // the top of the list in the picker
-  const customServers = [
-    connectedInstance,
-    ...without(getCustomServers(), connectedInstance),
-  ];
 
   return (
     <>
@@ -65,7 +59,7 @@ export default function LoggedOut() {
         columns={[
           {
             name: "server",
-            options: customServers.map((server) => ({
+            options: getCustomServers().map((server) => ({
               text: server,
               value: server,
             })),
