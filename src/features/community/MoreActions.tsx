@@ -9,7 +9,7 @@ import {
   removeCircleOutline,
   tabletPortraitOutline,
   eyeOffOutline,
-  shareOutline,
+  shareSocialOutline,
 } from "ionicons/icons";
 import { useState } from "react";
 import useHidePosts from "../feed/useHidePosts";
@@ -117,7 +117,7 @@ function MoreActionsActionSheet({
         },
         {
           text: "Share",
-          icon: shareOutline,
+          icon: shareSocialOutline,
           handler: () => {
             share();
           },

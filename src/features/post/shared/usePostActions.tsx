@@ -13,7 +13,7 @@ import {
   peopleOutline,
   personOutline,
   repeatOutline,
-  shareOutline,
+  shareSocialOutline,
   textOutline,
   trashOutline,
 } from "ionicons/icons";
@@ -242,7 +242,7 @@ export default function usePostActions(post: PostView) {
         {
           text: "Share",
           data: "share",
-          icon: shareOutline,
+          icon: shareSocialOutline,
           handler: () => {
             share(post.post);
           },

@@ -9,7 +9,7 @@ import {
   flagOutline,
   pencilOutline,
   personOutline,
-  shareOutline,
+  shareSocialOutline,
   textOutline,
   trashOutline,
 } from "ionicons/icons";
@@ -250,7 +250,7 @@ export default function useCommentActions({
         },
         {
           text: "Share",
-          icon: shareOutline,
+          icon: shareSocialOutline,
           handler: () => {
             share(comment);
           },
