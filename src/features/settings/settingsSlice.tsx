@@ -162,7 +162,7 @@ export const initialState: SettingsState = {
       showCommunityIcons: true,
     },
     large: {
-      showVotingButtons: true,
+      showVotingButtons: false,
     },
     compact: {
       thumbnailsPosition: OCompactThumbnailPositionType.Left,
