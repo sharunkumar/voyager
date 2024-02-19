@@ -23,6 +23,7 @@ import { useInModqueue } from "../../../../routes/pages/shared/ModqueuePage";
 import { useContext } from "react";
 import { PageTypeContext } from "../../../feed/PageTypeContext";
 import { styled } from "@linaria/react";
+import { SaveButton } from "../../shared/SaveButton";
 
 const Container = styled.div`
   display: flex;
@@ -132,19 +133,22 @@ export default function LargePost({ post }: PostProps) {
 
             <PreviewStats post={post} />
           </LeftDetails>
-          {(showVotingButtons || inModqueue) && (
-            <RightDetails>
-              {inModqueue && <ModqueueItemActions item={post} />}
-              <MoreActions post={post} />
-              {!inModqueue && (
-                <>
-                  <MoreModActions post={post} />
-                  <VoteButton type="up" postId={post.post.id} />
-                  <VoteButton type="down" postId={post.post.id} />
-                </>
-              )}
-            </RightDetails>
-          )}
+          <RightDetails>
+            {(showVotingButtons || inModqueue) && (
+              <>
+                {inModqueue && <ModqueueItemActions item={post} />}
+                <MoreActions post={post} />
+                {!inModqueue && (
+                  <>
+                    <MoreModActions post={post} />
+                    <VoteButton type="up" postId={post.post.id} />
+                    <VoteButton type="down" postId={post.post.id} />
+                  </>
+                )}
+              </>
+            )}
+            <SaveButton postId={post.post.id} />
+          </RightDetails>
         </Details>
 
         <Save type="post" id={post.post.id} />
