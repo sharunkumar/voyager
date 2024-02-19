@@ -23,6 +23,11 @@ import { useInModqueue } from "../../../../routes/pages/shared/ModqueuePage";
 import { useContext } from "react";
 import { PageTypeContext } from "../../../feed/PageTypeContext";
 import { styled } from "@linaria/react";
+
+import { ActionButton } from "../../actions/ActionButton";
+import { IonIcon } from "@ionic/react";
+import { share } from "../../../../helpers/lemmy";
+import { shareSocialOutline } from "ionicons/icons";
 import { SaveButton } from "../../shared/SaveButton";
 
 const Container = styled.div`
@@ -147,6 +152,12 @@ export default function LargePost({ post }: PostProps) {
                 )}
               </>
             )}
+            <ActionButton>
+              <IonIcon
+                icon={shareSocialOutline}
+                onClick={() => share(post.post)}
+              />
+            </ActionButton>
             <SaveButton postId={post.post.id} />
           </RightDetails>
         </Details>
