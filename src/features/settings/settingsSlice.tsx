@@ -43,6 +43,7 @@ import { get, set } from "./storage";
 import { Mode } from "@ionic/core";
 import { SortType } from "lemmy-js-client";
 import { loggedInSelector } from "../auth/authSelectors";
+import Dexie from "dexie";
 
 export {
   type CommentThreadCollapse,
@@ -55,6 +56,7 @@ export {
 
 interface SettingsState {
   ready: boolean;
+  databaseError: Error | undefined;
   appearance: {
     font: {
       fontSizeMultiplier: number;
@@ -68,6 +70,10 @@ interface SettingsState {
       blurNsfw: PostBlurNsfwType;
       type: PostAppearanceType;
       embedCrossposts: boolean;
+      showCommunityIcons: boolean;
+    };
+    large: {
+      showVotingButtons: boolean;
     };
     compact: {
       thumbnailsPosition: CompactThumbnailPositionType;
@@ -110,6 +116,9 @@ interface SettingsState {
       rememberCommunitySort: boolean;
       autoplayMedia: AutoplayMediaType;
     };
+    safari: {
+      alwaysUseReaderMode: boolean;
+    };
     enableHapticFeedback: boolean;
     linkHandler: LinkHandlerType;
     defaultFeed: DefaultFeedType | undefined;
@@ -136,6 +145,7 @@ export const LOCALSTORAGE_KEYS = {
 
 export const initialState: SettingsState = {
   ready: false,
+  databaseError: undefined,
   appearance: {
     font: {
       fontSizeMultiplier: 0.8,
@@ -149,6 +159,10 @@ export const initialState: SettingsState = {
       blurNsfw: OPostBlurNsfw.InFeed,
       type: OPostAppearanceType.Large,
       embedCrossposts: true,
+      showCommunityIcons: true,
+    },
+    large: {
+      showVotingButtons: true,
     },
     compact: {
       thumbnailsPosition: OCompactThumbnailPositionType.Left,
@@ -191,6 +205,9 @@ export const initialState: SettingsState = {
       rememberCommunitySort: false,
       autoplayMedia: OAutoplayMediaType.Always,
     },
+    safari: {
+      alwaysUseReaderMode: false,
+    },
     enableHapticFeedback: false,
     linkHandler: OLinkHandlerType.InApp,
     defaultFeed: undefined,
@@ -226,11 +243,22 @@ export const defaultCommentDepthSelector = createSelector(
   ],
   (collapseCommentThreads): number => {
     switch (collapseCommentThreads) {
-      case OCommentThreadCollapse.Always:
+      case OCommentThreadCollapse.RootOnly:
+      case OCommentThreadCollapse.All:
         return 1;
       case OCommentThreadCollapse.Never:
         return MAX_DEFAULT_COMMENT_DEPTH;
     }
+  },
+);
+
+export const defaultThreadCollapse = createSelector(
+  [
+    (state: RootState) =>
+      state.settings.general.comments.collapseCommentThreads,
+  ],
+  (collapseCommentThreads): string => {
+    return collapseCommentThreads;
   },
 );
 
@@ -244,6 +272,9 @@ export const appearanceSlice = createSlice({
     );
   },
   reducers: {
+    setDatabaseError(state, action: PayloadAction<Error>) {
+      state.databaseError = action.payload;
+    },
     setFontSizeMultiplier(state, action: PayloadAction<number>) {
       state.appearance.font.fontSizeMultiplier = action.payload;
       set(LOCALSTORAGE_KEYS.FONT.FONT_SIZE_MULTIPLIER, action.payload);
@@ -306,6 +337,10 @@ export const appearanceSlice = createSlice({
       state.appearance.posts.embedCrossposts = action.payload;
       db.setSetting("embed_crossposts", action.payload);
     },
+    setShowCommunityIcons(state, action: PayloadAction<boolean>) {
+      state.appearance.posts.showCommunityIcons = action.payload;
+      db.setSetting("show_community_icons", action.payload);
+    },
     setFilteredKeywords(state, action: PayloadAction<string[]>) {
       state.blocks.keywords = action.payload;
       // Per user setting is updated in StoreProvider
@@ -318,7 +353,15 @@ export const appearanceSlice = createSlice({
       state.general.noSubscribedInFeed = action.payload;
       db.setSetting("no_subscribed_in_feed", action.payload);
     },
-    setShowVotingButtons(state, action: PayloadAction<boolean>) {
+    setAlwaysUseReaderMode(state, action: PayloadAction<boolean>) {
+      state.general.safari.alwaysUseReaderMode = action.payload;
+      db.setSetting("always_use_reader_mode", action.payload);
+    },
+    setLargeShowVotingButtons(state, action: PayloadAction<boolean>) {
+      state.appearance.large.showVotingButtons = action.payload;
+      db.setSetting("large_show_voting_buttons", action.payload);
+    },
+    setCompactShowVotingButtons(state, action: PayloadAction<boolean>) {
       state.appearance.compact.showVotingButtons = action.payload;
       db.setSetting("compact_show_voting_buttons", action.payload);
     },
@@ -549,6 +592,10 @@ export const fetchSettingsFromDatabase = createAsyncThunk<SettingsState>(
       const post_appearance_type = await db.getSetting("post_appearance_type");
       const blur_nsfw = await db.getSetting("blur_nsfw");
       const embed_crossposts = await db.getSetting("embed_crossposts");
+      const show_community_icons = await db.getSetting("show_community_icons");
+      const large_show_voting_buttons = await db.getSetting(
+        "large_show_voting_buttons",
+      );
       const compact_thumbnail_position_type = await db.getSetting(
         "compact_thumbnail_position_type",
       );
@@ -593,6 +640,9 @@ export const fetchSettingsFromDatabase = createAsyncThunk<SettingsState>(
       const no_subscribed_in_feed = await db.getSetting(
         "no_subscribed_in_feed",
       );
+      const always_use_reader_mode = await db.getSetting(
+        "always_use_reader_mode",
+      );
       const default_post_sort = await db.getSetting("default_post_sort");
 
       return {
@@ -612,6 +662,14 @@ export const fetchSettingsFromDatabase = createAsyncThunk<SettingsState>(
             blurNsfw: blur_nsfw ?? initialState.appearance.posts.blurNsfw,
             embedCrossposts:
               embed_crossposts ?? initialState.appearance.posts.embedCrossposts,
+            showCommunityIcons:
+              show_community_icons ??
+              initialState.appearance.posts.showCommunityIcons,
+          },
+          large: {
+            showVotingButtons:
+              large_show_voting_buttons ??
+              initialState.appearance.large.showVotingButtons,
           },
           compact: {
             thumbnailsPosition:
@@ -686,6 +744,11 @@ export const fetchSettingsFromDatabase = createAsyncThunk<SettingsState>(
             autoplayMedia:
               autoplay_media ?? initialState.general.posts.autoplayMedia,
           },
+          safari: {
+            alwaysUseReaderMode:
+              always_use_reader_mode ??
+              initialState.general.safari.alwaysUseReaderMode,
+          },
           linkHandler: link_handler ?? initialState.general.linkHandler,
           enableHapticFeedback:
             enable_haptic_feedback ?? initialState.general.enableHapticFeedback,
@@ -702,6 +765,10 @@ export const fetchSettingsFromDatabase = createAsyncThunk<SettingsState>(
     try {
       return await result;
     } catch (error) {
+      if (error instanceof Dexie.MissingAPIError) {
+        thunkApi.dispatch(setDatabaseError(error));
+      }
+
       // In the event of a database error, attempt to render the UI anyways
       thunkApi.dispatch(settingsReady());
 
@@ -711,6 +778,7 @@ export const fetchSettingsFromDatabase = createAsyncThunk<SettingsState>(
 );
 
 export const {
+  setDatabaseError,
   setFontSizeMultiplier,
   setUseSystemFontSize,
   setUserInstanceUrlDisplay,
@@ -724,10 +792,12 @@ export const {
   setShowCommentImages,
   setNsfwBlur,
   setEmbedCrossposts,
+  setShowCommunityIcons,
   setFilteredKeywords,
   setPostAppearance,
   setThumbnailPosition,
-  setShowVotingButtons,
+  setLargeShowVotingButtons,
+  setCompactShowVotingButtons,
   setCompactThumbnailSize,
   setCompactShowSelfPostThumbnails,
   setVoteDisplayMode,
@@ -753,6 +823,7 @@ export const {
   setPureBlack,
   setDefaultFeed,
   setNoSubscribedInFeed,
+  setAlwaysUseReaderMode,
 } = appearanceSlice.actions;
 
 export default appearanceSlice.reducer;
