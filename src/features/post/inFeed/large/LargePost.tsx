@@ -155,7 +155,10 @@ export default function LargePost({ post }: PostProps) {
             <ActionButton>
               <IonIcon
                 icon={shareSocialOutline}
-                onClick={() => share(post.post)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  share(post.post);
+                }}
               />
             </ActionButton>
             <SaveButton postId={post.post.id} />
