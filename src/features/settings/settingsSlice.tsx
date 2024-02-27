@@ -88,6 +88,7 @@ interface SettingsState {
       usingSystemDarkMode: boolean;
       userDarkMode: boolean;
       pureBlack: boolean;
+      quickSwitch: boolean;
     };
     deviceMode: Mode;
     theme: AppThemeType;
@@ -102,6 +103,7 @@ interface SettingsState {
       highlightNewAccount: boolean;
       touchFriendlyLinks: boolean;
       showCommentImages: boolean;
+      showCollapsed: boolean;
     };
     posts: {
       sort: SortType;
@@ -177,6 +179,7 @@ export const initialState: SettingsState = {
       usingSystemDarkMode: true,
       userDarkMode: false,
       pureBlack: true,
+      quickSwitch: true,
     },
     deviceMode: "ios",
     theme: "tangerine",
@@ -191,6 +194,7 @@ export const initialState: SettingsState = {
       highlightNewAccount: true,
       touchFriendlyLinks: false,
       showCommentImages: true,
+      showCollapsed: false,
     },
     posts: {
       sort: "TopDay",
@@ -325,6 +329,10 @@ export const appearanceSlice = createSlice({
       state.general.comments.showCommentImages = action.payload;
       db.setSetting("show_comment_images", action.payload);
     },
+    setShowCollapsedComment(state, action: PayloadAction<boolean>) {
+      state.general.comments.showCollapsed = action.payload;
+      db.setSetting("show_collapsed_comment", action.payload);
+    },
     setPostAppearance(state, action: PayloadAction<PostAppearanceType>) {
       state.appearance.posts.type = action.payload;
       db.setSetting("post_appearance_type", action.payload);
@@ -394,6 +402,10 @@ export const appearanceSlice = createSlice({
     setPureBlack(state, action: PayloadAction<boolean>) {
       state.appearance.dark.pureBlack = action.payload;
       set(LOCALSTORAGE_KEYS.DARK.PURE_BLACK, action.payload);
+    },
+    setQuickSwitchDarkMode(state, action: PayloadAction<boolean>) {
+      state.appearance.dark.quickSwitch = action.payload;
+      db.setSetting("quick_switch_dark_mode", action.payload);
     },
     setUseSystemDarkMode(state, action: PayloadAction<boolean>) {
       state.appearance.dark.usingSystemDarkMode = action.payload;
@@ -637,6 +649,9 @@ export const fetchSettingsFromDatabase = createAsyncThunk<SettingsState>(
       const filtered_keywords = await db.getSetting("filtered_keywords");
       const touch_friendly_links = await db.getSetting("touch_friendly_links");
       const show_comment_images = await db.getSetting("show_comment_images");
+      const show_collapsed_comment = await db.getSetting(
+        "show_collapsed_comment",
+      );
       const no_subscribed_in_feed = await db.getSetting(
         "no_subscribed_in_feed",
       );
@@ -644,6 +659,9 @@ export const fetchSettingsFromDatabase = createAsyncThunk<SettingsState>(
         "always_use_reader_mode",
       );
       const default_post_sort = await db.getSetting("default_post_sort");
+      const quick_switch_dark_mode = await db.getSetting(
+        "quick_switch_dark_mode",
+      );
 
       return {
         ...state.settings,
@@ -656,6 +674,12 @@ export const fetchSettingsFromDatabase = createAsyncThunk<SettingsState>(
               initialState.appearance.general.userInstanceUrlDisplay,
             profileLabel:
               profile_label ?? initialState.appearance.general.profileLabel,
+          },
+          dark: {
+            ...state.settings.appearance.dark,
+            quickSwitch:
+              quick_switch_dark_mode ??
+              initialState.appearance.dark.quickSwitch,
           },
           posts: {
             type: post_appearance_type ?? initialState.appearance.posts.type,
@@ -713,6 +737,9 @@ export const fetchSettingsFromDatabase = createAsyncThunk<SettingsState>(
             showCommentImages:
               show_comment_images ??
               initialState.general.comments.showCommentImages,
+            showCollapsed:
+              show_collapsed_comment ??
+              initialState.general.comments.showCollapsed,
           },
           posts: {
             disableMarkingRead:
@@ -824,6 +851,8 @@ export const {
   setDefaultFeed,
   setNoSubscribedInFeed,
   setAlwaysUseReaderMode,
+  setShowCollapsedComment,
+  setQuickSwitchDarkMode,
 } = appearanceSlice.actions;
 
 export default appearanceSlice.reducer;

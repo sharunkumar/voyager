@@ -305,6 +305,8 @@ export type SettingValueTypes = {
   embed_crossposts: boolean;
   show_community_icons: boolean;
   autoplay_media: AutoplayMediaType;
+  show_collapsed_comment: boolean;
+  quick_switch_dark_mode: boolean;
 };
 
 export interface ISettingItem<T extends keyof SettingValueTypes> {

@@ -37,17 +37,18 @@ import {
 } from "../../../helpers/toastMessages";
 import {
   saveComment,
-  updateCommentCollapseState,
+  toggleCommentCollapseState,
   voteOnComment,
 } from "../../comment/commentSlice";
 import { PageContext } from "../../auth/PageContext";
 import { SwipeAction, SwipeActions } from "../../../services/db";
-import useCollapseRootComment from "../../comment/useCollapseRootComment";
+import useCollapseRootComment from "../../comment/inTree/useCollapseRootComment";
 import { getInboxItemId, markRead } from "../../inbox/inboxSlice";
-import { CommentsContext } from "../../comment/CommentsContext";
+import { CommentsContext } from "../../comment/inTree/CommentsContext";
 import useAppToast from "../../../helpers/useAppToast";
 import { share } from "../../../helpers/lemmy";
-import { scrollViewUpIfNeeded } from "../../comment/CommentTree";
+import { scrollCommentIntoViewIfNeeded } from "../../comment/inTree/CommentTree";
+import { AppContext } from "../../auth/AppContext";
 
 const StyledItemContainer = styled.div`
   --ion-item-border-color: transparent;
@@ -107,6 +108,8 @@ function BaseSlidingVoteInternal({
 }: BaseSlidingVoteProps) {
   const { presentLoginIfNeeded, presentCommentReply } = useContext(PageContext);
   const { prependComments } = useContext(CommentsContext);
+
+  const { activePageRef } = useContext(AppContext);
 
   const presentToast = useAppToast();
   const dispatch = useAppDispatch();
@@ -244,16 +247,11 @@ function BaseSlidingVoteInternal({
     (e: TouchEvent | MouseEvent) => {
       if (isPost) return;
 
-      dispatch(
-        updateCommentCollapseState({
-          commentId: item.comment.id,
-          collapsed: !collapsed,
-        }),
-      );
+      dispatch(toggleCommentCollapseState(item.comment.id));
 
-      if (e.target) scrollViewUpIfNeeded(e.target);
+      if (e.target) scrollCommentIntoViewIfNeeded(e.target, activePageRef);
     },
-    [collapsed, dispatch, isPost, item],
+    [dispatch, isPost, item, activePageRef],
   );
   const collapseAction = useMemo(() => {
     return {
