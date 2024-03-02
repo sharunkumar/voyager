@@ -7,6 +7,10 @@ import { useAppSelector } from "../../../store";
 import { css, cx } from "@linaria/core";
 import superSub from "remark-supersub";
 import Table from "./components/Table";
+import spoiler from "@aeharding/remark-lemmy-spoiler";
+import Summary from "./components/spoiler/Summary";
+import Details from "./components/spoiler/Details";
+import spoilerRehype from "./spoilerRehype";
 
 const markdownCss = css`
   @media (max-width: 700px) {
@@ -25,14 +29,37 @@ const markdownCss = css`
     border-left: 3px solid var(--ion-color-light);
     margin-left: 0;
   }
+
+  hr {
+    background-color: var(
+      --ion-border-color,
+      var(--ion-color-step-250, #c8c7cc)
+    );
+
+    min-width: min(100%, 100px);
+    width: 80%;
+
+    height: 2px;
+  }
 `;
 
 export interface MarkdownProps
   extends Omit<ReactMarkdownOptions, "remarkPlugins"> {
+  className?: string;
+
   disableInternalLinkRouting?: boolean;
+
+  /**
+   * ID should be unique (prefixed, if using autoincrement id like lemmy uses)
+   * Ideally, just use the `ap_id`
+   *
+   * This is used so spoilers can track open state
+   */
+  id: string;
 }
 
 export default function Markdown({
+  id,
   disableInternalLinkRouting,
   ...props
 }: MarkdownProps) {
@@ -58,9 +85,16 @@ export default function Markdown({
               />
             )
           : (props) => <LinkInterceptor {...props} />,
+        summary: Summary,
+        details: (props) => <Details {...props} id={id} />,
         ...props.components,
       }}
-      remarkPlugins={[[customRemarkGfm, { connectedInstance }], superSub]}
+      remarkPlugins={[
+        [customRemarkGfm, { connectedInstance }],
+        superSub,
+        spoiler,
+        spoilerRehype,
+      ]}
     />
   );
 }
