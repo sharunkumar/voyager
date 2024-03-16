@@ -2,7 +2,7 @@
   "name": "voyager",
   "description": "A progressive webapp Lemmy client",
   "private": true,
-  "version": "1.46.3",
+  "version": "1.47.1",
   "type": "module",
   "packageManager": "pnpm@8.15.4+sha256.cea6d0bdf2de3a0549582da3983c70c92ffc577ff4410cbf190817ddc35137c2",
   "scripts": {
@@ -129,6 +129,8 @@
     "react-router-dom": "^5.3.4",
     "react-textarea-autosize": "^8.5.3",
     "react-transition-state": "^2.1.1",
+    "rehype-parse": "^9.0.0",
+    "rehype-remark": "^10.0.0",
     "release-it": "^17.1.1",
     "remark-gfm": "^4.0.0",
     "remark-parse": "^11.0.0",

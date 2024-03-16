@@ -13,16 +13,8 @@ import {
   peopleOutline,
   personOutline,
 } from "ionicons/icons";
-import {
-  Dispatch,
-  MouseEvent,
-  RefObject,
-  SetStateAction,
-  useEffect,
-  useRef,
-} from "react";
+import { MouseEvent, RefObject, useEffect, useRef } from "react";
 import PreviewModal from "../PreviewModal";
-import { insert } from "../../../../../helpers/string";
 import textFaces from "./textFaces.txt?raw";
 import { bold, italic, quote } from "../../../../icons";
 import { TOOLBAR_TARGET_ID } from "../MarkdownToolbar";
@@ -30,6 +22,8 @@ import { styled } from "@linaria/react";
 import { css } from "@linaria/core";
 import { isValidUrl } from "../../../../../helpers/url";
 import useUploadImage from "../useUploadImage";
+import { getSelectionHtml } from "../../../../../helpers/dom";
+import { htmlToMarkdown } from "../../../../../helpers/markdown";
 
 const Button = styled.button`
   padding: 0;
@@ -47,7 +41,6 @@ const Button = styled.button`
 export interface SharedModeProps {
   type: "comment" | "post";
   text: string;
-  setText: Dispatch<SetStateAction<string>>;
   textareaRef: RefObject<HTMLTextAreaElement>;
 }
 
@@ -58,7 +51,6 @@ interface DefaultModeProps extends SharedModeProps {
 export default function DefaultMode({
   type,
   text,
-  setText,
   textareaRef,
   calculateMode,
 }: DefaultModeProps) {
@@ -76,13 +68,25 @@ export default function DefaultMode({
 
   const selectionLocation = useRef(0);
   const selectionLocationEnd = useRef(0);
-  const replySelectionRef = useRef("");
+  const replySelectionRef = useRef<{ text: string; html: string } | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     const onChange = () => {
       selectionLocation.current = textareaRef.current?.selectionStart ?? 0;
       selectionLocationEnd.current = textareaRef.current?.selectionEnd ?? 0;
-      replySelectionRef.current = window.getSelection()?.toString() || "";
+
+      // Not great to do this here, but if we don't,
+      // safari will sometimes return selection.toString() === "" during onQuote
+      const selection = window.getSelection();
+      replySelectionRef.current =
+        selection?.type === "Range"
+          ? {
+              text: selection.toString(),
+              html: getSelectionHtml(selection),
+            }
+          : undefined;
     };
 
     document.addEventListener("selectionchange", onChange);
@@ -101,7 +105,13 @@ export default function DefaultMode({
         {
           text: "Preview",
           icon: glassesOutline,
-          handler: presentPreview,
+          handler: () => {
+            presentPreview({
+              presentingElement: document.querySelector(
+                "ion-modal.show-modal",
+              ) as HTMLElement,
+            });
+          },
         },
         {
           text: "Mention user",
@@ -187,16 +197,12 @@ export default function DefaultMode({
 
   function insertMarkdownLink(text: string = "", url?: string) {
     const markdownLink = `[${text}](${url || "url"})`;
-    const toRemove = selectionLocationEnd.current - selectionLocation.current;
 
     const locationBeforeInsert = selectionLocation.current;
     const currentSelectionLocation = locationBeforeInsert + markdownLink.length;
 
-    setText((text) =>
-      insert(text, locationBeforeInsert, markdownLink, toRemove),
-    );
-
     textareaRef.current?.focus();
+    document.execCommand("insertText", false, markdownLink);
 
     setTimeout(() => {
       if (!text) {
@@ -230,17 +236,10 @@ export default function DefaultMode({
 
     const toInsert = `${space}${prefix}`;
 
-    setText((text) => insert(text, index, toInsert));
-
     textareaRef.current?.focus();
+    document.execCommand("insertText", false, toInsert);
 
-    setTimeout(() => {
-      const location = index + toInsert.length;
-
-      textareaRef.current?.setSelectionRange(location, location);
-
-      calculateMode();
-    });
+    calculateMode();
   }
 
   function presentTextFaces() {
@@ -260,44 +259,32 @@ export default function DefaultMode({
       onWillDismiss: (event) => {
         if (!event.detail.data) return;
 
-        const currentSelectionLocation =
-          selectionLocation.current + event.detail.data.length;
-
-        setText((text) =>
-          insert(text, selectionLocation.current, event.detail.data),
-        );
-
-        if (textareaRef.current) {
-          textareaRef.current.focus();
-
-          setTimeout(() => {
-            textareaRef.current?.setSelectionRange(
-              currentSelectionLocation,
-              currentSelectionLocation,
-            );
-          });
-        }
+        textareaRef.current?.focus();
+        document.execCommand("insertText", false, event.detail.data);
       },
     });
   }
 
-  function onQuote(e: MouseEvent | TouchEvent) {
-    if (!replySelectionRef.current) return;
-    if (
-      !textareaRef.current ||
-      textareaRef.current?.selectionStart - textareaRef.current?.selectionEnd
-    )
-      return;
+  async function onQuote(e: MouseEvent | TouchEvent) {
+    if (!textareaRef.current) return;
+    const selection = replySelectionRef.current;
+    if (!selection) return;
 
     e.stopPropagation();
     e.preventDefault();
 
     const currentSelectionLocation = selectionLocation.current;
 
-    let insertedText = `> ${replySelectionRef.current
-      .trim()
-      .split("\n")
-      .join("\n> ")}\n\n`;
+    let quotedText;
+
+    try {
+      quotedText = await htmlToMarkdown(selection.html);
+    } catch (error) {
+      quotedText = selection.text;
+      console.error("Parse error", error);
+    }
+
+    let insertedText = `> ${quotedText.trim().split("\n").join("\n> ")}\n\n`;
 
     if (
       text[currentSelectionLocation - 2] &&
@@ -306,18 +293,8 @@ export default function DefaultMode({
       insertedText = `\n${insertedText}`;
     }
 
-    setText((text) => insert(text, currentSelectionLocation, insertedText));
-
-    if (textareaRef.current) {
-      textareaRef.current.focus();
-
-      setTimeout(() => {
-        if (!textareaRef.current) return;
-
-        textareaRef.current.selectionEnd =
-          currentSelectionLocation + insertedText.length;
-      }, 10);
-    }
+    textareaRef.current.focus();
+    document.execCommand("insertText", false, insertedText);
 
     return false;
   }
@@ -345,9 +322,8 @@ export default function DefaultMode({
 
               const markdown = await uploadImage(image);
 
-              setText((text) =>
-                insert(text, selectionLocation.current, markdown),
-              );
+              textareaRef.current?.focus();
+              document.execCommand("insertText", false, markdown);
             }}
           />
         </label>
