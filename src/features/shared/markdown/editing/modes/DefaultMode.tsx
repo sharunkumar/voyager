@@ -5,18 +5,27 @@ import {
   useIonModal,
 } from "@ionic/react";
 import {
+  codeSlashOutline,
   ellipsisHorizontal,
+  eyeOutline,
   glassesOutline,
   happyOutline,
   image,
   link,
   peopleOutline,
   personOutline,
+  remove,
 } from "ionicons/icons";
 import { MouseEvent, RefObject, useEffect, useRef } from "react";
 import PreviewModal from "../PreviewModal";
 import textFaces from "./textFaces.txt?raw";
-import { bold, italic, quote } from "../../../../icons";
+import {
+  bold,
+  italic,
+  listOrdered,
+  listUnordered,
+  quote,
+} from "../../../../icons";
 import { TOOLBAR_TARGET_ID } from "../MarkdownToolbar";
 import { styled } from "@linaria/react";
 import { css } from "@linaria/core";
@@ -110,7 +119,49 @@ export default function DefaultMode({
               presentingElement: document.querySelector(
                 "ion-modal.show-modal",
               ) as HTMLElement,
+              onDidDismiss: () => {
+                requestAnimationFrame(() => textareaRef.current?.focus());
+              },
             });
+          },
+        },
+        {
+          text: "Horizontal Line",
+          icon: remove,
+          handler: () => {
+            insertBlock("---");
+          },
+        },
+        {
+          text: "Code",
+          icon: codeSlashOutline,
+          handler: () => {
+            insertBlock("```\ncode\n```", 8, 4);
+          },
+        },
+        {
+          text: "Spoiler",
+          icon: eyeOutline,
+          handler: () => {
+            insertBlock(
+              "::: spoiler Tap for spoiler\nhidden content\n:::",
+              18,
+              14,
+            );
+          },
+        },
+        {
+          text: "Unordered List",
+          icon: listUnordered,
+          handler: () => {
+            insertBlock("- ");
+          },
+        },
+        {
+          text: "Ordered List",
+          icon: listOrdered,
+          handler: () => {
+            insertBlock("1. ");
           },
         },
         {
@@ -273,8 +324,6 @@ export default function DefaultMode({
     e.stopPropagation();
     e.preventDefault();
 
-    const currentSelectionLocation = selectionLocation.current;
-
     let quotedText;
 
     try {
@@ -284,19 +333,80 @@ export default function DefaultMode({
       console.error("Parse error", error);
     }
 
-    let insertedText = `> ${quotedText.trim().split("\n").join("\n> ")}\n\n`;
+    const insertedBlock = `> ${quotedText.trim().split("\n").join("\n> ")}`;
 
-    if (
-      text[currentSelectionLocation - 2] &&
-      text[currentSelectionLocation - 2] !== "\n"
-    ) {
-      insertedText = `\n${insertedText}`;
-    }
-
-    textareaRef.current.focus();
-    document.execCommand("insertText", false, insertedText);
+    insertBlock(insertedBlock);
 
     return false;
+  }
+
+  function insertBlock(
+    blockText: string,
+    placeCursorFromEnd = 0,
+    selectLength = 0,
+  ) {
+    const currentSelectionLocation = selectionLocation.current;
+
+    const before = (() => {
+      if (
+        text[currentSelectionLocation - 1] &&
+        text[currentSelectionLocation - 1] === "\n" &&
+        text[currentSelectionLocation - 2] &&
+        text[currentSelectionLocation - 2] !== "\n"
+      )
+        return "\n";
+
+      if (
+        text[currentSelectionLocation - 2] &&
+        text[currentSelectionLocation - 2] !== "\n"
+      )
+        return "\n\n";
+
+      return "";
+    })();
+
+    const after = (() => {
+      if (
+        text[currentSelectionLocation] &&
+        text[currentSelectionLocation] === "\n" &&
+        text[currentSelectionLocation + 1] &&
+        text[currentSelectionLocation + 1] !== "\n"
+      )
+        return "\n";
+
+      if (
+        text[currentSelectionLocation + 1] &&
+        text[currentSelectionLocation + 1] !== "\n"
+      )
+        return "\n\n";
+
+      return "";
+    })();
+
+    const initiallySelectedText = text
+      .slice(selectionLocation.current, selectionLocationEnd.current)
+      .trim();
+
+    textareaRef.current?.focus();
+
+    const totalBlock = `${before}${blockText}${after}`;
+
+    document.execCommand("insertText", false, totalBlock);
+
+    const endCursorLocation =
+      currentSelectionLocation +
+      before.length +
+      blockText.length -
+      placeCursorFromEnd;
+
+    textareaRef.current?.setSelectionRange(
+      endCursorLocation,
+      endCursorLocation + selectLength,
+    );
+
+    if (initiallySelectedText && selectLength) {
+      document.execCommand("insertText", false, initiallySelectedText);
+    }
   }
 
   return (
