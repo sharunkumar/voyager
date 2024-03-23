@@ -126,12 +126,14 @@ export default function LargePost({ post }: PostProps) {
                   person={post.creator}
                   showInstanceWhenRemote
                   prefix="by"
+                  disableInstanceClick
                 />
               ) : (
                 <CommunityLink
                   community={post.community}
                   showInstanceWhenRemote
                   subscribed={post.subscribed}
+                  disableInstanceClick
                 />
               )}
             </CommunityName>

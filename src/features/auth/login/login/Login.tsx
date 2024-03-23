@@ -19,10 +19,9 @@ import useAppToast from "../../../../helpers/useAppToast";
 import { useAppDispatch, useAppSelector } from "../../../../store";
 import { addGuestInstance, login } from "../../authSlice";
 import {
-  OldLemmyErrorValue,
   getLoginErrorMessage,
   isLemmyError,
-} from "../../../../helpers/lemmy";
+} from "../../../../helpers/lemmyErrors";
 import Totp from "./Totp";
 import { DynamicDismissableModalContext } from "../../../shared/DynamicDismissableModal";
 import InAppExternalLink from "../../../shared/InAppExternalLink";
@@ -120,10 +119,7 @@ export default function Login({ url, siteIcon }: LoginProps) {
         return;
       }
 
-      if (
-        isLemmyError(error, "password_incorrect" as OldLemmyErrorValue) || // TODO lemmy v0.18 support
-        isLemmyError(error, "incorrect_login")
-      ) {
+      if (isLemmyError(error, "incorrect_login")) {
         setPassword("");
       }
 

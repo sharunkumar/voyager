@@ -35,10 +35,12 @@ import "@ionic/react/css/text-transformation.css";
 import "@ionic/react/css/flex-utils.css";
 import "@ionic/react/css/display.css";
 
+import "@ionic/react/css/palettes/dark.class.css";
+
 /* Setup global app lifecycle listeners */
 import "./listeners";
 import AppUrlListener from "./listeners/AppUrlListener";
-import OldInstanceWarning from "./OldInstanceWarning";
+import { ResetStatusTap } from "./listeners/statusTap";
 
 // index.tsx ensures android nav mode resolves before app is rendered
 (async () => {
@@ -50,7 +52,6 @@ import OldInstanceWarning from "./OldInstanceWarning";
   }
 
   setupIonicReact({
-    rippleEffect: false,
     mode: getDeviceMode(),
     statusTap: false, // custom implementation listeners/statusTap.ts
     swipeBackEnabled:
@@ -72,13 +73,13 @@ export default function App() {
                   <Router>
                     <OptimizedRouterProvider>
                       <AndroidBackButton />
+                      <ResetStatusTap />
 
                       <TabContextProvider>
                         <IonApp>
                           <HapticsListener />
                           <AppUrlListener />
                           <TextRecoveryStartupPrompt />
-                          <OldInstanceWarning />
 
                           <Auth>
                             <TabbedRoutes />

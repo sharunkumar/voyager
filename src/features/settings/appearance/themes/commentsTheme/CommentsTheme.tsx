@@ -1,5 +1,11 @@
-import { IonLabel, IonList, IonRadio, IonRadioGroup } from "@ionic/react";
-import { InsetIonItem, ListHeader } from "../../../shared/formatting";
+import {
+  IonItem,
+  IonLabel,
+  IonList,
+  IonRadio,
+  IonRadioGroup,
+} from "@ionic/react";
+import { ListHeader } from "../../../shared/formatting";
 import { OCommentsThemeType } from "../../../../../services/db";
 import COMMENT_THEMES from "./values";
 import Color from "./Color";
@@ -20,7 +26,7 @@ const Colors = styled.div`
   gap: 6px;
   margin: 0 6px;
 
-  .theme-dark & {
+  .ion-palette-dark & {
     opacity: 0.7;
   }
 `;
@@ -44,7 +50,7 @@ export default function CommentsTheme() {
       >
         <IonList inset>
           {Object.entries(OCommentsThemeType).map(([label, value]) => (
-            <InsetIonItem key={value}>
+            <IonItem key={value}>
               <IonRadio
                 value={value}
                 className={css`
@@ -62,7 +68,7 @@ export default function CommentsTheme() {
                   </Colors>
                 </ColorsContainer>
               </IonRadio>
-            </InsetIonItem>
+            </IonItem>
           ))}
         </IonList>
       </IonRadioGroup>
