@@ -14,9 +14,7 @@ export function formatRelative(date: string): string {
     addSuffix: false,
   });
 
-  return `${_date > new Date() ? "-" : ""}${getRelativeDateString(
-    relativeDate,
-  )}`;
+  return getRelativeDateString(relativeDate);
 }
 
 const getRelativeDateString = (relativeDate: string) => {
