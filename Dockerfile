@@ -30,7 +30,7 @@ COPY . ./
 
 # Tests
 RUN CI=true pnpm test
-RUN pnpm test:typecheck
+RUN pnpm test:typecheck --noEmit
 
 # Build
 RUN pnpm build
