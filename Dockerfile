@@ -28,6 +28,10 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 # Copy all source files
 COPY . ./
 
+# Tests
+RUN CI=true pnpm test
+RUN pnpm test:typecheck --noEmit
+
 # Build
 RUN pnpm build
 
