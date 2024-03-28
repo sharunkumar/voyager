@@ -1,7 +1,6 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { AppDispatch, RootState } from "../../store";
-import Cookies from "js-cookie";
-import { getRemoteHandle, parseJWT } from "../../helpers/lemmy";
+import { getRemoteHandle, parseLemmyJWT } from "../../helpers/lemmy";
 import { resetPosts } from "../post/postSlice";
 import { getClient } from "../../services/lemmy";
 import { resetComments } from "../comment/commentSlice";
@@ -20,22 +19,8 @@ import { setDefaultFeed } from "../settings/settingsSlice";
 
 const MULTI_ACCOUNT_STORAGE_NAME = "credentials";
 
-// Migrations
-(() => {
-  // 2023-06-25 clean up cookie used for old versions
-  Cookies.remove("jwt");
-
-  // 2023-06-26 prefer localStorage to avoid sending to proxy server
-  const cookie = Cookies.get(MULTI_ACCOUNT_STORAGE_NAME);
-
-  if (cookie && !localStorage.getItem(MULTI_ACCOUNT_STORAGE_NAME)) {
-    localStorage.setItem(MULTI_ACCOUNT_STORAGE_NAME, cookie);
-    Cookies.remove(MULTI_ACCOUNT_STORAGE_NAME);
-  }
-})();
-
 /**
- * DO NOT CHANGE this type. It is persisted in the login cookie
+ * DO NOT CHANGE this type. It is persisted.
  */
 export type Credential = {
   jwt?: string;
@@ -49,7 +34,7 @@ export type Credential = {
 };
 
 /**
- * DO NOT CHANGE this type. It is persisted in localStorage
+ * DO NOT CHANGE this type. It is persisted.
  */
 type CredentialStoragePayload = {
   accounts: Credential[];
@@ -233,7 +218,7 @@ const addJwt =
     dispatch(resetAccountSpecificStoreData());
     dispatch(receivedSite(site));
     dispatch(addAccount({ jwt, handle: getRemoteHandle(myUser) }));
-    dispatch(updateConnectedInstance(parseJWT(jwt).iss));
+    dispatch(updateConnectedInstance(parseLemmyJWT(jwt).iss));
   };
 
 const resetAccountSpecificStoreData = () => (dispatch: AppDispatch) => {
@@ -277,7 +262,10 @@ export const logoutAccount =
 
     // revoke token
     if (currentAccount && currentAccount.jwt)
-      getClient(parseJWT(currentAccount.jwt).iss, currentAccount.jwt)?.logout();
+      getClient(
+        parseLemmyJWT(currentAccount.jwt).iss,
+        currentAccount.jwt,
+      )?.logout();
 
     dispatch(removeAccount(handle));
 
