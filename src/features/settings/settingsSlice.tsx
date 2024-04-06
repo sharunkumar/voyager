@@ -213,7 +213,7 @@ export const initialState: SettingsState = {
       infiniteScrolling: true,
       upvoteOnSave: true,
       rememberCommunitySort: false,
-      autoplayMedia: OAutoplayMediaType.Always,
+      autoplayMedia: OAutoplayMediaType.WifiOnly,
     },
     safari: {
       alwaysUseReaderMode: false,
