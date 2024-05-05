@@ -27,7 +27,6 @@ import { PostEditorProps } from "./PostEditor";
 import NewPostText from "./NewPostText";
 import { useBuildGeneralBrowseLink } from "../../../helpers/routes";
 import PhotoPreview from "./PhotoPreview";
-import { uploadImage } from "../../../services/lemmy";
 import { receivedPosts } from "../postSlice";
 import useAppToast from "../../../helpers/useAppToast";
 import { isUrlImage, isValidUrl } from "../../../helpers/url";
@@ -36,6 +35,10 @@ import { useOptimizedIonRouter } from "../../../helpers/useOptimizedIonRouter";
 import { isAndroid } from "../../../helpers/device";
 import { css } from "@linaria/core";
 import AppHeader from "../../shared/AppHeader";
+import {
+  deletePendingImageUploads,
+  uploadImage,
+} from "../../shared/markdown/editing/uploadImageSlice";
 
 const Container = styled.div`
   position: absolute;
@@ -307,7 +310,7 @@ export default function PostEditorRoot({
     if (isAndroid()) await new Promise((resolve) => setTimeout(resolve, 250));
 
     try {
-      imageUrl = await uploadImage(client, image);
+      imageUrl = await dispatch(uploadImage(image));
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
 
@@ -322,6 +325,8 @@ export default function PostEditorRoot({
     } finally {
       setPhotoUploading(false);
     }
+
+    dispatch(deletePendingImageUploads(imageUrl));
 
     setPhotoUrl(imageUrl);
   }
