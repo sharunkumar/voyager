@@ -16,7 +16,6 @@ import { useAppSelector } from "../../../store";
 import { userHandleSelector } from "../../../features/auth/authSelectors";
 import FilterNsfw from "../../../features/settings/blocks/FilterNsfw";
 import BlockedCommunities from "../../../features/settings/blocks/BlockedCommunities";
-import { CenteredSpinner } from "../posts/PostPage";
 import BlockedUsers from "../../../features/settings/blocks/BlockedUsers";
 import FilteredKeywords from "../../../features/settings/blocks/FilteredKeywords";
 import BlockedInstances from "../../../features/settings/blocks/BlockedInstances";
@@ -24,6 +23,11 @@ import { useRef } from "react";
 import { useSetActivePage } from "../../../features/auth/AppContext";
 import { localUserSelector } from "../../../features/auth/siteSlice";
 import AppHeader from "../../../features/shared/AppHeader";
+import {
+  ListEditButton,
+  ListEditorProvider,
+} from "../../../features/shared/ListEditor";
+import { CenteredSpinner } from "../../../features/shared/CenteredSpinner";
 
 export default function BlocksSettingsPage() {
   const pageRef = useRef<HTMLElement>(null);
@@ -31,9 +35,36 @@ export default function BlocksSettingsPage() {
   const userHandle = useAppSelector(userHandleSelector);
   const localUser = useAppSelector(localUserSelector);
 
+  const hasBlocks = useAppSelector(
+    (state) =>
+      state.site.response?.my_user?.community_blocks.length ||
+      state.site.response?.my_user?.person_blocks.length ||
+      state.site.response?.my_user?.instance_blocks.length ||
+      state.settings.blocks.keywords.length,
+  );
+
   useSetActivePage(pageRef);
 
-  return (
+  const content = (() => {
+    if (!localUser)
+      return (
+        <IonContent scrollY={false}>
+          <CenteredSpinner />
+        </IonContent>
+      );
+
+    return (
+      <AppContent scrollY>
+        <FilterNsfw />
+        <FilteredKeywords />
+        <BlockedCommunities />
+        <BlockedUsers />
+        <BlockedInstances />
+      </AppContent>
+    );
+  })();
+
+  const page = (
     <IonPage ref={pageRef} className="grey-bg">
       <AppHeader>
         <IonToolbar>
@@ -49,21 +80,17 @@ export default function BlocksSettingsPage() {
               </div>
             </TitleContainer>{" "}
           </IonTitle>
+          <IonButtons slot="end">
+            {hasBlocks ? <ListEditButton /> : null}
+          </IonButtons>
         </IonToolbar>
       </AppHeader>
-      {localUser ? (
-        <AppContent scrollY>
-          <FilterNsfw />
-          <FilteredKeywords />
-          <BlockedCommunities />
-          <BlockedUsers />
-          <BlockedInstances />
-        </AppContent>
-      ) : (
-        <IonContent scrollY={false}>
-          <CenteredSpinner />
-        </IonContent>
-      )}
+
+      {content}
     </IonPage>
   );
+
+  if (hasBlocks) {
+    return <ListEditorProvider>{page}</ListEditorProvider>;
+  } else return page;
 }
