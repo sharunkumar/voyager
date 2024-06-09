@@ -27,8 +27,8 @@ import { styled } from "@linaria/react";
 import { ActionButton } from "../../actions/ActionButton";
 import { IonIcon } from "@ionic/react";
 import { share } from "../../../../helpers/lemmy";
-import { shareSocialOutline } from "ionicons/icons";
 import { SaveButton } from "../../shared/SaveButton";
+import { getShareIcon } from "../../../../helpers/device";
 
 const Container = styled.div`
   display: flex;
@@ -200,7 +200,7 @@ export default function LargePost({ post }: PostProps) {
             )}
             <ActionButton>
               <IonIcon
-                icon={shareSocialOutline}
+                icon={getShareIcon()}
                 onClick={(e) => {
                   e.stopPropagation();
                   share(post.post);
