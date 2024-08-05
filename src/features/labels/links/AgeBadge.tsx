@@ -5,7 +5,11 @@ import { useMemo } from "react";
 import Ago from "../Ago";
 
 const NewAccountBadge = styled.span`
-  color: gold;
+  color: #d9a900;
+
+  .ion-palette-dark & {
+    color: gold;
+  }
 `;
 
 const AlientBadge = styled.span`
