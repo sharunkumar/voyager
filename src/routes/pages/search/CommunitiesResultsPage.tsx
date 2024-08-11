@@ -1,7 +1,6 @@
 import {
   IonBackButton,
   IonButtons,
-  IonContent,
   IonPage,
   IonTitle,
   IonToolbar,
@@ -19,6 +18,7 @@ import useFeedSort from "../../../features/feed/sort/useFeedSort";
 import { compact } from "lodash";
 import AppHeader from "../../../features/shared/AppHeader";
 import ListingTypeFilter from "../../../features/feed/ListingType";
+import FeedContent from "../shared/FeedContent";
 
 interface CommunitiesResultsPageProps {
   search?: string;
@@ -29,7 +29,7 @@ export default function CommunitiesResultsPage({
 }: CommunitiesResultsPageProps) {
   const buildGeneralBrowseLink = useBuildGeneralBrowseLink();
   const client = useClient();
-  const [sort, setSort] = useFeedSort("posts");
+  const [sort, setSort] = useFeedSort("posts", undefined, "TopAll");
   const [listingType, setListingType] = useState<ListingType>("All");
 
   const fetchFn: FetchFn<CommunityView> = useCallback(
@@ -81,9 +81,9 @@ export default function CommunitiesResultsPage({
           </IonButtons>
         </IonToolbar>
       </AppHeader>
-      <IonContent>
+      <FeedContent>
         <CommunityFeed fetchFn={fetchFn} />
-      </IonContent>
+      </FeedContent>
     </IonPage>
   );
 }
