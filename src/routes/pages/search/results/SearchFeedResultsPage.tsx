@@ -37,7 +37,9 @@ export default function SearchFeedResultsPage({
   }>();
   const buildGeneralBrowseLink = useBuildGeneralBrowseLink();
   const client = useClient();
-  const [sort, setSort] = useFeedSort("posts");
+  const [sort, setSort] = useFeedSort("posts", {
+    internal: `${type}Search`,
+  });
 
   const search = decodeURIComponent(_encodedSearch);
 
@@ -81,7 +83,7 @@ export default function SearchFeedResultsPage({
           fetchFn={fetchFn}
           sortDuration={getSortDuration(sort)}
           filterHiddenPosts={false}
-          filterKeywords={false}
+          filterKeywordsAndWebsites={false}
         />
       </FeedContent>
     </IonPage>

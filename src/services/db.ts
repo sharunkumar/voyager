@@ -172,6 +172,15 @@ export const OLinkHandlerType = {
   InApp: "in-app",
 } as const;
 
+export type ShowSubscribedIcon =
+  (typeof OShowSubscribedIcon)[keyof typeof OShowSubscribedIcon];
+
+export const OShowSubscribedIcon = {
+  Never: "never",
+  OnlyAllLocal: "all-local",
+  Everywhere: "everywhere",
+} as const;
+
 export type DefaultFeedType =
   | {
       type:
@@ -328,6 +337,7 @@ export type SettingValueTypes = {
   jump_button_position: JumpButtonPositionType;
   tap_to_collapse: TapToCollapseType;
   filtered_keywords: string[];
+  filtered_websites: string[];
   highlight_new_account: boolean;
   default_feed: DefaultFeedType;
   touch_friendly_links: boolean;
@@ -351,6 +361,7 @@ export type SettingValueTypes = {
   autoplay_media: AutoplayMediaType;
   show_collapsed_comment: boolean;
   quick_switch_dark_mode: boolean;
+  subscribed_icon: ShowSubscribedIcon;
 };
 
 export interface ISettingItem<T extends keyof SettingValueTypes> {
