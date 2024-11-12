@@ -6,6 +6,7 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
+  "files.eol": "\n",
   "eslint.codeActionsOnSave.rules": [
     "perfectionist/*"
   ],

@@ -14,6 +14,7 @@ import ModqueueItemActions from "#/features/moderation/ModqueueItemActions";
 import Crosspost from "#/features/post/crosspost/Crosspost";
 import MoreActions from "#/features/post/shared/MoreActions";
 import MoreModActions from "#/features/post/shared/MoreModAction";
+import { SaveButton } from "#/features/post/shared/SaveButton";
 import { VoteButton } from "#/features/post/shared/VoteButton";
 import useCrosspostUrl from "#/features/post/shared/useCrosspostUrl";
 import { maxWidthCss } from "#/features/shared/AppContent";
@@ -195,6 +196,7 @@ export default function LargePost({ post }: PostProps) {
                   <MoreModActions post={post} />
                   <VoteButton type="up" post={post} />
                   <VoteButton type="down" post={post} />
+                  <SaveButton post={post} />
                 </>
               )}
             </RightDetails>

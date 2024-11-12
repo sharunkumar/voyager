@@ -56,6 +56,7 @@ import {
 } from "#/services/db";
 import { AppDispatch, RootState } from "#/store";
 
+import { custom } from "./custom";
 import {
   LOCALSTORAGE_KEYS,
   getLocalStorageInitialState,
@@ -165,7 +166,7 @@ export interface SettingsState {
   };
 }
 
-const baseState: SettingsState = {
+const baseState: SettingsState = custom({
   ready: false,
 
   databaseError: undefined,
@@ -186,15 +187,15 @@ const baseState: SettingsState = {
     },
     deviceMode: "ios",
     font: {
-      fontSizeMultiplier: 0.8,
+      fontSizeMultiplier: 1,
       useSystemFontSize: false,
     },
     general: {
-      profileLabel: OProfileLabelType.Handle,
+      profileLabel: OProfileLabelType.Instance,
       userInstanceUrlDisplay: OInstanceUrlDisplayMode.Never,
     },
     large: {
-      showVotingButtons: false,
+      showVotingButtons: true,
     },
     posts: {
       alwaysShowAuthor: false,
@@ -207,10 +208,10 @@ const baseState: SettingsState = {
       subscribedIcon: OShowSubscribedIcon.Never,
       type: OPostAppearanceType.Large,
     },
-    theme: "tangerine",
+    theme: "default",
     votesTheme: "lemmy",
     voting: {
-      voteDisplayMode: OVoteDisplayMode.Separate,
+      voteDisplayMode: OVoteDisplayMode.Total,
     },
   },
   blocks: {
@@ -226,12 +227,12 @@ const baseState: SettingsState = {
       showCollapsed: false,
       showCommentImages: true,
       showJumpButton: false,
-      sort: OCommentDefaultSort.Top,
+      sort: OCommentDefaultSort.Hot,
       tapToCollapse: OTapToCollapseType.Both,
       touchFriendlyLinks: true,
     },
     defaultFeed: undefined,
-    enableHapticFeedback: false,
+    enableHapticFeedback: true,
     linkHandler: OLinkHandlerType.InApp,
     noSubscribedInFeed: false,
     posts: {
@@ -259,7 +260,7 @@ const baseState: SettingsState = {
     saveSource: true,
     trackVotes: false,
   },
-};
+});
 
 /**
  * We continue using localstorage for specific items because indexeddb is slow
