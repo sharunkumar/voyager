@@ -245,7 +245,7 @@ const baseState: SettingsState = {
       showHiddenInCommunities: false,
       showHideReadButton: false,
       sort: "Active",
-      upvoteOnSave: false,
+      upvoteOnSave: true,
     },
     preferNativeApps: true,
     safari: {
