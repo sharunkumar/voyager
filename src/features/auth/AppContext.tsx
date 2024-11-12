@@ -1,10 +1,10 @@
 import { useIonViewDidEnter } from "@ionic/react";
+import { noop } from "es-toolkit";
 import React, {
   RefObject,
   createContext,
   useContext,
   useEffect,
-  useMemo,
   useRef,
 } from "react";
 import { VListHandle } from "virtua";
@@ -19,26 +19,21 @@ interface IAppContext {
 
 export const AppContext = createContext<IAppContext>({
   activePageRef: undefined,
-  setActivePage: () => {},
+  setActivePage: noop,
 });
 
-export function AppContextProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function AppContextProvider({ children }: React.PropsWithChildren) {
   const activePageRef = useRef<Page>();
 
-  const currentValue = useMemo(
-    () => ({
-      activePageRef,
-      setActivePage: (page: Page) => (activePageRef.current = page),
-    }),
-    [],
-  );
-
   return (
-    <AppContext.Provider value={currentValue}>{children}</AppContext.Provider>
+    <AppContext.Provider
+      value={{
+        activePageRef,
+        setActivePage: (page: Page) => (activePageRef.current = page),
+      }}
+    >
+      {children}
+    </AppContext.Provider>
   );
 }
 
@@ -47,10 +42,10 @@ export function useSetActivePage(page?: Page, enabled = true) {
 
   useEffect(() => {
     if (!enabled) return;
+    if (activePageRef?.current === page) return;
 
     if (page) setActivePage(page);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activePageRef, enabled, page, setActivePage]);
 
   useIonViewDidEnter(() => {
     if (!enabled) return;
@@ -79,6 +74,5 @@ export function useSetActivePage(page?: Page, enabled = true) {
     if (!current) {
       setActivePage(page);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [activePageRef, enabled, page, setActivePage]);
 }

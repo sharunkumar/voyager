@@ -1,33 +1,32 @@
+import { useImperativeHandle } from "react";
 import * as portals from "react-reverse-portal";
-import { useVideoPortalNode } from "./VideoPortalProvider";
-import { forwardRef, useImperativeHandle } from "react";
+
 import type { PlayerProps } from "./Player";
 import type Player from "./Player";
+import { useVideoPortalNode } from "./VideoPortalProvider";
 
-export interface VideoProps extends PlayerProps {}
+export interface VideoProps extends Omit<PlayerProps, "ref"> {
+  ref: React.RefObject<HTMLVideoElement | undefined>;
+}
 
-const Video = forwardRef<HTMLVideoElement | undefined, VideoProps>(
-  function Video({ src, ...props }, ref) {
-    const portalNode = useVideoPortalNode(src);
+export default function Video({ src, ref, ...props }: VideoProps) {
+  const portalNode = useVideoPortalNode(src);
 
-    useImperativeHandle(
-      ref,
-      () => portalNode?.element.querySelector("video") ?? undefined,
-      [portalNode],
-    );
+  useImperativeHandle(
+    ref,
+    () => portalNode?.element.querySelector("video") ?? undefined,
+    [portalNode],
+  );
 
-    return (
-      <div style={props.style} className={props.className}>
-        {portalNode ? (
-          <portals.OutPortal<typeof Player>
-            node={portalNode}
-            {...props}
-            src={src}
-          />
-        ) : undefined}
-      </div>
-    );
-  },
-);
-
-export default Video;
+  return (
+    <div style={props.style} className={props.className}>
+      {portalNode ? (
+        <portals.OutPortal<typeof Player>
+          node={portalNode}
+          {...props}
+          src={src}
+        />
+      ) : undefined}
+    </div>
+  );
+}

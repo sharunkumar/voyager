@@ -1,7 +1,8 @@
-import { useAppSelector } from "../store";
-import { useCallback, useContext } from "react";
-import { TabNameContext } from "../routes/common/Route";
-import { TabContext } from "../core/TabContext";
+import { useContext, useEffect, useRef } from "react";
+
+import { TabContext } from "#/core/TabContext";
+import { TabNameContext } from "#/routes/common/Route";
+import { useAppSelector } from "#/store";
 
 export function useBuildGeneralBrowseLink() {
   const { tabRef } = useContext(TabContext);
@@ -10,19 +11,18 @@ export function useBuildGeneralBrowseLink() {
   );
 
   const tabName = useContext(TabNameContext);
+  const tabNameRef = useRef(tabName);
 
-  const buildGeneralBrowseLink = useCallback(
-    (path: string) => {
-      const tab = tabName || tabRef?.current;
-      // /settings/lemmy.world is invalid. Posts tab is special case
-      if (tab !== "posts" && (!path || path === "/")) return `/${tab}`;
+  useEffect(() => {
+    // tab should never dynamically change for a rendered buildGeneralBrowseLink tab. So don't re-render buildGeneralBrowseLink
+    tabNameRef.current = tabName;
+  });
 
-      return `/${tab}/${connectedInstance}${path}`;
-    },
-    // tab should never dynamically change for a rendered buildGeneralBrowseLink tab. So don't re-render
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [connectedInstance],
-  );
+  return function buildGeneralBrowseLink(path: string) {
+    const tab = tabNameRef.current || tabRef?.current;
+    // /settings/lemmy.world is invalid. Posts tab is special case
+    if (tab !== "posts" && (!path || path === "/")) return `/${tab}`;
 
-  return buildGeneralBrowseLink;
+    return `/${tab}/${connectedInstance}${path}`;
+  };
 }

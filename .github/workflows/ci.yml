@@ -1,15 +1,15 @@
 name: ci
 
-permissions: {}
-
 on:
   push:
     branches:
       - main
+      - release/*
   pull_request:
     branches:
       - main
-  workflow_dispatch: {}
+      - release/*
+  workflow_dispatch:
 
 jobs:
   ci:
@@ -20,7 +20,7 @@ jobs:
       - run: corepack enable
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: 📦 Install dependencies

@@ -1,20 +1,20 @@
-import React, { useCallback, useEffect } from "react";
-import { useAppDispatch, useAppSelector } from "../store";
-import { updateConnectedInstance } from "../features/auth/authSlice";
+import { useDocumentVisibility, useInterval } from "@mantine/hooks";
+import React, {
+  useCallback,
+  useEffect,
+  experimental_useEffectEvent as useEffectEvent,
+} from "react";
 import { useLocation } from "react-router";
-import { getInboxCounts, syncMessages } from "../features/inbox/inboxSlice";
-import { useInterval } from "usehooks-ts";
-import usePageVisibility from "../helpers/usePageVisibility";
-import { getDefaultServer } from "../services/app";
-import BackgroundReportSync from "../features/moderation/BackgroundReportSync";
-import { getSiteIfNeeded, isAdminSelector } from "../features/auth/siteSlice";
-import { instanceSelector, jwtSelector } from "../features/auth/authSelectors";
 
-interface AuthProps {
-  children: React.ReactNode;
-}
+import { instanceSelector, jwtSelector } from "#/features/auth/authSelectors";
+import { updateConnectedInstance } from "#/features/auth/authSlice";
+import { getSiteIfNeeded, isAdminSelector } from "#/features/auth/siteSlice";
+import { getInboxCounts, syncMessages } from "#/features/inbox/inboxSlice";
+import BackgroundReportSync from "#/features/moderation/BackgroundReportSync";
+import { getDefaultServer } from "#/services/app";
+import { useAppDispatch, useAppSelector } from "#/store";
 
-export default function Auth({ children }: AuthProps) {
+export default function Auth({ children }: React.PropsWithChildren) {
   const dispatch = useAppDispatch();
   const jwt = useAppSelector(jwtSelector);
   const connectedInstance = useAppSelector(
@@ -40,7 +40,7 @@ function AuthLocation() {
   const location = useLocation();
 
   const dispatch = useAppDispatch();
-  const pageVisibility = usePageVisibility();
+  const documentState = useDocumentVisibility();
   const jwt = useAppSelector(jwtSelector);
 
   const selectedInstance = useAppSelector(instanceSelector);
@@ -53,10 +53,6 @@ function AuthLocation() {
       !!state.site.response?.my_user?.moderates.length ||
       !!isAdminSelector(state),
   );
-
-  const shouldSyncMessages = useCallback(() => {
-    return jwt && location.pathname.startsWith("/inbox/messages");
-  }, [jwt, location]);
 
   useEffect(() => {
     if (connectedInstance) return;
@@ -76,39 +72,55 @@ function AuthLocation() {
     } else {
       dispatch(updateConnectedInstance(getDefaultServer()));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+    // TODO is this right???
+  }, [connectedInstance, dispatch, location.pathname, selectedInstance]);
 
-  useInterval(
-    () => {
-      if (!pageVisibility) return;
-      if (!shouldSyncMessages()) return;
+  const shouldSyncMessages = useCallback(() => {
+    return jwt && location.pathname.startsWith("/inbox/messages");
+  }, [jwt, location.pathname]);
 
-      dispatch(syncMessages());
-    },
-    shouldSyncMessages() ? 1_000 * 15 : null,
-  );
-
-  useInterval(() => {
-    if (!pageVisibility) return;
-    if (!jwt) return;
-
-    dispatch(getInboxCounts());
-  }, 1_000 * 60);
-
-  useEffect(() => {
-    if (!pageVisibility) return;
-
-    dispatch(getInboxCounts());
-  }, [pageVisibility, jwt, dispatch]);
-
-  useEffect(() => {
-    if (!pageVisibility) return;
+  const { start, stop } = useInterval(() => {
+    if (documentState === "hidden") return;
     if (!shouldSyncMessages()) return;
 
     dispatch(syncMessages());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageVisibility]);
+  }, 1_000 * 15);
 
-  return <>{hasModdedSubs && <BackgroundReportSync />}</>;
+  const startEvent = useEffectEvent(start);
+  const stopEvent = useEffectEvent(stop);
+
+  useEffect(() => {
+    if (shouldSyncMessages()) startEvent();
+    else stopEvent();
+  }, [shouldSyncMessages]);
+
+  useInterval(
+    () => {
+      if (documentState === "hidden") return;
+      if (!jwt) return;
+
+      dispatch(getInboxCounts());
+    },
+    1_000 * 60,
+    { autoInvoke: true },
+  );
+
+  useEffect(() => {
+    if (documentState === "hidden") return;
+
+    dispatch(getInboxCounts());
+  }, [documentState, jwt, dispatch]);
+
+  const shouldSyncMessagesEvent = useEffectEvent(shouldSyncMessages);
+
+  useEffect(() => {
+    if (documentState === "hidden") return;
+    if (!shouldSyncMessagesEvent()) return;
+
+    dispatch(syncMessages());
+  }, [dispatch, documentState]);
+
+  if (!hasModdedSubs) return;
+
+  return <BackgroundReportSync />;
 }

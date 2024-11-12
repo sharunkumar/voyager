@@ -1,28 +1,30 @@
-import { styled } from "@linaria/react";
 import {
-  IonButtons,
   IonButton,
-  IonToolbar,
-  IonTitle,
+  IonButtons,
   IonContent,
   IonItem,
-  IonTextarea,
-  IonList,
-  IonToggle,
   IonLabel,
+  IonList,
+  IonTextarea,
+  IonTitle,
+  IonToggle,
+  IonToolbar,
   useIonActionSheet,
 } from "@ionic/react";
+import { styled } from "@linaria/react";
+import { addDays } from "date-fns";
 import { useEffect, useState } from "react";
-import { BanUserPayload } from "../../auth/PageContext";
-import { useAppDispatch } from "../../../store";
-import useAppToast from "../../../helpers/useAppToast";
-import { preventPhotoswipeGalleryFocusTrap } from "../../media/gallery/GalleryImg";
-import { getHandle } from "../../../helpers/lemmy";
-import AddRemoveButtons from "../../share/asImage/AddRemoveButtons";
-import { banUser } from "../../user/userSlice";
-import { Centered, Spinner } from "../../auth/login/LoginNav";
-import { buildBanFailed, buildBanned } from "../../../helpers/toastMessages";
-import AppHeader from "../../shared/AppHeader";
+
+import { BanUserPayload } from "#/features/auth/PageContext";
+import { Centered, Spinner } from "#/features/auth/login/LoginNav";
+import { preventPhotoswipeGalleryFocusTrap } from "#/features/media/gallery/GalleryImg";
+import AddRemoveButtons from "#/features/share/asImage/AddRemoveButtons";
+import AppHeader from "#/features/shared/AppHeader";
+import { banUser } from "#/features/user/userSlice";
+import { getHandle } from "#/helpers/lemmy";
+import { buildBanFailed, buildBanned } from "#/helpers/toastMessages";
+import useAppToast from "#/helpers/useAppToast";
+import { useAppDispatch } from "#/store";
 
 const Title = styled.span`
   overflow: hidden;
@@ -40,11 +42,11 @@ const BanTextContainer = styled.div`
   margin: 0 32px 32px;
 `;
 
-type BanUserProps = {
+interface BanUserProps {
   dismiss: () => void;
   setCanDismiss: (canDismiss: boolean) => void;
   item: BanUserPayload;
-};
+}
 
 export default function BanUser({
   dismiss,
@@ -91,13 +93,16 @@ export default function BanUser({
           person_id: user.id,
           community_id: community.id,
           reason,
-          expires: !permanent ? days : undefined,
+          expires: !permanent
+            ? Math.trunc(addDays(new Date(), days).getTime() / 1_000)
+            : undefined,
           remove_or_restore_data: removeContent,
           ["remove_data" as never]: removeContent, // TODO lemmy 0.19.0 and less support
         }),
       );
-    } catch (_) {
+    } catch (error) {
       presentToast(buildBanFailed(true));
+      throw error;
     } finally {
       setLoading(false);
     }

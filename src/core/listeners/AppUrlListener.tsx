@@ -1,11 +1,15 @@
 import { App } from "@capacitor/app";
-import { useEffect, useRef } from "react";
-import useLemmyUrlHandler from "../../features/shared/useLemmyUrlHandler";
-import useEvent from "../../helpers/useEvent";
-import { useAppSelector } from "../../store";
-import useAppToast from "../../helpers/useAppToast";
-import { deepLinkFailed } from "../../helpers/toastMessages";
-import { normalizeObjectUrl } from "../../features/resolve/resolveSlice";
+import {
+  useEffect,
+  experimental_useEffectEvent as useEffectEvent,
+  useRef,
+} from "react";
+
+import { normalizeObjectUrl } from "#/features/resolve/resolveSlice";
+import useLemmyUrlHandler from "#/features/shared/useLemmyUrlHandler";
+import { deepLinkFailed } from "#/helpers/toastMessages";
+import useAppToast from "#/helpers/useAppToast";
+import { useAppSelector } from "#/store";
 
 export default function AppUrlListener() {
   const { redirectToLemmyObjectIfNeeded } = useLemmyUrlHandler();
@@ -26,7 +30,7 @@ export default function AppUrlListener() {
     !connectedInstance ||
     !deepLinkReady;
 
-  const onAppUrl = useEvent(async (url: string) => {
+  const onAppUrl = async (url: string) => {
     if (notReady) {
       appUrlToOpen.current = url;
       return;
@@ -34,24 +38,30 @@ export default function AppUrlListener() {
 
     // wait for router to get into a good state before pushing
     // (needed for pushing user profiles from app startup)
-    const resolved = await redirectToLemmyObjectIfNeeded(url);
+    const result = await redirectToLemmyObjectIfNeeded(url);
 
-    if (!resolved) presentToast(deepLinkFailed);
-  });
+    if (result === "not-found") presentToast(deepLinkFailed);
+  };
+
+  const onAppUrlEvent = useEffectEvent(onAppUrl);
 
   useEffect(() => {
     App.addListener("appUrlOpen", (event) => {
-      onAppUrl(normalizeObjectUrl(event.url));
+      onAppUrlEvent(normalizeObjectUrl(event.url));
     });
-  }, [onAppUrl]);
+
+    return () => {
+      App.removeAllListeners();
+    };
+  }, []);
 
   useEffect(() => {
     if (notReady) return;
     if (!appUrlToOpen.current) return;
 
-    onAppUrl(appUrlToOpen.current);
+    onAppUrlEvent(appUrlToOpen.current);
     appUrlToOpen.current = undefined;
-  }, [notReady, onAppUrl]);
+  }, [notReady]);
 
   return null;
 }

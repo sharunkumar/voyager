@@ -1,27 +1,29 @@
 import { IonItem } from "@ionic/react";
+import { cx } from "@linaria/core";
+import { styled } from "@linaria/react";
 import { CommentView } from "lemmy-js-client";
-import React, { MouseEvent, memo, useCallback, useRef } from "react";
+import React, { MouseEvent, useRef } from "react";
 import AnimateHeight from "react-animate-height";
-import CommentContent from "./CommentContent";
-import SlidingNestedCommentVote from "../shared/sliding/SlidingNestedCommentVote";
-import { CommentEllipsisHandle } from "./CommentEllipsis";
-import { useAppSelector } from "../../store";
-import Save from "../labels/Save";
-import { ModeratableItemBannerOutlet } from "../moderation/ModeratableItem";
-import ModeratableItem from "../moderation/ModeratableItem";
-import useCanModerate from "../moderation/useCanModerate";
 import { useLongPress } from "use-long-press";
-import { filterEvents } from "../../helpers/longPress";
+
+import Save from "#/features/labels/Save";
+import { ModeratableItemBannerOutlet } from "#/features/moderation/ModeratableItem";
+import ModeratableItem from "#/features/moderation/ModeratableItem";
+import useCanModerate from "#/features/moderation/useCanModerate";
+import SlidingNestedCommentVote from "#/features/shared/sliding/SlidingNestedCommentVote";
+import { isTouchDevice } from "#/helpers/device";
 import {
   preventOnClickNavigationBug,
   stopIonicTapClick,
-} from "../../helpers/ionic";
-import { styled } from "@linaria/react";
-import { PositionedContainer } from "./elements/PositionedContainer";
-import CommentContainer from "./elements/CommentContainer";
+} from "#/helpers/ionic";
+import { filterEvents } from "#/helpers/longPress";
+import { useAppSelector } from "#/store";
+
+import CommentContent from "./CommentContent";
+import { CommentEllipsisHandle } from "./CommentEllipsis";
 import CommentHeader, { isStubComment } from "./CommentHeader";
-import { cx } from "@linaria/core";
-import { isTouchDevice } from "../../helpers/device";
+import CommentContainer from "./elements/CommentContainer";
+import { PositionedContainer } from "./elements/PositionedContainer";
 
 export const CustomIonItem = styled(IonItem)`
   scroll-margin-bottom: 35vh;
@@ -63,9 +65,7 @@ interface CommentProps {
   rootIndex?: number;
 }
 
-export default memo(Comment);
-
-function Comment({
+export default function Comment({
   comment: commentView,
   highlightedCommentId,
   depth,
@@ -98,10 +98,10 @@ function Comment({
 
   const collapsed = cannotCollapse ? false : _collapsed;
 
-  const onCommentLongPress = useCallback(() => {
+  function onCommentLongPress() {
     commentEllipsisHandleRef.current?.present();
     stopIonicTapClick();
-  }, []);
+  }
 
   const bind = useLongPress(onCommentLongPress, {
     threshold: 800,

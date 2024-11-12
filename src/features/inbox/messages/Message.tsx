@@ -1,14 +1,23 @@
-import { PrivateMessageView } from "lemmy-js-client";
-import { useAppDispatch, useAppSelector } from "../../../store";
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
-import useClient from "../../../helpers/useClient";
-import { getInboxCounts, receivedMessages } from "../inboxSlice";
 import { useIonViewDidLeave, useIonViewWillEnter } from "@ionic/react";
-import { PageContext } from "../../auth/PageContext";
-import { useLongPress } from "use-long-press";
-import Markdown from "../../shared/markdown/Markdown";
-import { styled } from "@linaria/react";
 import { css } from "@linaria/core";
+import { styled } from "@linaria/react";
+import { PrivateMessageView } from "lemmy-js-client";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  experimental_useEffectEvent as useEffectEvent,
+  useRef,
+  useState,
+} from "react";
+import { useLongPress } from "use-long-press";
+
+import { PageContext } from "#/features/auth/PageContext";
+import Markdown from "#/features/shared/markdown/Markdown";
+import useClient from "#/helpers/useClient";
+import { useAppDispatch, useAppSelector } from "#/store";
+
+import { getInboxCounts, receivedMessages } from "../inboxSlice";
 
 const Container = styled.div<{ first: boolean }>`
   position: relative; /* Setup a relative container for our pseudo elements */
@@ -125,19 +134,7 @@ export default function Message({ message, first }: MessageProps) {
 
   const bind = useLongPress(onMessageLongPress, { cancelOnMovement: 15 });
 
-  useEffect(() => {
-    if (
-      message.private_message.read ||
-      (thisIsMyMessage && !thisIsASelfMessage) ||
-      !focused
-    )
-      return;
-
-    setRead();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focused, message, thisIsMyMessage]);
-
-  async function setRead() {
+  const setReadEvent = useEffectEvent(async () => {
     if (loading) return;
 
     setLoading(true);
@@ -155,7 +152,18 @@ export default function Message({ message, first }: MessageProps) {
 
     await dispatch(receivedMessages([response.private_message_view]));
     await dispatch(getInboxCounts(true));
-  }
+  });
+
+  useEffect(() => {
+    if (
+      message.private_message.read ||
+      (thisIsMyMessage && !thisIsASelfMessage) ||
+      !focused
+    )
+      return;
+
+    setReadEvent();
+  }, [focused, message, thisIsMyMessage, thisIsASelfMessage]);
 
   return (
     <Container

@@ -1,23 +1,25 @@
+import { IonItem, IonList } from "@ionic/react";
+import { styled } from "@linaria/react";
+import { useDebouncedValue } from "@mantine/hooks";
+import { compact, sortBy, uniqBy } from "es-toolkit";
+import { Community, CommunityView } from "lemmy-js-client";
 import {
-  useCallback,
   useContext,
   useEffect,
+  experimental_useEffectEvent as useEffectEvent,
   useMemo,
   useRef,
   useState,
 } from "react";
+
+import useShowModeratorFeed from "#/features/community/list/useShowModeratorFeed";
+import { getHandle } from "#/helpers/lemmy";
+import { useBuildGeneralBrowseLink } from "#/helpers/routes";
+import useClient from "#/helpers/useClient";
+import { useOptimizedIonRouter } from "#/helpers/useOptimizedIonRouter";
+import { useAppSelector } from "#/store";
+
 import { TitleSearchContext } from "./TitleSearchProvider";
-import { useDebounceValue } from "usehooks-ts";
-import useClient from "../../../helpers/useClient";
-import { Community, CommunityView } from "lemmy-js-client";
-import { IonItem, IonList } from "@ionic/react";
-import { useAppSelector } from "../../../store";
-import { compact, sortBy, uniqBy } from "lodash";
-import { getHandle } from "../../../helpers/lemmy";
-import { useBuildGeneralBrowseLink } from "../../../helpers/routes";
-import { useOptimizedIonRouter } from "../../../helpers/useOptimizedIonRouter";
-import useShowModeratorFeed from "../list/useShowModeratorFeed";
-import { styled } from "@linaria/react";
 
 const Backdrop = styled.div`
   position: absolute;
@@ -102,7 +104,7 @@ export default function TitleSearchResults() {
   const router = useOptimizedIonRouter();
   const { search, setSearch, searching, setSearching, setOnSubmit } =
     useContext(TitleSearchContext);
-  const [debouncedSearch, setDebouncedSearch] = useDebounceValue(search, 500);
+  const [debouncedSearch] = useDebouncedValue(search, 500);
   const [searchPayload, setSearchPayload] = useState<CommunityView[]>([]);
   const client = useClient();
   const follows = useAppSelector(
@@ -118,10 +120,6 @@ export default function TitleSearchResults() {
     (state) => state.site.response?.my_user?.moderates,
   );
   const showModeratorFeed = useShowModeratorFeed();
-
-  useEffect(() => {
-    setDebouncedSearch(search);
-  }, [search, setDebouncedSearch]);
 
   const results: Result[] = useMemo(() => {
     const results = [
@@ -142,60 +140,50 @@ export default function TitleSearchResults() {
       compact([
         ...searchSpecialByName(eligibleSpecialFeeds, search),
         ...(search
-          ? sortBy(results, (r) => {
-              if (favorites.includes(getHandle(r))) {
-                return 0;
-              }
+          ? sortBy(results, [
+              (r) => {
+                if (favorites.includes(getHandle(r))) {
+                  return 0;
+                }
 
-              if (moderatedAsCommunityId?.includes(r.id)) {
-                return 1;
-              }
+                if (moderatedAsCommunityId?.includes(r.id)) {
+                  return 1;
+                }
 
-              return 2;
-            })
+                return 2;
+              },
+            ])
           : favorites),
       ]),
       (c) => (typeof c === "string" ? c : c.id),
     ).slice(0, 15);
   }, [follows, searchPayload, search, favorites, showModeratorFeed, moderates]);
 
-  useEffect(() => {
-    if (!debouncedSearch) {
-      setSearchPayload([]);
-      return;
+  const onSelect = (c: Result) => {
+    let route;
+
+    if (typeof c === "string") {
+      // favorite
+      route = buildGeneralBrowseLink(`/c/${c}`);
+    } else if ("type" in c) {
+      route = buildGeneralBrowseLink(`/${c.type}`);
+    } else {
+      route = buildGeneralBrowseLink(`/c/${getHandle(c)}`);
     }
 
-    asyncSearch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch]);
+    router.push(route, "none", "replace");
+  };
 
-  const onSelect = useCallback(
-    (c: Result) => {
-      let route;
-
-      if (typeof c === "string") {
-        // favorite
-        route = buildGeneralBrowseLink(`/c/${c}`);
-      } else if ("type" in c) {
-        route = buildGeneralBrowseLink(`/${c.type}`);
-      } else {
-        route = buildGeneralBrowseLink(`/c/${getHandle(c)}`);
-      }
-
-      router.push(route, "none", "replace");
-    },
-    [buildGeneralBrowseLink, router],
-  );
+  const onSelectEvent = useEffectEvent(onSelect);
 
   useEffect(() => {
     setOnSubmit(() => {
       if (!results.length) return;
 
-      onSelect(results[0]!);
+      onSelectEvent(results[0]!);
       setSearching(false);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [results, setSearching]);
+  }, [results, setSearching, setOnSubmit]);
 
   useEffect(() => {
     if (!searching) {
@@ -231,7 +219,7 @@ export default function TitleSearchResults() {
     };
   }, []);
 
-  async function asyncSearch() {
+  const asyncSearchEvent = useEffectEvent(async () => {
     const result = await client.search({
       q: debouncedSearch,
       limit: 20,
@@ -241,7 +229,16 @@ export default function TitleSearchResults() {
     });
 
     setSearchPayload(result.communities);
-  }
+  });
+
+  useEffect(() => {
+    if (!debouncedSearch) {
+      setSearchPayload([]);
+      return;
+    }
+
+    asyncSearchEvent();
+  }, [debouncedSearch]);
 
   function renderTitle(result: Result) {
     if (typeof result === "string") return result;

@@ -1,26 +1,34 @@
-import { forwardRef, useEffect, useRef } from "react";
-import { mergeRefs } from "react-merge-refs";
+import { useMergedRef } from "@mantine/hooks";
+import { useEffect, useRef } from "react";
+
 import { GalleryMediaProps } from "./GalleryMedia";
 
-export default forwardRef<
-  HTMLCanvasElement | HTMLImageElement,
-  GalleryMediaProps
->(function GalleryGif({ onClick, ...props }, ref) {
+interface GalleryGifProps extends GalleryMediaProps {
+  ref?: React.Ref<HTMLCanvasElement>;
+}
+
+export default function GalleryGif({
+  onClick,
+  ref,
+  ...props
+}: GalleryGifProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const syntheticImgRef = useRef<HTMLImageElement>();
 
   const loaded = useRef(false);
 
   useEffect(() => {
-    syntheticImgRef.current = new Image();
-
     if (!props.src) return;
 
-    syntheticImgRef.current.src = props.src;
+    const syntheticImg = new Image();
+    syntheticImgRef.current = syntheticImg;
+    syntheticImg.src = props.src;
 
-    syntheticImgRef.current.addEventListener("load", function () {
+    syntheticImg.addEventListener("load", function () {
       const canvas = canvasRef.current;
       if (!canvas) return;
+
+      loaded.current = true;
 
       // Clear the canvas before drawing the new image
       const ctx = canvas.getContext("2d");
@@ -28,10 +36,9 @@ export default forwardRef<
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Draw the new image
-      canvas.width = this.width;
-      canvas.height = this.height;
-      ctx.drawImage(syntheticImgRef.current!, 0, 0);
-      loaded.current = true;
+      canvas.width = syntheticImg.width;
+      canvas.height = syntheticImg.height;
+      ctx.drawImage(syntheticImg, 0, 0);
     });
   }, [props.src]);
 
@@ -41,7 +48,7 @@ export default forwardRef<
       style={props.style}
       width={0}
       height={0}
-      ref={mergeRefs([canvasRef, ref])}
+      ref={useMergedRef(canvasRef, ref)}
       onClick={(e) => {
         if (!loaded.current) return;
 
@@ -53,4 +60,4 @@ export default forwardRef<
       aria-label={props.alt}
     />
   );
-});
+}

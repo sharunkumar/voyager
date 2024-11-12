@@ -1,9 +1,9 @@
+import { IonIcon } from "@ionic/react";
 import { styled } from "@linaria/react";
+import { play, volumeHigh, volumeOff } from "ionicons/icons";
 import {
   CSSProperties,
   ChangeEvent,
-  forwardRef,
-  memo,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -12,12 +12,11 @@ import {
   useState,
 } from "react";
 import { useInView } from "react-intersection-observer";
-import useShouldAutoplay from "../../../core/listeners/network/useShouldAutoplay";
-import { IonIcon } from "@ionic/react";
-import { play, volumeHigh, volumeOff } from "ionicons/icons";
-import { PlainButton } from "../../shared/PlainButton";
-import { getVideoSrcForUrl } from "../../../helpers/url";
-import { stopIonicTapClick } from "../../../helpers/ionic";
+
+import useShouldAutoplay from "#/core/listeners/network/useShouldAutoplay";
+import { PlainButton } from "#/features/shared/PlainButton";
+import { stopIonicTapClick } from "#/helpers/ionic";
+import { getVideoSrcForUrl } from "#/helpers/url";
 
 const Container = styled.div`
   position: relative;
@@ -111,20 +110,20 @@ export interface PlayerProps {
   className?: string;
   style?: CSSProperties;
   alt?: string;
+
+  ref?: React.RefObject<HTMLVideoElement>;
 }
 
-const Player = forwardRef<HTMLVideoElement, PlayerProps>(function Player(
-  {
-    src: potentialSrc,
-    nativeControls,
-    className,
-    progress: showProgress = !nativeControls,
-    volume = true,
-    autoPlay: videoAllowedToAutoplay = true,
-    ...rest
-  },
-  forwardedRef,
-) {
+export default function Player({
+  src: potentialSrc,
+  nativeControls,
+  className,
+  progress: showProgress = !nativeControls,
+  volume = true,
+  autoPlay: videoAllowedToAutoplay = true,
+  ref,
+  ...rest
+}: PlayerProps) {
   const videoRef = useRef<HTMLVideoElement>();
 
   const [muted, setMuted] = useState(true);
@@ -138,11 +137,7 @@ const Player = forwardRef<HTMLVideoElement, PlayerProps>(function Player(
 
   const src = useMemo(() => getVideoSrcForUrl(potentialSrc), [potentialSrc]);
 
-  useImperativeHandle(
-    forwardedRef,
-    () => videoRef.current as HTMLVideoElement,
-    [],
-  );
+  useImperativeHandle(ref, () => videoRef.current as HTMLVideoElement, []);
 
   const [inViewRef, inView] = useInView({
     threshold: 0.5,
@@ -264,6 +259,4 @@ const Player = forwardRef<HTMLVideoElement, PlayerProps>(function Player(
       )}
     </Container>
   );
-});
-
-export default memo(Player);
+}

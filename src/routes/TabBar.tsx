@@ -1,11 +1,12 @@
 import { IonTabBar } from "@ionic/react";
-import { forwardRef, useRef } from "react";
-import PostsTabButton from "./tabs/buttons/PostsTabButton";
+import { styled } from "@linaria/react";
+import { ComponentProps, useRef } from "react";
+
 import InboxTabButton from "./tabs/buttons/InboxTabButton";
+import PostsTabButton from "./tabs/buttons/PostsTabButton";
 import ProfileTabButton from "./tabs/buttons/ProfileTabButton";
 import SearchTabButton from "./tabs/buttons/SearchTabButton";
 import SettingsTabButton from "./tabs/buttons/SettingsTabButton";
-import { styled } from "@linaria/react";
 
 const StyledIonTabBar = styled(IonTabBar)`
   @media (orientation: landscape) and (max-height: 450px) {
@@ -34,14 +35,12 @@ const StyledIonTabBar = styled(IonTabBar)`
   }
 `;
 
-type CustomTabBarType = typeof IonTabBar & {
-  /**
-   * Signal to Ionic that this is a tab bar component
-   */
-  isTabBar?: boolean;
-};
+/**
+ * Ionic checks `isTabBar` for custom IonTabBar components.
+ */
+TabBar.isTabBar = true;
 
-const TabBar: CustomTabBarType = forwardRef(function TabBar(props, ref) {
+export default function TabBar(props: ComponentProps<typeof IonTabBar>) {
   const longPressedRef = useRef(false);
 
   const resetLongPress = () => {
@@ -55,7 +54,6 @@ const TabBar: CustomTabBarType = forwardRef(function TabBar(props, ref) {
   return (
     <StyledIonTabBar
       {...props}
-      ref={ref}
       onClick={resetLongPress}
       onTouchEnd={(e) => {
         // stop keyboard closing when search input has text on search tab press up
@@ -69,8 +67,4 @@ const TabBar: CustomTabBarType = forwardRef(function TabBar(props, ref) {
       <SettingsTabButton tab="settings" href="/settings" {...sharedTabProps} />
     </StyledIonTabBar>
   );
-});
-
-TabBar.isTabBar = true;
-
-export default TabBar;
+}

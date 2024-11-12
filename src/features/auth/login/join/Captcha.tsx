@@ -6,19 +6,14 @@ import {
   IonSpinner,
   IonText,
 } from "@ionic/react";
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useState,
-} from "react";
-import { getClient } from "../../../../services/lemmy";
-import { GetCaptchaResponse, Register } from "lemmy-js-client";
 import { styled } from "@linaria/react";
 import { refresh, volumeHigh, volumeHighOutline } from "ionicons/icons";
-import { b64ToBlob } from "../../../../helpers/blob";
-import { PlainButton } from "../../../shared/PlainButton";
+import { GetCaptchaResponse, Register } from "lemmy-js-client";
+import { useCallback, useEffect, useImperativeHandle, useState } from "react";
+
+import { PlainButton } from "#/features/shared/PlainButton";
+import { b64ToBlob } from "#/helpers/blob";
+import { getClient } from "#/services/lemmy";
 
 const CaptchaIonList = styled(IonList)`
   position: relative;
@@ -80,12 +75,10 @@ export interface CaptchaHandle {
 
 interface CaptchaProps {
   url: string;
+  ref: React.RefObject<CaptchaHandle>;
 }
 
-export default forwardRef<CaptchaHandle, CaptchaProps>(function Captcha(
-  { url },
-  ref,
-) {
+export default function Captcha({ url, ref }: CaptchaProps) {
   const [captcha, setCaptcha] = useState<GetCaptchaResponse | undefined>();
   const [answer, setAnswer] = useState("");
   const [playing, setPlaying] = useState(false);
@@ -206,4 +199,4 @@ export default forwardRef<CaptchaHandle, CaptchaProps>(function Captcha(
       </IonList>
     </>
   );
-});
+}

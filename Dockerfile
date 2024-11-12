@@ -19,15 +19,16 @@ FROM base AS builder
 # Prepare deps
 RUN apk add --no-cache git
 
-# Prepare build deps ( ignore postinstall scripts for now )
-COPY package.json pnpm-lock.yaml ./
+# Prepare build deps
+COPY package.json pnpm-lock.yaml .npmrc ./
 COPY patches ./patches
 
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --ignore-scripts
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # Copy all source files
-COPY build.sh disable_in_app_purchases.sh index.html vite.config.ts manifest.json tsconfig.json ./
+COPY index.html vite.config.ts manifest.json tsconfig.json compilerOptions.js ./
 COPY public ./public
+COPY scripts ./scripts
 COPY src ./src
 
 # Tests
@@ -43,7 +44,7 @@ FROM docker.io/library/nginx AS runner
 
 ARG UID=911 GID=911
 
-COPY generate_config.sh /docker-entrypoint.d/generate_config.sh
+COPY scripts/docker_generate_config.sh /docker-entrypoint.d/generate_config.sh
 
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 

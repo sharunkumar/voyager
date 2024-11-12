@@ -4,15 +4,21 @@ import {
   IonSpinner,
   useIonAlert,
 } from "@ionic/react";
-import { useEffect, useState } from "react";
-import Profile from "../../features/user/Profile";
-import { GetPersonDetailsResponse } from "lemmy-js-client";
-import { useAppDispatch } from "../../store";
-import { getUser } from "../../features/user/userSlice";
-import { useBuildGeneralBrowseLink } from "../../helpers/routes";
-import { isLemmyError } from "../../helpers/lemmyErrors";
-import { useOptimizedIonRouter } from "../../helpers/useOptimizedIonRouter";
 import { styled } from "@linaria/react";
+import { GetPersonDetailsResponse } from "lemmy-js-client";
+import {
+  useCallback,
+  useEffect,
+  experimental_useEffectEvent as useEffectEvent,
+  useState,
+} from "react";
+
+import Profile from "#/features/user/Profile";
+import { getUser } from "#/features/user/userSlice";
+import { isLemmyError } from "#/helpers/lemmyErrors";
+import { useBuildGeneralBrowseLink } from "#/helpers/routes";
+import { useOptimizedIonRouter } from "#/helpers/useOptimizedIonRouter";
+import { useAppDispatch } from "#/store";
 
 export const PageContentIonSpinner = styled(IonSpinner)`
   position: relative;
@@ -40,12 +46,7 @@ export default function AsyncProfile({ handle }: AsyncProfileProps) {
   const router = useOptimizedIonRouter();
   const [present] = useIonAlert();
 
-  useEffect(() => {
-    if (handle) load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [handle]);
-
-  async function load() {
+  const load = useCallback(async () => {
     let data;
 
     try {
@@ -72,7 +73,13 @@ export default function AsyncProfile({ handle }: AsyncProfileProps) {
     }
 
     setPerson(data);
-  }
+  }, [buildGeneralBrowseLink, dispatch, handle, present, router]);
+
+  const loadEvent = useEffectEvent(load);
+
+  useEffect(() => {
+    if (handle) loadEvent();
+  }, [handle]);
 
   if (!person) return <PageContentIonSpinner />;
 
@@ -95,5 +102,5 @@ export default function AsyncProfile({ handle }: AsyncProfileProps) {
       </>
     );
 
-  return <Profile person={person} />;
+  return <Profile person={person} onPull={load} />;
 }

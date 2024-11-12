@@ -1,4 +1,4 @@
-import { useContext, useEffect } from "react";
+import { NotificationType } from "@capacitor/haptics";
 import {
   IonBackButton,
   IonButton,
@@ -9,12 +9,13 @@ import {
   IonTitle,
   IonToolbar,
 } from "@ionic/react";
-import Login from "../login/Login";
-import { useAppSelector } from "../../../../store";
-import useHapticFeedback from "../../../../helpers/useHapticFeedback";
-import { NotificationType } from "@capacitor/haptics";
-import { DynamicDismissableModalContext } from "../../../shared/DynamicDismissableModal";
-import AppHeader from "../../../shared/AppHeader";
+import { useContext, useEffect, useRef } from "react";
+
+import Login from "#/features/auth/login/login/Login";
+import AppHeader from "#/features/shared/AppHeader";
+import { DynamicDismissableModalContext } from "#/features/shared/DynamicDismissableModal";
+import useHapticFeedback from "#/helpers/useHapticFeedback";
+import { useAppSelector } from "#/store";
 
 interface JoinedProps {
   verifyEmailSent: boolean;
@@ -24,12 +25,14 @@ export default function Joined({ verifyEmailSent }: JoinedProps) {
   const vibrate = useHapticFeedback();
   const { setCanDismiss } = useContext(DynamicDismissableModalContext);
   const { url, site } = useAppSelector((state) => state.join);
+  const vibratedRef = useRef(false);
 
   useEffect(() => {
+    if (vibratedRef.current) return;
+    vibratedRef.current = true;
     vibrate({ type: NotificationType.Success });
     setCanDismiss(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [setCanDismiss, vibrate]);
 
   return (
     <>

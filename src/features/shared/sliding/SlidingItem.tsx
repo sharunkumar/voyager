@@ -1,15 +1,21 @@
 import { ImpactStyle } from "@capacitor/haptics";
 import { IonItemSlidingCustomEvent, ItemSlidingCustomEvent } from "@ionic/core";
 import { IonItemOption, IonItemOptions, IonItemSliding } from "@ionic/react";
-import React, { useCallback, useMemo, useRef, useState } from "react";
-import useHapticFeedback from "../../../helpers/useHapticFeedback";
-import { bounceAnimation } from "../animations";
-import { useAppSelector } from "../../../store";
-import { OLongSwipeTriggerPointType } from "../../../services/db";
-import ActionContents from "./ActionContents";
-import { styled } from "@linaria/react";
 import { css } from "@linaria/core";
-import useEvent from "../../../helpers/useEvent";
+import { styled } from "@linaria/react";
+import React, {
+  useEffect,
+  experimental_useEffectEvent as useEffectEvent,
+  useRef,
+  useState,
+} from "react";
+
+import useHapticFeedback from "#/helpers/useHapticFeedback";
+import { OLongSwipeTriggerPointType } from "#/services/db";
+import { useAppSelector } from "#/store";
+
+import { bounceAnimation } from "../animations";
+import ActionContents from "./ActionContents";
 
 const StyledIonItemSliding = styled(IonItemSliding)`
   overflow: initial; // sticky
@@ -54,7 +60,7 @@ const optionContainerActiveCss = css`
   ${bounceAnimation}
 `;
 
-export type SlidingItemAction = {
+export interface SlidingItemAction {
   /**
    * If `string`, it's passed to IonIcon as an icon value
    */
@@ -62,7 +68,7 @@ export type SlidingItemAction = {
   trigger: (e: TouchEvent | MouseEvent) => void;
   bgColor: string;
   slash?: boolean;
-};
+}
 
 export type ActionList = [
   // short swipe action
@@ -117,120 +123,130 @@ export default function SlidingItem({
     (state) => state.gesture.swipe.longSwipeTriggerPoint,
   );
 
-  const SECOND_ACTION_RATIO = useMemo(() => {
+  const SECOND_ACTION_RATIO = (() => {
     switch (longSwipeTriggerPoint) {
       case OLongSwipeTriggerPointType.Normal:
         return SECOND_ACTION_RATIO_NORMAL;
       case OLongSwipeTriggerPointType.Later:
         return SECOND_ACTION_RATIO_LATER;
     }
-  }, [longSwipeTriggerPoint]);
+  })();
 
   const activeActionRef = useRef(activeItemIndex);
 
-  const onIonDrag = useCallback(
-    async (e: IonItemSlidingCustomEvent<unknown>) => {
-      dragRef.current = e;
+  const onIonDrag = async (e: IonItemSlidingCustomEvent<unknown>) => {
+    dragRef.current = e;
 
-      if (!draggingRef.current) return;
+    if (!draggingRef.current) return;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ratio = (e.detail as any).ratio;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ratio = (e.detail as any).ratio;
 
-      if (Math.round(ratio) === ratio) return;
+    if (Math.round(ratio) === ratio) return;
 
-      const activeItem = getActiveItem(
-        ratio,
-        startActions,
-        endActions,
-        SECOND_ACTION_RATIO,
-      );
+    const activeItem = getActiveItem(
+      ratio,
+      startActions,
+      endActions,
+      SECOND_ACTION_RATIO,
+    );
 
-      setActiveItemIndex(activeItem);
+    setActiveItemIndex(activeItem);
 
-      if (Math.abs(activeItem) > activeActionRef.current) {
-        vibrate({ style: ImpactStyle.Light });
-      }
+    if (Math.abs(activeItem) > activeActionRef.current) {
+      vibrate({ style: ImpactStyle.Light });
+    }
 
-      activeActionRef.current = Math.abs(activeItem) as 0 | 1 | 2;
-    },
-    [SECOND_ACTION_RATIO, endActions, startActions, vibrate],
-  );
+    activeActionRef.current = Math.abs(activeItem) as 0 | 1 | 2;
+  };
 
   /*
    * Start Actions
    */
 
-  const canSwipeStart = useMemo(() => {
-    return startActions[0] || startActions[1];
-  }, [startActions]);
-  const canSwipeEnd = useMemo(() => {
-    return endActions[0] || endActions[1];
-  }, [endActions]);
+  const canSwipeStart = startActions[0] || startActions[1];
+  const canSwipeEnd = endActions[0] || endActions[1];
 
-  const currentStartActionIndex = useMemo(() => {
+  const currentStartActionIndex = (() => {
     if (!startActions[1]) return 0;
     else if (!startActions[0]) return 1;
     else return activeItemIndex === -2 ? 1 : 0;
-  }, [activeItemIndex, startActions]);
+  })();
 
-  const startActionContents = useMemo(
-    () => <ActionContents action={startActions[currentStartActionIndex]} />,
-
-    // NOTE: This caches the content so that it doesn't re-render until completely closed
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeItemIndex],
+  const [startAction, setStartAction] = useState(
+    startActions[currentStartActionIndex],
   );
+
+  const currentStartActionIndexRef = useRef(currentStartActionIndex);
+
+  useEffect(() => {
+    currentStartActionIndexRef.current = currentStartActionIndex;
+  });
+
+  const startActionsRef = useRef(startActions);
+
+  useEffect(() => {
+    startActionsRef.current = startActions;
+  });
+
+  useEffect(() => {
+    setStartAction(startActionsRef.current[currentStartActionIndexRef.current]);
+  }, [activeItemIndex]);
 
   /*
    * End Actions
    */
 
-  const currentEndActionIndex = useMemo(() => {
+  const currentEndActionIndex = (() => {
     if (!endActions[1]) return 0;
     else if (!endActions[0]) return 1;
     else return activeItemIndex === 2 ? 1 : 0;
-  }, [endActions, activeItemIndex]);
+  })();
 
-  const endActionContents = useMemo(
-    () => <ActionContents action={endActions[currentEndActionIndex]} />,
+  const [endAction, setEndAction] = useState(endActions[currentEndActionIndex]);
 
-    // NOTE: This caches the content so that it doesn't re-render until completely closed
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeItemIndex],
-  );
+  const currentEndActionIndexRef = useRef(currentEndActionIndex);
 
-  const onDragStop = useEvent(
-    useCallback(
-      async (e: TouchEvent | MouseEvent) => {
-        if (!dragRef.current) return;
-        if (!draggingRef.current) return;
+  useEffect(() => {
+    currentEndActionIndexRef.current = currentEndActionIndex;
+  });
 
-        switch (activeItemIndex) {
-          case 1:
-          case 2:
-            endActions[activeItemIndex - 1]?.trigger(e);
-            break;
-          case -1:
-          case -2:
-            startActions[-activeItemIndex - 1]?.trigger(e);
-        }
+  const endActionsRef = useRef(endActions);
 
-        dragRef.current.target.closeOpened();
-        draggingRef.current = false;
-      },
-      [endActions, activeItemIndex, startActions],
-    ),
-  );
+  useEffect(() => {
+    endActionsRef.current = endActions;
+  });
 
-  const onDragStart = useCallback(() => {
+  useEffect(() => {
+    setEndAction(endActionsRef.current[currentEndActionIndexRef.current]);
+  }, [activeItemIndex]);
+
+  const onDragStopEvent = useEffectEvent(async (e: TouchEvent | MouseEvent) => {
+    if (!dragRef.current) return;
+    if (!draggingRef.current) return;
+
+    switch (activeItemIndex) {
+      case 1:
+      case 2:
+        endActions[activeItemIndex - 1]?.trigger(e);
+        break;
+      case -1:
+      case -2:
+        startActions[-activeItemIndex - 1]?.trigger(e);
+    }
+
+    dragRef.current.target.closeOpened();
+    draggingRef.current = false;
+  });
+
+  const onDragStart = () => {
     draggingRef.current = true;
 
     setActiveItemIndex(0);
 
     const onStop = (e: MouseEvent | TouchEvent) => {
       cleanup();
-      onDragStop(e);
+      onDragStopEvent(e);
     };
 
     const cleanup = () => {
@@ -238,13 +254,13 @@ export default function SlidingItem({
       document.removeEventListener("touchend", onStop);
     };
 
-    document.addEventListener("mouseup", onDragStop);
-    document.addEventListener("touchend", onDragStop);
+    document.addEventListener("mouseup", onDragStopEvent);
+    document.addEventListener("touchend", onDragStopEvent);
 
     return cleanup;
-  }, [onDragStop]);
+  };
 
-  const startItems = useMemo(() => {
+  const startItems = (() => {
     if (!canSwipeStart) return;
 
     const startActionColor = startActions[currentStartActionIndex]?.bgColor;
@@ -258,20 +274,14 @@ export default function SlidingItem({
             }
             slot="top"
           >
-            {startActionContents}
+            <ActionContents action={startAction} />
           </OptionContainer>
         </StyledIonItemOption>
       </IonItemOptions>
     );
-  }, [
-    activeItemIndex,
-    canSwipeStart,
-    currentStartActionIndex,
-    startActionContents,
-    startActions,
-  ]);
+  })();
 
-  const endItems = useMemo(() => {
+  const endItems = (() => {
     if (!canSwipeEnd) return;
 
     const endActionColor = endActions[currentEndActionIndex]?.bgColor;
@@ -285,42 +295,25 @@ export default function SlidingItem({
             }
             slot="top"
           >
-            {endActionContents}
+            <ActionContents action={endAction} />
           </OptionContainer>
         </StyledIonItemOption>
       </IonItemOptions>
     );
-  }, [
-    activeItemIndex,
-    canSwipeEnd,
-    currentEndActionIndex,
-    endActionContents,
-    endActions,
-  ]);
+  })();
 
-  const childrenMemoized = useMemo(() => children, [children]);
+  return (
+    <StyledIonItemSliding
+      onIonDrag={onIonDrag}
+      onTouchStart={onDragStart}
+      onMouseDown={onDragStart}
+      className={className}
+    >
+      {startItems}
 
-  return useMemo(() => {
-    return (
-      <StyledIonItemSliding
-        onIonDrag={onIonDrag}
-        onTouchStart={onDragStart}
-        onMouseDown={onDragStart}
-        className={className}
-      >
-        {startItems}
+      {endItems}
 
-        {endItems}
-
-        {childrenMemoized}
-      </StyledIonItemSliding>
-    );
-  }, [
-    onIonDrag,
-    onDragStart,
-    className,
-    startItems,
-    endItems,
-    childrenMemoized,
-  ]);
+      {children}
+    </StyledIonItemSliding>
+  );
 }
