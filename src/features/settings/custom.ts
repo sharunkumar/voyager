@@ -7,6 +7,9 @@ export function custom(s: SettingsState): SettingsState {
   s.appearance.voting.voteDisplayMode = "separate";
   s.general.comments.sort = "Top";
   s.general.enableHapticFeedback = false;
+  s.general.posts.autoHideRead = true;
+  s.general.posts.showHideReadButton = true;
+  s.general.posts.sort = "TopDay";
   s.general.posts.upvoteOnSave = true;
   return s;
 }
