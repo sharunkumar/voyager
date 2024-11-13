@@ -3,10 +3,11 @@ import react from "@vitejs/plugin-react";
 import wyw from "@wyw-in-js/vite";
 import { ManifestOptions, VitePWA } from "vite-plugin-pwa";
 import svgr from "vite-plugin-svgr";
-import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 
-import compilerOptions from "./compilerOptions";
+// @ts-expect-error -- Waiting for stable typescript eslint config
+// https://eslint.org/docs/latest/use/configure/configuration-files#typescript-configuration-files
+import compilerOptions from "./compilerOptions.js";
 import manifest from "./manifest.json";
 
 const IGNORED_ROLLUP_WARNINGS = [
@@ -21,7 +22,6 @@ const IGNORED_ROLLUP_WARNINGS = [
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    tsconfigPaths(),
     react({
       babel: {
         plugins: [["babel-plugin-react-compiler", compilerOptions]],
@@ -89,6 +89,8 @@ export default defineConfig({
   },
   define: {
     APP_VERSION: JSON.stringify(process.env.npm_package_version),
+    APP_BUILD: JSON.stringify(process.env.APP_BUILD ?? ""),
+    APP_GIT_REF: JSON.stringify(process.env.APP_GIT_REF ?? ""),
     BUILD_FOSS_ONLY: !!process.env.BUILD_FOSS_ONLY,
   },
   test: {

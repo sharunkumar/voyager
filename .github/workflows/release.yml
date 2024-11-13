@@ -1,20 +1,25 @@
-name: Cut a release
+name: release
 
 on:
   workflow_dispatch:
-  # -- TESTING ONLY --
-  # push:
-  #   branches:
-  #     - inherit # todo remove, can't workflow_dispatch from branch
+    inputs:
+      release_behavior:
+        description: "If publish_release, will create a release and publish it to the release branch. If push_beta, will create a beta build and push it to the beta track."
+        required: true
+        default: "publish_release"
+        type: choice
+        options:
+          - publish_release
+          - push_beta
+  push:
+    branches:
+      - "main"
 
 env:
   APP_BUILD_OFFSET: 300
-  TAG_PREFIX: # test-
-  RELEASE_BRANCH_PREFIX: release # test-release
 
 jobs:
-  app_build_number:
-    name: Calculate app build number
+  app_build:
     runs-on: ubuntu-latest
     steps:
       - id: calculate
@@ -25,12 +30,10 @@ jobs:
     outputs:
       app_build: ${{ steps.calculate.outputs.app_build }}
 
-  validate_version:
-    needs: app_build_number
-    name: Validate version
+  app_version:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.get_current_version.outputs.version }}
+      app_version: ${{ steps.app_version.outputs.app_version }}
     steps:
       - uses: actions/checkout@v4
 
@@ -39,29 +42,27 @@ jobs:
           node-version: 22
 
       - name: Get current version from package.json
-        id: get_current_version
+        id: app_version
         run: |
           CURRENT_APP_VERSION=$(node -p "require('./package.json').version")
-          echo "version=$CURRENT_APP_VERSION" >> $GITHUB_OUTPUT
+          echo "app_version=$CURRENT_APP_VERSION" >> $GITHUB_OUTPUT
 
       - name: Verify provided version not already released
+        if: inputs.release_behavior == 'publish_release'
         run: |
           git fetch --tags
-          TAG_NAME="$TAG_PREFIX${{ steps.get_current_version.outputs.version }}"
+          TAG_NAME="${{ steps.app_version.outputs.app_version }}"
           if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
             echo "Error: Tag $TAG_NAME already exists"
             exit 1
           fi
 
-  push_release:
-    needs: [validate_version, app_build_number]
-    name: Add version to apps, push release branch and tag
+  bump_src:
+    needs: [app_build, app_version]
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false # Don't clobber the PAT below
 
       - run: corepack enable
 
@@ -71,8 +72,43 @@ jobs:
       - name: Run trapeze (update iOS and Android version/code)
         run: pnpm exec trapeze run trapeze.yaml -y
         env:
-          APP_BUILD: ${{ needs.app_build_number.outputs.app_build }}
-          APP_VERSION: ${{ needs.validate_version.outputs.version }}
+          APP_BUILD: ${{ needs.app_build.outputs.app_build }}
+          APP_VERSION: ${{ needs.app_version.outputs.app_version }}
+
+      - name: Upload bumped version artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: trapeze-artifacts
+          retention-days: 3
+          path: |
+            android
+            ios
+
+  dispatch_beta_release:
+    if: inputs.release_behavior != 'publish_release'
+    needs: [app_build, bump_src]
+    uses: ./.github/workflows/build_release.yml
+    with:
+      is_main_build: true
+      app_build: ${{ needs.app_build.outputs.app_build }}
+    secrets: inherit
+    permissions:
+      contents: write # needed for create_release, even though it won't be called
+
+  push_release:
+    needs: [bump_src, app_build, app_version]
+    runs-on: ubuntu-latest
+    if: inputs.release_behavior == 'publish_release'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false # Don't clobber the PAT below
+
+      - name: Download bumped version artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: trapeze-artifacts
 
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@cb9bde2e2525e640591a934b1fd28eef1dcaf5e5 # v6.2.0
@@ -81,6 +117,7 @@ jobs:
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
           git_user_signingkey: true
           git_commit_gpgsign: true
+          git_tag_gpgsign: true
 
       - name: Commit and push release
         env:
@@ -88,13 +125,13 @@ jobs:
         # Github doesn't trigger subsequent workflows unless push with a PAT
         run: |
           git remote set-url origin "https://${PAT_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git checkout -b "$RELEASE_BRANCH_PREFIX/${{ needs.validate_version.outputs.version }}"
+          git checkout -b "release/${{ needs.app_version.outputs.app_version }}"
           git config --global user.email "voyager.ci.noreply@harding.dev"
           git config --global user.name "Voyager CI"
           git add .
-          git commit -S -m "Release ${{ needs.validate_version.outputs.version }} (${{ needs.app_build_number.outputs.app_build }})"
-          TAG_NAME="${TAG_PREFIX}${{ needs.validate_version.outputs.version }}"
+          git commit -S -m "release: ${{ needs.app_version.outputs.app_version }} (${{ needs.app_build.outputs.app_build }})"
+          TAG_NAME="${{ needs.app_version.outputs.app_version }}"
           echo "Creating tag: $TAG_NAME"
-          git tag "$TAG_NAME"
-          git push origin "$RELEASE_BRANCH_PREFIX/${{ needs.validate_version.outputs.version }}"
+          git tag -s "$TAG_NAME" -m "release: ${{ needs.app_version.outputs.app_version }} (${{ needs.app_build.outputs.app_build }})"
+          git push origin "release/${{ needs.app_version.outputs.app_version }}"
           git push origin "$TAG_NAME"

@@ -2,7 +2,7 @@
   "name": "voyager",
   "description": "A progressive webapp Lemmy client",
   "private": true,
-  "version": "2.19.0",
+  "version": "2.19.1",
   "type": "module",
   "packageManager": "pnpm@9.12.2+sha512.22721b3a11f81661ae1ec68ce1a7b879425a1ca5b991c975b074ac220b187ce56c708fe5db69f4c962c989452eee76c82877f4ee80f474cebd61ee13461b6228",
   "scripts": {
@@ -25,6 +25,9 @@
     "upgrade:packageManager": "corepack use pnpm@latest",
     "upgrade:react": "pnpm i --save react@experimental react-dom@experimental babel-plugin-react-compiler@experimental eslint-plugin-react-compiler@experimental eslint-plugin-react-hooks@experimental",
     "release": "./scripts/release.sh"
+  },
+  "imports": {
+    "#/*": "./src/*"
   },
   "pnpm": {
     "overrides": {
