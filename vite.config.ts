@@ -1,6 +1,5 @@
 import legacy from "@vitejs/plugin-legacy";
 import react from "@vitejs/plugin-react";
-import wyw from "@wyw-in-js/vite";
 import { ManifestOptions, VitePWA } from "vite-plugin-pwa";
 import svgr from "vite-plugin-svgr";
 import { defineConfig } from "vitest/config";
@@ -10,28 +9,12 @@ import { defineConfig } from "vitest/config";
 import compilerOptions from "./compilerOptions.js";
 import manifest from "./manifest.json";
 
-const IGNORED_ROLLUP_WARNINGS = [
-  // https://github.com/Anber/wyw-in-js/issues/62
-  "contains an annotation that Rollup cannot interpret due to the position of the comment",
-  "The comment will be removed to avoid issues.",
-
-  // https://github.com/vitejs/vite/blob/fe30349d350ef08bccd56404ccc3e6d6e0a2e156/packages/vite/rollup.config.ts#L71
-  "Circular dependency",
-];
-
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react({
       babel: {
         plugins: [["babel-plugin-react-compiler", compilerOptions]],
-      },
-    }),
-    wyw({
-      displayName: process.env.NODE_ENV === "development",
-      include: ["**/*.{ts,tsx}"],
-      babelOptions: {
-        presets: ["@babel/preset-typescript", "@babel/preset-react"],
       },
     }),
     svgr(),
@@ -73,13 +56,6 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 5_000,
     rollupOptions: {
-      onwarn: (log, handler) => {
-        for (const msg in IGNORED_ROLLUP_WARNINGS) {
-          if (log.message.includes(msg)) return;
-        }
-
-        handler(log);
-      },
       output: {
         manualChunks: () => "index.js",
 
@@ -94,6 +70,9 @@ export default defineConfig({
           : {}),
       },
     },
+  },
+  esbuild: {
+    logOverride: { "unsupported-css-nesting": "silent" },
   },
   test: {
     exclude: ["**/e2e/**", "**/node_modules/**"],

@@ -10,7 +10,6 @@ import vitestPlugin from "eslint-plugin-vitest";
 import tseslint from "typescript-eslint";
 
 import compilerOptions from "./compilerOptions.js";
-import packageJson from "./package.json" with { type: "json" };
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -108,18 +107,23 @@ export default tseslint.config(
         "warn",
         {
           newlinesBetween: "always",
-          ignoreCase: false,
+          partitionByComment: true,
           type: "natural",
-          internalPattern: Object.keys(packageJson.imports).map((i) =>
-            i.endsWith("*") ? `${i}*` : i,
-          ),
+          ignoreCase: false,
+          tsconfigRootDir: ".",
           sortSideEffects: true,
           groups: [
             "builtin",
             "external",
             "internal",
             ["parent", "sibling", "index"],
+            "css-modules",
           ],
+          customGroups: {
+            value: {
+              ["css-modules"]: ["\\.module\\.css$"],
+            },
+          },
         },
       ],
 

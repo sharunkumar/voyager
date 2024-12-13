@@ -1,23 +1,22 @@
-import { cx } from "@linaria/core";
 import { CSSProperties } from "react";
 
 import Media, { MediaProps } from "#/features/media/Media";
-import useLatch from "#/helpers/useLatch";
+import { cx } from "#/helpers/css";
 import { useAppDispatch } from "#/store";
 
-import MediaPlaceholder from "./MediaPlaceholder";
 import { IMAGE_FAILED, imageFailed, imageLoaded } from "./imageSlice";
+import MediaPlaceholder from "./MediaPlaceholder";
 import { isLoadedAspectRatio } from "./useAspectRatio";
 import useMediaLoadObserver, {
   getTargetDimensions,
 } from "./useMediaLoadObserver";
 
+import mediaPlaceholderStyles from "./MediaPlaceholder.module.css";
+
 export type InlineMediaProps = Omit<MediaProps, "ref"> & {
   defaultAspectRatio?: number;
   mediaClassName?: string;
 };
-
-export const MEDIA_EL_CLASSNAME = "media";
 
 export default function InlineMedia({
   src,
@@ -28,15 +27,7 @@ export default function InlineMedia({
   ...props
 }: InlineMediaProps) {
   const dispatch = useAppDispatch();
-  const [mediaRef, currentAspectRatio] = useMediaLoadObserver(src);
-
-  /**
-   * Cross posts have different image thumbnail url when loaded, so prevent resizing by latching
-   *
-   * If the new image is different size (or errors), it will be properly updated then
-   * (IMAGE_FAILED is truthy)
-   */
-  const aspectRatio = useLatch(currentAspectRatio);
+  const [mediaRef, aspectRatio] = useMediaLoadObserver(src);
 
   function buildPlaceholderState() {
     if (aspectRatio === IMAGE_FAILED) return "error";
@@ -61,7 +52,7 @@ export default function InlineMedia({
       <Media
         {...props}
         src={src}
-        className={cx(MEDIA_EL_CLASSNAME, mediaClassName)}
+        className={cx(mediaPlaceholderStyles.media, mediaClassName)}
         style={buildStyle()}
         ref={mediaRef}
         onError={() => {

@@ -7,10 +7,10 @@
     "source.fixAll.eslint": "explicit"
   },
   "files.eol": "\n",
-  "eslint.codeActionsOnSave.rules": [
-    "perfectionist/*"
-  ],
   "[shellscript]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
-  }
+  },
+  "eslint.codeActionsOnSave.rules": ["perfectionist/*"],
+  "css.lint.validProperties": ["composes"],
+  "css.lint.vendorPrefix": "ignore"
 }

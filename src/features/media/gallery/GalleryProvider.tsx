@@ -3,7 +3,6 @@ import { compact, noop } from "es-toolkit";
 import { PostView } from "lemmy-js-client";
 import type { PreparedPhotoSwipeOptions, ZoomLevelOption } from "photoswipe";
 import PhotoSwipeLightbox from "photoswipe/lightbox";
-import "photoswipe/style.css";
 import React, {
   ComponentRef,
   createContext,
@@ -21,9 +20,9 @@ import { setPostRead } from "#/features/post/postSlice";
 import { getSafeArea, isAndroid, isNative } from "#/helpers/device";
 import { useAppDispatch } from "#/store";
 
-import type GalleryMedia from "./GalleryMedia";
 import GalleryPostActions from "./actions/GalleryPostActions";
 import ImageMoreActions from "./actions/ImageMoreActions";
+import type GalleryMedia from "./GalleryMedia";
 
 const MAX_IMAGE_WIDTH = 4000;
 
