@@ -137,6 +137,7 @@ export interface SettingsState {
       markReadOnScroll: boolean;
       showHideReadButton: boolean;
       showHiddenInCommunities: boolean;
+      neverShowReadPosts: boolean;
       autoHideRead: boolean;
       disableAutoHideInCommunities: boolean;
       infiniteScrolling: boolean;
@@ -149,6 +150,7 @@ export interface SettingsState {
     };
     media: {
       hideAltText: boolean;
+      showControlsOnOpen: boolean;
     };
     enableHapticFeedback: boolean;
     linkHandler: LinkHandlerType;
@@ -239,6 +241,7 @@ const baseState: SettingsState = custom({
     linkHandler: OLinkHandlerType.InApp,
     media: {
       hideAltText: false,
+      showControlsOnOpen: true,
     },
     noSubscribedInFeed: false,
     posts: {
@@ -248,6 +251,7 @@ const baseState: SettingsState = custom({
       disableMarkingRead: false,
       infiniteScrolling: true,
       markReadOnScroll: false,
+      neverShowReadPosts: false,
       rememberCommunitySort: false,
       showHiddenInCommunities: false,
       showHideReadButton: false,
@@ -428,6 +432,11 @@ export const settingsSlice = createSlice({
 
       db.setSetting("mark_read_on_scroll", action.payload);
     },
+    setNeverShowReadPosts(state, action: PayloadAction<boolean>) {
+      state.general.posts.neverShowReadPosts = action.payload;
+
+      db.setSetting("never_show_read_posts", action.payload);
+    },
     setNoSubscribedInFeed(state, action: PayloadAction<boolean>) {
       state.general.noSubscribedInFeed = action.payload;
       db.setSetting("no_subscribed_in_feed", action.payload);
@@ -482,6 +491,10 @@ export const settingsSlice = createSlice({
     setShowCommunityIcons(state, action: PayloadAction<boolean>) {
       state.appearance.posts.showCommunityIcons = action.payload;
       db.setSetting("show_community_icons", action.payload);
+    },
+    setShowControlsOnOpen(state, action: PayloadAction<boolean>) {
+      state.general.media.showControlsOnOpen = action.payload;
+      db.setSetting("show_controls_on_open", action.payload);
     },
     setShowHiddenInCommunities(state, action: PayloadAction<boolean>) {
       state.general.posts.showHiddenInCommunities = action.payload;
@@ -787,6 +800,7 @@ export const {
   setLargeShowVotingButtons,
   setLinkHandler,
   setMarkPostsReadOnScroll,
+  setNeverShowReadPosts,
   setNoSubscribedInFeed,
   setNsfwBlur,
   setPostAppearance,
@@ -800,6 +814,7 @@ export const {
   setShowCollapsedComment,
   setShowCommentImages,
   setShowCommunityIcons,
+  setShowControlsOnOpen,
   setShowHiddenInCommunities,
   setShowHideReadButton,
   setShowJumpButton,
@@ -892,6 +907,7 @@ function hydrateStateWithGlobalSettings(
       linkHandler: settings.link_handler,
       media: {
         hideAltText: settings.hide_alt_text,
+        showControlsOnOpen: settings.show_controls_on_open,
       },
       noSubscribedInFeed: settings.no_subscribed_in_feed,
       posts: {
@@ -901,6 +917,7 @@ function hydrateStateWithGlobalSettings(
         disableMarkingRead: settings.disable_marking_posts_read,
         infiniteScrolling: settings.infinite_scrolling,
         markReadOnScroll: settings.mark_read_on_scroll,
+        neverShowReadPosts: settings.never_show_read_posts,
         rememberCommunitySort: settings.remember_community_post_sort,
         showHiddenInCommunities: settings.show_hidden_in_communities,
         showHideReadButton: settings.show_hide_read_button,

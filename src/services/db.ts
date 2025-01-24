@@ -353,6 +353,7 @@ export interface GlobalSettingValueTypes {
   large_show_voting_buttons: boolean;
   link_handler: LinkHandlerType;
   mark_read_on_scroll: boolean;
+  never_show_read_posts: boolean;
   no_subscribed_in_feed: boolean;
   post_appearance_type: PostAppearanceType;
   prefer_native_apps: boolean;
@@ -364,6 +365,7 @@ export interface GlobalSettingValueTypes {
   show_collapsed_comment: boolean;
   show_comment_images: boolean;
   show_community_icons: boolean;
+  show_controls_on_open: boolean;
   show_hidden_in_communities: boolean;
   show_hide_read_button: boolean;
   show_jump_button: boolean;
@@ -456,8 +458,10 @@ export const ALL_GLOBAL_SETTINGS = arrayOfAll<keyof GlobalSettingValueTypes>()([
   "upvote_on_save",
   "user_instance_url_display",
   "vote_display_mode",
+  "never_show_read_posts",
   "votes_theme",
   "hide_alt_text",
+  "show_controls_on_open",
 ]);
 
 export interface ISettingItem<T extends keyof SettingValueTypes> {
