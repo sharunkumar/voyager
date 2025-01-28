@@ -42,12 +42,14 @@ import {
   OLinkHandlerType,
   OPostAppearanceType,
   OPostBlurNsfw,
+  OPostCommentShareType,
   OProfileLabelType,
   OShowSubscribedIcon,
   OTapToCollapseType,
   OVoteDisplayMode,
   PostAppearanceType,
   PostBlurNsfwType,
+  PostCommentShareType,
   ProfileLabelType,
   ShowSubscribedIcon,
   TapToCollapseType,
@@ -158,6 +160,7 @@ export interface SettingsState {
     defaultFeed: DefaultFeedType | undefined;
     noSubscribedInFeed: boolean;
     thumbnailinatorEnabled: boolean;
+    defaultShare: PostCommentShareType;
   };
   tags: {
     enabled: boolean;
@@ -237,6 +240,7 @@ const baseState: SettingsState = custom({
       touchFriendlyLinks: true,
     },
     defaultFeed: undefined,
+    defaultShare: OPostCommentShareType.Local,
     enableHapticFeedback: true,
     linkHandler: OLinkHandlerType.InApp,
     media: {
@@ -358,6 +362,10 @@ export const settingsSlice = createSlice({
     setDefaultPostSort(state, action: PayloadAction<PostSortType>) {
       state.general.posts.sort = action.payload;
       db.setSetting("default_post_sort", action.payload);
+    },
+    setDefaultShare(state, action: PayloadAction<PostCommentShareType>) {
+      state.general.defaultShare = action.payload;
+      db.setSetting("default_share", action.payload);
     },
     setDeviceMode(state, action: PayloadAction<Mode>) {
       state.appearance.deviceMode = action.payload;
@@ -784,6 +792,7 @@ export const {
   setDefaultCommentSort,
   setDefaultFeed,
   setDefaultPostSort,
+  setDefaultShare,
   setDeviceMode,
   setDisableAutoHideInCommunities,
   setDisableMarkingPostsRead,
@@ -903,6 +912,7 @@ function hydrateStateWithGlobalSettings(
         tapToCollapse: settings.tap_to_collapse,
         touchFriendlyLinks: settings.touch_friendly_links,
       },
+      defaultShare: settings.default_share,
       enableHapticFeedback: settings.enable_haptic_feedback,
       linkHandler: settings.link_handler,
       media: {
