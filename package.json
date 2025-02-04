@@ -2,7 +2,7 @@
   "name": "voyager",
   "description": "A progressive webapp Lemmy client",
   "private": true,
-  "version": "2.24.1",
+  "version": "2.24.2",
   "type": "module",
   "packageManager": "pnpm@10.0.0+sha512.b8fef5494bd3fe4cbd4edabd0745df2ee5be3e4b0b8b08fa643aa3e4c6702ccc0f00d68fa8a8c9858a735a0032485a44990ed2810526c875e416f001b17df12b",
   "scripts": {
@@ -75,7 +75,7 @@
     "capacitor-launch-native": "^2.0.0",
     "capacitor-plugin-safe-area": "^3.0.4",
     "capacitor-reader": "^1.0.0",
-    "capacitor-share-safari": "^0.1.0",
+    "capacitor-share-safari": "^0.1.1",
     "capacitor-stash-media": "^3.0.0",
     "capacitor-tips": "^2.0.0",
     "colorjs.io": "^0.5.2",
