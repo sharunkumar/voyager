@@ -11,5 +11,6 @@ export function custom(s: SettingsState): SettingsState {
   s.general.posts.showHideReadButton = true;
   s.general.posts.sort = "TopDay";
   s.general.posts.upvoteOnSave = true;
+  s.general.posts.markReadOnScroll = true;
   return s;
 }
