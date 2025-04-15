@@ -6,7 +6,7 @@ import { RefObject } from "react";
 import Ago from "#/features/labels/Ago";
 import Edited from "#/features/labels/Edited";
 import PersonLink from "#/features/labels/links/PersonLink";
-import Vote from "#/features/labels/Vote";
+import Vote from "#/features/labels/vote/Vote";
 import ModqueueItemActions from "#/features/moderation/ModqueueItemActions";
 import { ModeratorRole } from "#/features/moderation/useCanModerate";
 import { ActionButton } from "#/features/post/actions/ActionButton";
@@ -14,6 +14,7 @@ import ActionsContainer from "#/features/post/actions/ActionsContainer";
 import UserScore from "#/features/tags/UserScore";
 import UserTag from "#/features/tags/UserTag";
 import { cx } from "#/helpers/css";
+import { getCounts } from "#/helpers/lemmyCompat";
 import { useInModqueue } from "#/routes/pages/shared/ModqueuePage";
 import { useAppSelector } from "#/store";
 
@@ -78,7 +79,7 @@ export default function CommentHeader({
         {collapsed && (
           <>
             <div className={styles.amountCollapsed}>
-              {commentView.counts.child_count +
+              {getCounts(commentView).child_count +
                 (showCollapsedComment || stub ? 0 : 1)}
             </div>
             <IonIcon

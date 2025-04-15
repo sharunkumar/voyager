@@ -21,7 +21,7 @@ import {
   pricetag,
   reloadCircle,
 } from "ionicons/icons";
-import React, { useContext, useEffect, useRef } from "react";
+import React, { use, useEffect, useRef } from "react";
 
 import { useSetActivePage } from "#/features/auth/AppContext";
 import { userHandleSelector } from "#/features/auth/authSelectors";
@@ -66,7 +66,7 @@ export function IconBg({ color, size, children, slot }: IconBgProps) {
 
 export default function SettingsPage() {
   const databaseError = useAppSelector((state) => state.settings.databaseError);
-  const { status: updateStatus, checkForUpdates } = useContext(UpdateContext);
+  const { status: updateStatus, checkForUpdates } = use(UpdateContext);
   const shouldInstall = useShouldInstall();
   const currentHandle = useAppSelector(userHandleSelector);
   const icon = useAppSelector((state) => state.appIcon.icon);
@@ -93,13 +93,13 @@ export default function SettingsPage() {
   }, [documentState, dispatch]);
 
   return (
-    <IonPage ref={pageRef} className="grey-bg">
+    <IonPage ref={pageRef}>
       <AppHeader>
         <IonToolbar>
           <IonTitle>Settings</IonTitle>
         </IonToolbar>
       </AppHeader>
-      <AppContent scrollY fullscreen>
+      <AppContent scrollY fullscreen color="light-bg">
         <AppHeader collapse="condense">
           <IonToolbar>
             <IonTitle size="large">Settings</IonTitle>
@@ -123,7 +123,7 @@ export default function SettingsPage() {
 
         {!isNative() && (
           <IonList inset>
-            <IonItem routerLink="/settings/install">
+            <IonItem routerLink="/settings/install" button detail>
               <IconBg color="#0e7afe" slot="start">
                 <IonIcon icon={apps} />
               </IconBg>
@@ -131,7 +131,7 @@ export default function SettingsPage() {
               {shouldInstall && <IonBadge color="danger">1</IonBadge>}
             </IonItem>
 
-            <IonItem routerLink="/settings/update">
+            <IonItem routerLink="/settings/update" button detail>
               <IconBg
                 color="color(display-p3 0 0.8 0)"
                 size="1.25"
@@ -147,7 +147,7 @@ export default function SettingsPage() {
           </IonList>
         )}
         <IonList inset>
-          <IonItem routerLink="/settings/general">
+          <IonItem routerLink="/settings/general" button detail>
             <IconBg
               color="color(display-p3 0.5 0.5 0.5)"
               size="1.3"
@@ -158,7 +158,7 @@ export default function SettingsPage() {
             <IonLabel className="ion-text-nowrap">General</IonLabel>
           </IonItem>
 
-          <IonItem routerLink="/settings/appearance">
+          <IonItem routerLink="/settings/appearance" button detail>
             <IconBg color="#0e7afe" size="1.2" slot="start">
               <IonIcon icon={colorPalette} />
             </IconBg>
@@ -166,7 +166,7 @@ export default function SettingsPage() {
           </IonItem>
 
           {isNative() && (
-            <IonItem routerLink="/settings/app-icon">
+            <IonItem routerLink="/settings/app-icon" button detail>
               <img
                 src={getIconSrc(icon)}
                 slot="start"
@@ -177,7 +177,7 @@ export default function SettingsPage() {
           )}
 
           {biometricSupported && (
-            <IonItem routerLink="/settings/biometric">
+            <IonItem routerLink="/settings/biometric" button detail>
               <IconBg
                 color="color(display-p3 0.86 0.1 0.2)"
                 size="1.1"
@@ -192,7 +192,7 @@ export default function SettingsPage() {
           )}
 
           {currentHandle && (
-            <IonItem routerLink="/settings/blocks">
+            <IonItem routerLink="/settings/blocks" button detail>
               <IconBg
                 color="color(display-p3 0 0.75 0.3)"
                 size="1.15"
@@ -204,14 +204,14 @@ export default function SettingsPage() {
             </IonItem>
           )}
 
-          <IonItem routerLink="/settings/tags">
+          <IonItem routerLink="/settings/tags" button detail>
             <IconBg color="color(display-p3 1 0.3 1)" size="1" slot="start">
               <IonIcon icon={pricetag} />
             </IconBg>
             <IonLabel className="ion-text-nowrap">User Tags</IonLabel>
           </IonItem>
 
-          <IonItem routerLink="/settings/gestures">
+          <IonItem routerLink="/settings/gestures" button detail>
             <IconBg
               color="color(display-p3 0.55 0.15 1)"
               size="1.3"
@@ -224,7 +224,7 @@ export default function SettingsPage() {
         </IonList>
 
         <IonList inset>
-          <IonItem routerLink="/settings/reddit-migrate">
+          <IonItem routerLink="/settings/reddit-migrate" button detail>
             <IconBg color="#ff5700" slot="start">
               <IonIcon icon={bagCheck} />
             </IconBg>
@@ -233,7 +233,7 @@ export default function SettingsPage() {
         </IonList>
 
         <IonList inset>
-          <IonItem routerLink="/settings/about">
+          <IonItem routerLink="/settings/about" button detail>
             <IconBg color="#0e7afe" size="1.15" slot="start">
               <IonIcon icon={at} />
             </IconBg>

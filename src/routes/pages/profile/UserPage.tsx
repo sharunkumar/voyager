@@ -16,7 +16,6 @@ import DocumentTitle from "#/features/shared/DocumentTitle";
 import AsyncProfile from "#/features/user/AsyncProfile";
 import ProfilePageActions from "#/features/user/ProfilePageActions";
 import UserPageActions from "#/features/user/UserPageActions";
-import FeedContent from "#/routes/pages/shared/FeedContent";
 import { useAppSelector } from "#/store";
 
 interface UserPageProps {
@@ -35,7 +34,7 @@ function UserPageContent({ handle }: UserPageProps) {
   const isSelf = handle === myUsername || handle === myHandle;
 
   return (
-    <IonPage className="grey-bg">
+    <IonPage>
       <AppHeader>
         <IonToolbar>
           <IonButtons slot="start">
@@ -54,9 +53,7 @@ function UserPageContent({ handle }: UserPageProps) {
           </IonButtons>
         </IonToolbar>
       </AppHeader>
-      <FeedContent>
-        <AsyncProfile handle={handle} />
-      </FeedContent>
+      <AsyncProfile handle={handle} />
     </IonPage>
   );
 }

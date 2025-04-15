@@ -7,7 +7,7 @@ import {
   IonToolbar,
 } from "@ionic/react";
 import { swapHorizontalSharp } from "ionicons/icons";
-import { useContext, useRef } from "react";
+import { use, useRef } from "react";
 
 import { useSetActivePage } from "#/features/auth/AppContext";
 import {
@@ -22,7 +22,6 @@ import AsyncProfile from "#/features/user/AsyncProfile";
 import LoggedOut from "#/features/user/LoggedOut";
 import ProfilePageActions from "#/features/user/ProfilePageActions";
 import { isIosTheme } from "#/helpers/device";
-import FeedContent from "#/routes/pages/shared/FeedContent";
 import { useAppSelector } from "#/store";
 
 export default function ProfilePage() {
@@ -35,14 +34,14 @@ export default function ProfilePage() {
   );
   const loggedIn = useAppSelector(loggedInSelector);
 
-  const { presentAccountSwitcher } = useContext(PageContext);
+  const { presentAccountSwitcher } = use(PageContext);
 
   useSetActivePage(pageRef, !handle);
 
   const title = handle ?? connectedInstance;
 
   return (
-    <IonPage className="grey-bg" ref={pageRef}>
+    <IonPage ref={pageRef}>
       <AppHeader>
         <IonToolbar>
           {!accountsListEmpty && (
@@ -68,13 +67,7 @@ export default function ProfilePage() {
         </IonToolbar>
       </AppHeader>
 
-      {handle ? (
-        <FeedContent>
-          <AsyncProfile handle={handle} />
-        </FeedContent>
-      ) : (
-        <LoggedOut />
-      )}
+      {handle ? <AsyncProfile handle={handle} /> : <LoggedOut />}
     </IonPage>
   );
 }

@@ -23,7 +23,7 @@ export default function ShareButton({ post }: ShareButtonProps) {
   });
 
   return (
-    <ActionButton {...bind()}>
+    <ActionButton {...bind()} onClick={(e) => e.stopPropagation()}>
       <IonIcon icon={getShareIcon()} />
     </ActionButton>
   );

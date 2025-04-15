@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { use } from "react";
 
 import { PageTypeContext } from "#/features/feed/PageTypeContext";
 import CommunityLink from "#/features/labels/links/CommunityLink";
@@ -13,14 +13,15 @@ import Crosspost from "#/features/post/crosspost/Crosspost";
 import AnnouncementIcon from "#/features/post/detail/AnnouncementIcon";
 import MoreActions from "#/features/post/shared/MoreActions";
 import MoreModActions from "#/features/post/shared/MoreModAction";
-import useCrosspostUrl from "#/features/post/shared/useCrosspostUrl";
 import { SaveButton } from "#/features/post/shared/SaveButton";
+import useCrosspostUrl from "#/features/post/shared/useCrosspostUrl";
 import { VoteButton } from "#/features/post/shared/VoteButton";
 import InlineMarkdown from "#/features/shared/markdown/InlineMarkdown";
 import { cx } from "#/helpers/css";
 import { useInModqueue } from "#/routes/pages/shared/ModqueuePage";
 import { useAppSelector } from "#/store";
 
+import ShareButton from "../../actions/ShareButton";
 import { PostProps } from "../Post";
 import PreviewStats from "../PreviewStats";
 import LargePostContents from "./LargePostContents";
@@ -45,7 +46,12 @@ export default function LargePost({ post }: PostProps) {
 
   const inModqueue = useInModqueue();
 
-  const inCommunityFeed = useContext(PageTypeContext) === "community";
+  const inCommunityFeed = use(PageTypeContext) === "community";
+
+  const isAnnouncement =
+    post.post.featured_community || post.post.featured_local;
+
+  const hasTopLabelContent = showCommunityAtTop && !inCommunityFeed;
 
   function renderPostBody() {
     if (crosspostUrl) {
@@ -61,21 +67,26 @@ export default function LargePost({ post }: PostProps) {
         <ModeratableItemBannerOutlet />
 
         <div className={styles.header}>
-          {showCommunityAtTop && !inCommunityFeed && (
+          {hasTopLabelContent && (
             <div className={styles.details}>
               <div className={styles.leftDetails}>
-                <CommunityLink
-                  community={post.community}
-                  subscribed={post.subscribed}
-                  showInstanceWhenRemote
-                  tinyIcon
-                />
+                <span className={styles.communityName}>
+                  {isAnnouncement ? <AnnouncementIcon /> : undefined}
+                  <CommunityLink
+                    community={post.community}
+                    subscribed={post.subscribed}
+                    showInstanceWhenRemote
+                    tinyIcon
+                  />
+                </span>
               </div>
             </div>
           )}
 
           <div className={styles.title}>
-            <InlineMarkdown>{post.post.name}</InlineMarkdown>{" "}
+            <InlineMarkdown parseBlocks={false}>
+              {post.post.name}
+            </InlineMarkdown>{" "}
             {isNsfw(post) && <Nsfw />}
           </div>
         </div>
@@ -85,7 +96,7 @@ export default function LargePost({ post }: PostProps) {
         <div className={styles.details}>
           <div className={styles.leftDetails}>
             <span className={styles.communityName}>
-              {post.post.featured_community || post.post.featured_local ? (
+              {isAnnouncement && !hasTopLabelContent ? (
                 <AnnouncementIcon />
               ) : undefined}
               {inCommunityFeed ? (
@@ -132,8 +143,7 @@ export default function LargePost({ post }: PostProps) {
               {!inModqueue && (
                 <>
                   <MoreModActions post={post} />
-                  <VoteButton type="up" post={post} />
-                  <VoteButton type="down" post={post} />
+                  <ShareButton post={post} />
                   <SaveButton post={post} />
                 </>
               )}

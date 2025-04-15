@@ -14,7 +14,7 @@ import {
   IonTitle,
   IonToolbar,
 } from "@ionic/react";
-import { useContext, useEffect, useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 
 import { useSetActivePage } from "#/features/auth/AppContext";
 import { MaxWidthContainer } from "#/features/shared/AppContent";
@@ -32,8 +32,7 @@ export default function UpdateAppPage() {
   const pageRef = useRef<HTMLElement>(null);
 
   const [loading, setLoading] = useState(false);
-  const { status, checkForUpdates, updateServiceWorker } =
-    useContext(UpdateContext);
+  const { status, checkForUpdates, updateServiceWorker } = use(UpdateContext);
 
   useSetActivePage(pageRef);
 
@@ -64,7 +63,7 @@ export default function UpdateAppPage() {
   }
 
   return (
-    <IonPage ref={pageRef} className="grey-bg">
+    <IonPage ref={pageRef}>
       <AppHeader>
         <IonToolbar>
           <IonButtons slot="start">
@@ -74,7 +73,7 @@ export default function UpdateAppPage() {
           <IonTitle>Updates</IonTitle>
         </IonToolbar>
       </AppHeader>
-      <IonContent>
+      <IonContent color="light-bg">
         <IonLoading isOpen={loading} message="Updating" />
         <IonRefresher
           slot="fixed"
@@ -101,6 +100,7 @@ export default function UpdateAppPage() {
                 href="https://github.com/aeharding/voyager/releases"
                 target="_blank"
                 rel="noopener noreferrer"
+                detail
               >
                 <IonLabel>Release notes</IonLabel>
               </IonItem>
