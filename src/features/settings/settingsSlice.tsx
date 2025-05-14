@@ -14,6 +14,7 @@ import { produce } from "immer";
 import { PostSortType } from "lemmy-js-client";
 
 import { loggedInSelector } from "#/features/auth/authSelectors";
+import { isNative } from "#/helpers/device";
 import { MAX_DEFAULT_COMMENT_DEPTH } from "#/helpers/lemmy";
 import { DeepPartial } from "#/helpers/typescript";
 import {
@@ -46,6 +47,7 @@ import {
   OProfileLabelType,
   OShowSubscribedIcon,
   OTapToCollapseType,
+  OTwoColumnLayout,
   OVoteDisplayMode,
   PostAppearanceType,
   PostBlurNsfwType,
@@ -53,6 +55,7 @@ import {
   ProfileLabelType,
   ShowSubscribedIcon,
   TapToCollapseType,
+  TwoColumnLayout,
   VoteDisplayMode,
   VotesThemeType,
 } from "#/services/db";
@@ -85,6 +88,7 @@ export interface SettingsState {
     general: {
       userInstanceUrlDisplay: InstanceUrlDisplayMode;
       profileLabel: ProfileLabelType;
+      twoColumnLayout: TwoColumnLayout;
     };
     posts: {
       blurNsfw: PostBlurNsfwType;
@@ -200,6 +204,7 @@ const baseState: SettingsState = custom({
     },
     general: {
       profileLabel: OProfileLabelType.Instance,
+      twoColumnLayout: OTwoColumnLayout.Off,
       userInstanceUrlDisplay: OInstanceUrlDisplayMode.Never,
     },
     large: {
@@ -240,7 +245,9 @@ const baseState: SettingsState = custom({
       touchFriendlyLinks: true,
     },
     defaultFeed: undefined,
-    defaultShare: OPostCommentShareType.Local,
+    defaultShare: isNative()
+      ? OPostCommentShareType.DeepLink
+      : OPostCommentShareType.Local,
     enableHapticFeedback: true,
     linkHandler: OLinkHandlerType.InApp,
     media: {
@@ -566,6 +573,10 @@ export const settingsSlice = createSlice({
       state.general.comments.touchFriendlyLinks = action.payload;
       db.setSetting("touch_friendly_links", action.payload);
     },
+    setTwoColumnLayout(state, action: PayloadAction<TwoColumnLayout>) {
+      state.appearance.general.twoColumnLayout = action.payload;
+      db.setSetting("two_column_layout", action.payload);
+    },
     setUpvoteOnSave(state, action: PayloadAction<boolean>) {
       state.general.posts.upvoteOnSave = action.payload;
 
@@ -838,6 +849,7 @@ export const {
   setThumbnailPosition,
   settingsReady,
   setTouchFriendlyLinks,
+  setTwoColumnLayout,
   setUpvoteOnSave,
   setUserDarkMode,
   setUserInstanceUrlDisplay,
@@ -874,6 +886,7 @@ function hydrateStateWithGlobalSettings(
       },
       general: {
         profileLabel: settings.profile_label,
+        twoColumnLayout: settings.two_column_layout,
         userInstanceUrlDisplay: settings.user_instance_url_display,
       },
       large: {

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { calculateIsCakeDay, calculateNewAccount } from "#/helpers/date";
+import { calculateNewAccountDays, isCakeDay } from "#/helpers/date";
 import { useAppSelector } from "#/store";
 
 import Ago from "../Ago";
@@ -17,11 +17,9 @@ export default function AgeBadge({ published }: AgeBadgeProps) {
   );
 
   const ageBadgeData = useMemo(() => {
-    const publishedDate = new Date(published);
+    if (isCakeDay(published)) return { type: "cake" } as const;
 
-    if (calculateIsCakeDay(publishedDate)) return { type: "cake" } as const;
-
-    const days = calculateNewAccount(publishedDate);
+    const days = calculateNewAccountDays(published);
 
     if (days !== undefined) {
       if (days >= 0) return { type: "new", days } as const;
