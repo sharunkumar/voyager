@@ -16,8 +16,7 @@ import { TitleSearchProvider } from "#/features/community/titleSearch/TitleSearc
 import TitleSearchResults from "#/features/community/titleSearch/TitleSearchResults";
 import useFetchCommunity from "#/features/community/useFetchCommunity";
 import useGetRandomCommunity from "#/features/community/useGetRandomCommunity";
-import { getSortDuration } from "#/features/feed/endItems/EndPost";
-import { FetchFn } from "#/features/feed/Feed";
+import { AbortLoadError, FetchFn } from "#/features/feed/Feed";
 import FeedContextProvider from "#/features/feed/FeedContext";
 import { PageTypeContext } from "#/features/feed/PageTypeContext";
 import PostCommentFeed, {
@@ -25,8 +24,10 @@ import PostCommentFeed, {
 } from "#/features/feed/PostCommentFeed";
 import { ShowHiddenPostsProvider } from "#/features/feed/postFabs/HidePostsFab";
 import PostFabs from "#/features/feed/postFabs/PostFabs";
-import PostSort from "#/features/feed/PostSort";
-import useFeedSort from "#/features/feed/sort/useFeedSort";
+import { PostSort } from "#/features/feed/sort/PostSort";
+import useFeedSort, {
+  useFeedSortParams,
+} from "#/features/feed/sort/useFeedSort";
 import useCommonPostFeedParams from "#/features/feed/useCommonPostFeedParams";
 import useFeedUpdate from "#/features/feed/useFeedUpdate";
 import PostAppearanceProvider, {
@@ -34,7 +35,6 @@ import PostAppearanceProvider, {
 } from "#/features/post/appearance/PostAppearanceProvider";
 import AppHeader from "#/features/shared/AppHeader";
 import { AppTitleHandle } from "#/features/shared/AppTitle";
-import { CenteredSpinner } from "#/features/shared/CenteredSpinner";
 import DocumentTitle from "#/features/shared/DocumentTitle";
 import { AppPage } from "#/helpers/AppPage";
 import { cx } from "#/helpers/css";
@@ -46,6 +46,7 @@ import { LIMIT } from "#/services/lemmy";
 import { useAppSelector } from "#/store";
 
 import FeedContent from "./FeedContent";
+import { formatTimeLimitedSort } from "./Sort";
 
 import styles from "./CommunityPage.module.css";
 interface CommunityPageParams {
@@ -91,27 +92,29 @@ function CommunityPageContent({ community, actor }: CommunityPageParams) {
   };
 
   const [sort, setSort] = useFeedSort("posts", postFeed);
+  const sortParams = useFeedSortParams("posts", sort);
 
   const communityView = useFetchCommunity(community);
 
   const searchbarRef = useRef<HTMLIonSearchbarElement>(null);
 
-  const fetchFn: FetchFn<PostCommentItem> = async (pageData, ...rest) => {
+  const fetchFn: FetchFn<PostCommentItem> = async (page_cursor, ...rest) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     fetchFnLastUpdated;
 
-    const { posts, next_page } = await client.getPosts(
+    if (sortParams === undefined) throw new AbortLoadError();
+
+    return client.getPosts(
       {
-        ...pageData,
+        page_cursor,
         ...commonPostFeedParams,
         limit: LIMIT,
         community_name: community,
-        sort,
+        ...sortParams,
         show_read: true,
       },
       ...rest,
     );
-    return { data: posts, next_page };
   };
 
   const onPull = async () => {
@@ -152,8 +155,6 @@ function CommunityPageContent({ community, actor }: CommunityPageParams) {
     );
 
   const feed = (() => {
-    if (!sort) return <CenteredSpinner />;
-
     return (
       <FeedSearchContext value={{ setScrolledPastSearch }}>
         <PageTypeContext value="community">
@@ -161,7 +162,7 @@ function CommunityPageContent({ community, actor }: CommunityPageParams) {
             <PostCommentFeed
               fetchFn={fetchFn}
               communityName={community}
-              sortDuration={getSortDuration(sort)}
+              formatSortDuration={() => formatTimeLimitedSort(sort)}
               header={header}
               filterHiddenPosts={!showHiddenInCommunities}
               onPull={onPull}

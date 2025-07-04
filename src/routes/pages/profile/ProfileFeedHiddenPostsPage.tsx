@@ -22,7 +22,8 @@ import { isLemmyError } from "#/helpers/lemmyErrors";
 import { useBuildGeneralBrowseLink } from "#/helpers/routes";
 import useClient from "#/helpers/useClient";
 import FeedContent from "#/routes/pages/shared/FeedContent";
-import { db, IPostMetadata } from "#/services/db";
+import { db } from "#/services/db";
+import { IPostMetadata } from "#/services/db/types";
 import store, { useAppSelector } from "#/store";
 
 // Currently, we have to fetch each post with a separate API call.
@@ -43,12 +44,12 @@ export default function ProfileFeedHiddenPostsPage() {
   const lastPageNumberRef = useRef(1);
   const lastPageItemsRef = useRef<IPostMetadata[]>([]);
 
-  const fetchFn: FetchFn<PostCommentItem> = async (pageData, ...rest) => {
+  const fetchFn: FetchFn<PostCommentItem> = async (page_cursor, ...rest) => {
     postHiddenById; // eslint-disable-line @typescript-eslint/no-unused-expressions -- Trigger rerender when this changes
 
-    if (!handle) return [];
-    if (!("page" in pageData)) return [];
-    const { page } = pageData;
+    if (!handle) return { data: [] };
+    const page = page_cursor ?? 1;
+    if (typeof page === "string") return { data: [] };
 
     const hiddenPostMetadatas = await db.getHiddenPostMetadatasPaginated(
       handle,
@@ -88,9 +89,12 @@ export default function ProfileFeedHiddenPostsPage() {
       }),
     );
 
-    return compact(result).map((post) =>
-      "post_view" in post ? post.post_view : post,
-    );
+    return {
+      data: compact(result).map((post) =>
+        "post_view" in post ? post.post_view : post,
+      ),
+      next_page: page + 1,
+    };
   };
 
   return (

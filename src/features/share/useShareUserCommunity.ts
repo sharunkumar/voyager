@@ -1,6 +1,6 @@
 import { useIonActionSheet } from "@ionic/react";
 import { uniq } from "es-toolkit";
-import { Community, Person } from "lemmy-js-client";
+import { Community, Person } from "threadiverse";
 
 import {
   buildLemmyCommunityLink,
@@ -8,12 +8,16 @@ import {
   getHandle,
   isCommunity,
 } from "#/helpers/lemmy";
-import { getApId } from "#/helpers/lemmyCompat";
 import { parseUrl } from "#/helpers/url";
-import { OPostCommentShareType } from "#/services/db";
+import { OPostCommentShareType } from "#/services/db/types";
 import { useAppSelector } from "#/store";
 
-import { buildGoVoyagerLink, GO_VOYAGER_HOST } from "./goVoyager";
+import {
+  buildFediRedirectLink,
+  FEDI_REDIRECT_SERVICE_COMPATIBLE_HOSTS,
+  getFediRedirectHostFromShareType,
+  GO_VOYAGER_HOST,
+} from "./fediRedirect";
 import { useShare } from "./share";
 
 export default function useShareUserCommunity(
@@ -42,9 +46,9 @@ export default function useShareUserCommunity(
       buttons: instanceCandidates.map((instance) => ({
         text: instance,
         handler: () => {
-          if (instance === GO_VOYAGER_HOST) {
-            const voyagerLink = buildGoVoyagerLink(getApId(item));
-            if (voyagerLink) share(voyagerLink);
+          if (FEDI_REDIRECT_SERVICE_COMPATIBLE_HOSTS.includes(instance)) {
+            const fediLink = buildFediRedirectLink(instance, item.actor_id);
+            if (fediLink) share(fediLink);
             return;
           }
 
@@ -66,7 +70,7 @@ export default function useShareUserCommunity(
         return share(buildLink(instance, getHandle(item)));
       }
       default: {
-        return share(getApId(item));
+        return share(item.actor_id);
       }
     }
   }
@@ -77,7 +81,7 @@ export default function useShareUserCommunity(
     switch (defaultShare) {
       case OPostCommentShareType.ApId:
       case OPostCommentShareType.Community: {
-        await share(getApId(item));
+        await share(item.actor_id);
         break;
       }
       case OPostCommentShareType.Ask:
@@ -87,8 +91,13 @@ export default function useShareUserCommunity(
         await shareInstance(connectedInstance);
         break;
       case OPostCommentShareType.DeepLink:
-        await share(buildGoVoyagerLink(getApId(item))!);
+      case OPostCommentShareType.Threadiverse: {
+        const fediRedirectHost = getFediRedirectHostFromShareType(defaultShare);
+        if (!fediRedirectHost) break;
+
+        await share(buildFediRedirectLink(fediRedirectHost, item.actor_id)!);
         break;
+      }
     }
   }
 
@@ -106,7 +115,7 @@ function generateUserCommunityInstanceCandidates(
 
   candidates.push(connectedInstance);
 
-  const communityActorHostname = parseUrl(getApId(community))?.hostname;
+  const communityActorHostname = parseUrl(community.actor_id)?.hostname;
   if (communityActorHostname) candidates.push(communityActorHostname);
 
   return uniq(candidates);

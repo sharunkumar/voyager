@@ -3,7 +3,6 @@ import { useImperativeHandle, useRef, useState } from "react";
 
 import { followCommunity } from "#/features/community/communitySlice";
 import { getCommunityHandleFromActorId } from "#/helpers/lemmy";
-import { getApId } from "#/helpers/lemmyCompat";
 import { subscribedStarterPacks } from "#/helpers/toastMessages";
 import { parseUrl } from "#/helpers/url";
 import useAppToast from "#/helpers/useAppToast";
@@ -42,10 +41,6 @@ export default function BulkSubscriber({
 
   const pendingRef = useRef<string[]>([]);
 
-  useImperativeHandle(ref, () => ({
-    submit,
-  }));
-
   function submit(packs: PackType[]) {
     setIsLoading(true);
 
@@ -60,7 +55,7 @@ export default function BulkSubscriber({
           ];
 
         if (community) return community.subscribed === "NotSubscribed";
-        if (follows?.find((f) => getApId(f.community) === ap_id)) return false;
+        if (follows?.find((f) => f.community.actor_id === ap_id)) return false;
 
         return true;
       });
@@ -118,6 +113,10 @@ export default function BulkSubscriber({
 
     onNext();
   }
+
+  useImperativeHandle(ref, () => ({
+    submit,
+  }));
 
   return (
     <IonLoading isOpen={isLoading} message={`Subscribing ${processingLabel}`} />

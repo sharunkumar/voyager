@@ -1,5 +1,5 @@
 import { IonBackButton, IonButtons, IonTitle, IonToolbar } from "@ionic/react";
-import { PersonMentionView } from "lemmy-js-client";
+import { PersonMentionView } from "threadiverse";
 
 import { FetchFn } from "#/features/feed/Feed";
 import InboxFeed from "#/features/feed/InboxFeed";
@@ -17,20 +17,19 @@ export default function MentionsPage() {
   const dispatch = useAppDispatch();
   const client = useClient();
 
-  const fetchFn: FetchFn<PersonMentionView> = async (pageData, ...rest) => {
+  const fetchFn: FetchFn<PersonMentionView> = async (page_cursor, ...rest) => {
     const response = await client.getPersonMentions(
       {
-        ...pageData,
+        page_cursor,
         limit: LIMIT,
-        sort: "New",
         unread_only: false,
       },
       ...rest,
     );
 
-    dispatch(receivedInboxItems(response.mentions));
+    dispatch(receivedInboxItems(response.data));
 
-    return response.mentions;
+    return response;
   };
 
   return (

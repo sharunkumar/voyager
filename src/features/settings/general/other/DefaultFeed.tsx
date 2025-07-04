@@ -8,7 +8,7 @@ import {
   pinOutline,
   shieldCheckmarkOutline,
 } from "ionicons/icons";
-import { CommunityView } from "lemmy-js-client";
+import { CommunityView } from "threadiverse";
 
 import {
   handleSelector,
@@ -18,7 +18,7 @@ import SettingSelector from "#/features/settings/shared/SettingSelector";
 import CommunitySelectorModal from "#/features/shared/selectorModals/CommunitySelectorModal";
 import { useAppPageRef } from "#/helpers/AppPage";
 import { getHandle } from "#/helpers/lemmy";
-import { ODefaultFeedType } from "#/services/db";
+import { ODefaultFeedType } from "#/services/db/types";
 import { useAppDispatch, useAppSelector } from "#/store";
 
 import { updateDefaultFeed } from "../../settingsSlice";

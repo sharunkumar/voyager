@@ -4,7 +4,6 @@ import { FetchFn } from "#/features/feed/Feed";
 import InboxFeed from "#/features/feed/InboxFeed";
 import { InboxItemView } from "#/features/inbox/InboxItem";
 import {
-  getInboxItemPublished,
   receivedInboxItems,
   totalUnreadSelector,
 } from "#/features/inbox/inboxSlice";
@@ -25,61 +24,42 @@ export default function InboxPage({ showRead }: InboxPageProps) {
   const dispatch = useAppDispatch();
   const client = useClient();
   const myUserId = useAppSelector(
-    (state) =>
-      state.site.response?.my_user?.local_user_view?.local_user?.person_id,
+    (state) => state.site.response?.my_user?.local_user_view?.person.id,
   );
   const totalUnread = useAppSelector(totalUnreadSelector);
 
-  const fetchFn: FetchFn<InboxItemView> = async (pageData, ...rest) => {
+  const fetchFn: FetchFn<InboxItemView> = async (page_cursor, ...rest) => {
     if (!myUserId) throw new Error("Logged out");
 
-    const params = {
-      limit: 50,
-      ...pageData,
-      unread_only: !showRead,
-    };
-
-    const [replies, mentions, privateMessages] = await Promise.all([
-      client.getReplies(
-        {
-          ...params,
-          sort: "New",
-        },
-        ...rest,
-      ),
-      client.getPersonMentions(
-        {
-          ...params,
-          sort: "New",
-        },
-        ...rest,
-      ),
-      client.getPrivateMessages(params, ...rest),
-    ]);
-
-    const everything = [
-      ...replies.replies,
-      ...mentions.mentions,
-      ...privateMessages.private_messages.filter(
-        (message) =>
-          message.creator.id !== myUserId ||
-          message.creator.id === message.recipient.id, // if you message yourself, show it (lemmy returns as a notification)
-      ),
-    ].sort(
-      (a, b) =>
-        Date.parse(getInboxItemPublished(b)) -
-        Date.parse(getInboxItemPublished(a)),
+    const response = await client.getNotifications(
+      {
+        limit: 50,
+        page_cursor,
+        unread_only: !showRead,
+      },
+      ...rest,
     );
 
-    dispatch(receivedInboxItems(everything));
+    const filteredData = response.data.filter((notification) => {
+      if ("private_message" in notification) {
+        return (
+          notification.creator.id !== myUserId ||
+          notification.creator.id === notification.recipient.id
+        ); // if you message yourself, show it (lemmy returns as a notification)
+      }
+
+      return true;
+    });
+
+    dispatch(receivedInboxItems(filteredData));
     dispatch(
       receivedUsers([
-        ...everything.map(({ creator }) => creator),
-        ...everything.map(({ recipient }) => recipient),
+        ...filteredData.map(({ creator }) => creator),
+        ...filteredData.map(({ recipient }) => recipient),
       ]),
     );
 
-    return everything;
+    return { ...response, data: filteredData };
   };
 
   return (

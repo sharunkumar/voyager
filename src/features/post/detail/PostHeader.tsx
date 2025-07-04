@@ -1,7 +1,7 @@
 import { IonItem } from "@ionic/react";
-import { CommentView, PostView } from "lemmy-js-client";
 import { use, useCallback, useMemo, useRef } from "react";
 import AnimateHeight from "react-animate-height";
+import { CommentView, PostView } from "threadiverse";
 
 import { SharedDialogContext } from "#/features/auth/SharedDialogContext";
 import CommunityLink from "#/features/labels/links/CommunityLink";
@@ -18,14 +18,14 @@ import PostLink from "#/features/post/link/PostLink";
 import { togglePostCollapse } from "#/features/post/postSlice";
 import useCrosspostUrl from "#/features/post/shared/useCrosspostUrl";
 import useIsPostUrlMedia from "#/features/post/useIsPostUrlMedia";
-import InlineMarkdown from "#/features/shared/markdown/InlineMarkdown";
 import Markdown from "#/features/shared/markdown/Markdown";
+import PostTitleMarkdown from "#/features/shared/markdown/PostTitleMarkdown";
 import { cx } from "#/helpers/css";
 import { findIonContentScrollView } from "#/helpers/ionic";
 import { postLocked } from "#/helpers/toastMessages";
 import useAppToast from "#/helpers/useAppToast";
 import useGetAppScrollable from "#/helpers/useGetAppScrollable";
-import { OTapToCollapseType } from "#/services/db";
+import { OTapToCollapseType } from "#/services/db/types";
 import { useAppDispatch, useAppSelector } from "#/store";
 
 import AnnouncementIcon from "./AnnouncementIcon";
@@ -177,9 +177,7 @@ export default function PostHeader({
             <ModeratableItemBannerOutlet />
             <div>
               <div className={styles.title} ref={titleRef}>
-                <InlineMarkdown parseBlocks={false}>
-                  {post.post.name}
-                </InlineMarkdown>{" "}
+                <PostTitleMarkdown>{post.post.name}</PostTitleMarkdown>{" "}
                 {isNsfw(post) && <Nsfw />}
               </div>
               {showPostText && text && (

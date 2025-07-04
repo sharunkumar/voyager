@@ -1,5 +1,3 @@
-import { CommentSortType, PostSortType } from "lemmy-js-client";
-
 import styles from "./EndPost.module.css";
 
 export interface EndPostProps {
@@ -12,7 +10,7 @@ export interface EndPostProps {
    *
    * Examples: `"1 hour"` `"6 months"` `"1 week"`
    */
-  sortDuration: string | undefined;
+  formatSortDuration: (() => string | undefined) | undefined;
 
   renderCustomEmptyContent?: () => React.ReactNode;
 }
@@ -20,17 +18,19 @@ export interface EndPostProps {
 export default function EndPost({
   empty,
   communityName,
-  sortDuration,
+  formatSortDuration,
   renderCustomEmptyContent,
 }: EndPostProps) {
   const feedName = communityName ? `c/${communityName}` : "this feed";
 
   function renderError() {
     if (empty) {
+      const sortDuration = formatSortDuration?.();
+
       if (sortDuration)
         return (
           <div className={styles.container}>
-            No posts in {feedName} for last {sortDuration}.
+            No posts in {feedName} for last {sortDuration.toLowerCase()}.
           </div>
         );
 
@@ -47,31 +47,4 @@ export default function EndPost({
   }
 
   return renderError();
-}
-
-export function getSortDuration(
-  sort: PostSortType | CommentSortType | undefined,
-): string | undefined {
-  switch (sort) {
-    case "TopDay":
-      return "day";
-    case "TopHour":
-      return "hour";
-    case "TopMonth":
-      return "month";
-    case "TopNineMonths":
-      return "9 months";
-    case "TopSixHour":
-      return "6 hours";
-    case "TopSixMonths":
-      return "6 months";
-    case "TopThreeMonths":
-      return "3 months";
-    case "TopTwelveHour":
-      return "12 hours";
-    case "TopWeek":
-      return "week";
-    case "TopYear":
-      return "year";
-  }
 }

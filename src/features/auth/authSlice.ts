@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { ApplicationContext } from "capacitor-application-context";
 import { uniqBy } from "es-toolkit";
-import { Register } from "lemmy-js-client";
+import { Register } from "threadiverse";
 
 import { resetComments } from "#/features/comment/commentSlice";
 import { resetCommunities } from "#/features/community/communitySlice";
@@ -14,11 +14,11 @@ import { setDefaultFeed } from "#/features/settings/settingsSlice";
 import { resetUsers } from "#/features/user/userSlice";
 import { getRemoteHandle, parseLemmyJWT } from "#/helpers/lemmy";
 import { getDefaultServer } from "#/services/app";
-import { getClient } from "#/services/lemmy";
+import { getClient } from "#/services/client";
 import { AppDispatch, RootState } from "#/store";
 
 import { getInstanceFromHandle, instanceSelector } from "./authSelectors";
-import { receivedSite, resetSite } from "./siteSlice";
+import { getSite, resetSite } from "./siteSlice";
 
 const MULTI_ACCOUNT_STORAGE_NAME = "credentials";
 
@@ -193,14 +193,10 @@ export const register =
 
 export const addGuestInstance =
   (url: string) => async (dispatch: AppDispatch) => {
-    const client = getClient(url);
-
-    const site = await client.getSite();
-
     dispatch(resetAccountSpecificStoreData());
-    dispatch(receivedSite(site));
     dispatch(addAccount({ handle: url }));
     dispatch(updateConnectedInstance(url));
+    dispatch(getSite());
   };
 
 const addJwt =
@@ -213,9 +209,9 @@ const addJwt =
     if (!myUser) throw new Error("broke");
 
     dispatch(resetAccountSpecificStoreData());
-    dispatch(receivedSite(site));
     dispatch(addAccount({ jwt, handle: getRemoteHandle(myUser) }));
     dispatch(updateConnectedInstance(parseLemmyJWT(jwt).iss));
+    dispatch(getSite(site));
   };
 
 const resetAccountSpecificStoreData = () => (dispatch: AppDispatch) => {

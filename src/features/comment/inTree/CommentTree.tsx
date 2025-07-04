@@ -2,11 +2,10 @@ import React from "react";
 
 import { getOffsetTop, scrollIntoView } from "#/helpers/dom";
 import { CommentNodeI } from "#/helpers/lemmy";
-import { getCounts } from "#/helpers/lemmyCompat";
 import useGetAppScrollable, {
   AppScrollable,
 } from "#/helpers/useGetAppScrollable";
-import { OTapToCollapseType } from "#/services/db";
+import { OTapToCollapseType } from "#/services/db/types";
 import { useAppDispatch, useAppSelector } from "#/store";
 
 import { toggleCommentCollapseState } from "../commentSlice";
@@ -64,7 +63,7 @@ export default function CommentTree({
 
   if (
     comment.absoluteDepth - baseDepth > MAX_COMMENT_DEPTH &&
-    getCounts(comment.comment_view).child_count >= 2
+    comment.comment_view.counts.child_count >= 2
   ) {
     return (
       <ContinueThread

@@ -3,7 +3,7 @@ import {
   CommunityModeratorView,
   CommunityView,
   GetCommunityResponse,
-} from "lemmy-js-client";
+} from "threadiverse";
 
 import { clientSelector } from "#/features/auth/authSelectors";
 import { getSite } from "#/features/auth/siteSlice";
@@ -156,9 +156,9 @@ export const getTrendingCommunities =
       getState(),
     )?.listCommunities({
       type_: "All",
-      sort: "Hot",
+      sort: "Hot" as never, // TODO Piefed doesn't support Hot for communities sort, ignore for now and hopefully supported soon
       limit: 6,
     });
 
-    dispatch(recievedTrendingCommunities(trendingCommunities.communities));
+    dispatch(recievedTrendingCommunities(trendingCommunities.data));
   };

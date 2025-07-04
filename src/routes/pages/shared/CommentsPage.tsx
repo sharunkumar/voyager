@@ -1,5 +1,5 @@
 import { IonBackButton, IonButtons, IonTitle, IonToolbar } from "@ionic/react";
-import { ListingType } from "lemmy-js-client";
+import { ListingType } from "threadiverse";
 
 import { getFeedUrlName } from "#/features/community/mod/ModActions";
 import { FetchFn } from "#/features/feed/Feed";
@@ -32,10 +32,10 @@ export default function CommentsPage(props: CommentsPageProps) {
   const communityNameIfAvailable =
     "communityName" in props ? props.communityName : undefined;
 
-  const fetchFn: FetchFn<PostCommentItem> = async (pageData, ...rest) => {
-    const { comments } = await client.getComments(
+  const fetchFn: FetchFn<PostCommentItem> = async (page_cursor, ...rest) =>
+    client.getComments(
       {
-        ...pageData,
+        page_cursor,
         limit: LIMIT,
         community_name: communityNameIfAvailable,
         type_: "type" in props ? props.type : undefined,
@@ -43,8 +43,6 @@ export default function CommentsPage(props: CommentsPageProps) {
       },
       ...rest,
     );
-    return comments;
-  };
 
   const feedName = (() => {
     if ("communityName" in props) return props.communityName;

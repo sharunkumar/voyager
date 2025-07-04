@@ -15,6 +15,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { PageCursor } from "threadiverse";
 import { VListHandle } from "virtua";
 
 import { CenteredSpinner } from "#/features/shared/CenteredSpinner";
@@ -31,24 +32,19 @@ import { useRangeChange } from "./useRangeChange";
 
 const ABORT_REASON_UNMOUNT = "unmount";
 
-type PageData =
-  | {
-      page: number;
-    }
-  | {
-      page_cursor: string;
-    };
-
 export type FetchFn<I> = (
-  pageData: PageData,
+  page_cursor: PageCursor | undefined,
   options?: Pick<RequestInit, "signal">,
 ) => Promise<FetchFnResult<I>>;
 
-type FetchFnResult<I> = I[] | { data: I[]; next_page?: string };
+interface FetchFnResult<I> {
+  data: I[];
+  next_page?: PageCursor;
+}
 
 export interface FeedProps<I>
   extends Partial<
-    Pick<EndPostProps, "sortDuration" | "renderCustomEmptyContent">
+    Pick<EndPostProps, "formatSortDuration" | "renderCustomEmptyContent">
   > {
   itemsRef?: React.RefObject<I[] | undefined>;
   fetchFn: FetchFn<I>;
@@ -104,12 +100,12 @@ export default function Feed<I>({
   communityName,
   getIndex,
   limit = DEFAULT_LIMIT,
-  sortDuration,
+  formatSortDuration,
   renderCustomEmptyContent,
   onRemovedFromTop,
   onPull,
 }: FeedProps<I>) {
-  const [page, setPage] = useState<number | string>(0);
+  const [cursor, setCursor] = useState<PageCursor | undefined>();
   const [numberedPage, setNumberedPage] = useState(0);
   const [items, setItems] = useState<I[]>([]);
 
@@ -164,12 +160,10 @@ export default function Feed<I>({
 
       setLoading(true);
 
-      let currentPage = (() => {
-        if (refresh) return 1;
+      let currentCursor = (() => {
+        if (refresh) return;
 
-        if (typeof page === "number") return page + 1;
-
-        return page;
+        return cursor;
       })();
 
       let result;
@@ -178,12 +172,14 @@ export default function Feed<I>({
       abortControllerRef.current = abortController;
 
       try {
-        result = await fetchFn(withPageData(currentPage), {
+        result = await fetchFn(currentCursor, {
           signal: abortController.signal,
         });
       } catch (error) {
         // Aborted requests are expected. Silently return to avoid spamming console with DOM errors
-        // Also don't set loading to false, component will unmount
+        // Also don't set loading to false, component will unmount (or shortly rerender)
+
+        if (error instanceof AbortLoadError) return; // Aborted by implementation
         if (
           abortController.signal.aborted &&
           abortController.signal.reason === ABORT_REASON_UNMOUNT
@@ -192,19 +188,16 @@ export default function Feed<I>({
 
         setLoading(false);
         setLoadFailed(true);
+        if (refresh) setItems([]);
+
         throw error;
       } finally {
         if (abortControllerRef.current === abortController)
           abortControllerRef.current = undefined;
       }
 
-      let newPageItems;
-
-      if (Array.isArray(result)) newPageItems = result;
-      else {
-        newPageItems = result.data;
-        if (result.next_page) currentPage = result.next_page;
-      }
+      const newPageItems = result.data;
+      currentCursor = result.next_page;
 
       setLoading(false);
 
@@ -215,32 +208,41 @@ export default function Feed<I>({
       setLoadFailed(false);
       setInitialLoad(false);
 
+      function updateFilteredNewPageItems() {
+        if (!filteredNewPageItems.length) {
+          requestLoopRef.current++;
+        } else {
+          requestLoopRef.current = 0;
+        }
+      }
+
       if (refresh) {
-        setAtEnd(false);
+        setAtEnd(!currentCursor);
         setItems(filteredNewPageItems);
+        updateFilteredNewPageItems();
       } else {
         setItems((existingItems) => {
           const newItems = getIndex
             ? differenceBy(filteredNewPageItems, existingItems, getIndex)
             : filteredNewPageItems;
 
+          updateFilteredNewPageItems();
+
+          if (
+            !currentCursor ||
+            !newItems.length ||
+            requestLoopRef.current > MAX_REQUEST_LOOP
+          )
+            setAtEnd(true);
+
           return [...existingItems, ...newItems];
         });
       }
 
-      if (!filteredNewPageItems.length) {
-        requestLoopRef.current++;
-      } else {
-        requestLoopRef.current = 0;
-      }
-
-      if (!newPageItems.length || requestLoopRef.current > MAX_REQUEST_LOOP)
-        setAtEnd(true);
-
       setNumberedPage((numberedPage) => (refresh ? 1 : numberedPage + 1));
-      setPage(currentPage);
+      setCursor(currentCursor);
     },
-    [fetchFn, page, getIndex, filterOnRxFn],
+    [fetchFn, cursor, getIndex, filterOnRxFn],
   );
 
   useEffect(() => {
@@ -263,7 +265,7 @@ export default function Feed<I>({
       return;
 
     fetchMore();
-  }, [filteredItems, items, page, loading, limit, loadFailed, fetchMore]);
+  }, [filteredItems, items, cursor, loading, limit, loadFailed, fetchMore]);
 
   const virtuaHandle = useRef<VListHandle>(null);
 
@@ -316,7 +318,7 @@ export default function Feed<I>({
         <EndPost
           empty={!items.length}
           communityName={communityName}
-          sortDuration={sortDuration}
+          formatSortDuration={formatSortDuration}
           renderCustomEmptyContent={renderCustomEmptyContent}
           key="footer"
         />
@@ -387,14 +389,13 @@ export default function Feed<I>({
   );
 }
 
-function withPageData(page: number | string): PageData {
-  if (typeof page === "number") return { page };
-  return { page_cursor: page };
-}
-
-export function isFirstPage(pageData: PageData): boolean {
-  if ("page" in pageData) return pageData.page === 1;
-  return !pageData.page_cursor;
-}
-
 export const InFeedContext = createContext(false);
+
+/**
+ * When thrown in fetchFn, it will be caught and the
+ * loading state will continue.
+ *
+ * It is assumed that fetchFn will be updated very shortly
+ * after this error is thrown, once all deps are ready.
+ */
+export class AbortLoadError extends Error {}

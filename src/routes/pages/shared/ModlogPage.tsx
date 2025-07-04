@@ -1,16 +1,12 @@
 import { IonBackButton, IonButtons, IonTitle, IonToolbar } from "@ionic/react";
-import { Community, Person } from "lemmy-js-client";
 import { useEffect } from "react";
 import { useParams } from "react-router";
+import { Community, ModlogItem as ModlogItemType, Person } from "threadiverse";
 
 import useFetchCommunity from "#/features/community/useFetchCommunity";
 import Feed, { FetchFn } from "#/features/feed/Feed";
 import FeedContextProvider from "#/features/feed/FeedContext";
-import {
-  getLogDate,
-  getLogIndex,
-  ModlogItemType,
-} from "#/features/moderation/logs/helpers";
+import { getLogIndex } from "#/features/moderation/logs/helpers";
 import { ModlogItem } from "#/features/moderation/logs/ModlogItem";
 import AppHeader from "#/features/shared/AppHeader";
 import { CenteredSpinner } from "#/features/shared/CenteredSpinner";
@@ -75,21 +71,16 @@ function Modlog({ community, user }: ModlogProps) {
   const buildGeneralBrowseLink = useBuildGeneralBrowseLink();
   const client = useClient();
 
-  const fetchFn: FetchFn<ModlogItemType> = async (pageData, ...rest) => {
-    const logs = await client.getModlog(
+  const fetchFn: FetchFn<ModlogItemType> = async (page_cursor, ...rest) =>
+    client.getModlog(
       {
-        ...pageData,
+        page_cursor,
         limit: LIMIT,
         community_id: community?.id,
         other_person_id: user?.id,
       },
       ...rest,
     );
-
-    return Object.values(logs)
-      .reduce<ModlogItemType[]>((acc, current) => acc.concat(current), [])
-      .sort((a, b) => Date.parse(getLogDate(b)) - Date.parse(getLogDate(a)));
-  };
 
   function renderItemContent(item: ModlogItemType) {
     return <ModlogItem item={item} />;

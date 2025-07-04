@@ -1,7 +1,6 @@
 import { RefresherCustomEvent } from "@ionic/core";
 import { IonRefresher, IonRefresherContent, IonSpinner } from "@ionic/react";
 import { compact, differenceBy, sortBy, uniqBy } from "es-toolkit";
-import { CommentSortType, CommentView } from "lemmy-js-client";
 import React, {
   useCallback,
   useEffect,
@@ -11,9 +10,11 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { CommentView, PageCursor } from "threadiverse";
 import { VListHandle } from "virtua";
 
 import FeedLoadMoreFailed from "#/features/feed/endItems/FeedLoadMoreFailed";
+import { useFeedSortParams } from "#/features/feed/sort/useFeedSort";
 import { useRangeChange } from "#/features/feed/useRangeChange";
 import { getPost } from "#/features/post/postSlice";
 import { defaultCommentDepthSelector } from "#/features/settings/settingsSlice";
@@ -23,7 +24,6 @@ import {
   buildCommentsTreeWithMissing,
   getDepthFromCommentPath,
 } from "#/helpers/lemmy";
-import { getCounts } from "#/helpers/lemmyCompat";
 import useAppToast from "#/helpers/useAppToast";
 import useClient from "#/helpers/useClient";
 import usePreservePositionFromBottomInScrollView from "#/helpers/usePreservePositionFromBottomInScrollView";
@@ -32,6 +32,7 @@ import { isSafariFeedHackEnabled } from "#/routes/pages/shared/FeedContent";
 import { useAppDispatch, useAppSelector } from "#/store";
 
 import { receivedComments } from "../commentSlice";
+import { VgerCommentSortType } from "../CommentSort";
 import { CommentsContext } from "./CommentsContext";
 import CommentTree, { MAX_COMMENT_DEPTH } from "./CommentTree";
 import LoadParentComments from "./LoadParentComments";
@@ -50,7 +51,7 @@ interface CommentsProps {
   postId: number;
   commentPath?: string;
   threadCommentId?: string;
-  sort: CommentSortType;
+  sort: VgerCommentSortType | null | undefined;
   bottomPadding?: number;
 
   ref: React.RefObject<CommentsHandle | undefined>;
@@ -69,7 +70,7 @@ export default function Comments({
   virtualEnabled,
 }: CommentsProps) {
   const dispatch = useAppDispatch();
-  const [page, setPage] = useState(0);
+  const [cursor, setCursor] = useState<PageCursor | undefined>();
   const [loading, _setLoading] = useState(true);
   const loadingRef = useRef(false);
   const finishedPagingRef = useRef(false);
@@ -84,6 +85,10 @@ export default function Comments({
 
   const scrollViewContainerRef = useRef<HTMLDivElement>(null);
   const virtuaRef = useRef<VListHandle>(null);
+
+  const sortParams = useFeedSortParams("comments", sort);
+
+  const ready = sortParams !== undefined;
 
   const preservePositionFromBottomInScrollView =
     usePreservePositionFromBottomInScrollView(
@@ -212,8 +217,10 @@ export default function Comments({
 
   const fetchComments = useCallback(
     async (refresh = false) => {
+      if (!ready) return;
+
       if (refresh) {
-        if (page === 0 && loadingRef.current) return; // Still loading first page
+        if (!cursor && loadingRef.current) return; // Still loading first page
         finishedPagingRef.current = false;
       } else {
         if (loadingRef.current) return;
@@ -222,7 +229,7 @@ export default function Comments({
 
       let response;
 
-      const currentPage = refresh ? 1 : page + 1;
+      const currentPage = refresh ? undefined : cursor;
 
       const reqPostId = postId;
       const reqCommentId = parentCommentId;
@@ -232,14 +239,11 @@ export default function Comments({
         response = await client.getComments({
           post_id: reqPostId,
           parent_id: parentCommentId,
-          limit: 10,
-          sort,
+          ...sortParams,
           type_: "All",
-
+          limit: 60,
           max_depth: maxDepth,
-
-          saved_only: false,
-          page: currentPage,
+          page_cursor: currentPage,
         });
       } catch (error) {
         if (reqPostId === postId && reqCommentId === parentCommentId)
@@ -251,7 +255,7 @@ export default function Comments({
         setLoadFailed(true);
         if (refresh) {
           setComments([]);
-          setPage(0);
+          setCursor(undefined);
         }
 
         throw error;
@@ -259,16 +263,33 @@ export default function Comments({
         setLoading(false);
       }
 
-      dispatch(receivedComments(response.comments));
+      dispatch(receivedComments(response.data));
 
       if (reqPostId !== postId || reqCommentId !== parentCommentId) return;
 
       const existingComments = refresh ? [] : comments;
-      const newComments = differenceBy(
-        response.comments,
+
+      // Remove comments that are already received
+      let newComments = differenceBy(
+        response.data,
         existingComments,
         (c) => c.comment.id,
       );
+
+      // When paging, only append new comments in a brand new root tree. Never append to an existing tree
+      // (Prevent user losing their place in the tree)
+      newComments = newComments.filter((c) => {
+        const rootCommentId = c.comment.path.split(".")[1];
+        if (!rootCommentId) return true;
+
+        const rootComment = existingComments.find(
+          (c) => c.comment.id === +rootCommentId,
+        );
+        if (!rootComment) return true;
+
+        return false;
+      });
+
       if (!newComments.length) finishedPagingRef.current = true;
 
       const potentialComments = uniqBy(
@@ -277,7 +298,7 @@ export default function Comments({
       );
 
       setComments(potentialComments);
-      setPage(currentPage);
+      setCursor(response.next_page);
       setLoadFailed(false);
 
       if (refresh) scrolledRef.current = false;
@@ -287,11 +308,12 @@ export default function Comments({
       comments,
       dispatch,
       maxDepth,
-      page,
+      cursor,
       parentCommentId,
       postId,
       presentToast,
-      sort,
+      sortParams,
+      ready,
     ],
   );
 
@@ -336,7 +358,7 @@ export default function Comments({
               ...parent,
               counts: {
                 ...parent.counts,
-                child_count: getCounts(parent).child_count + 1,
+                child_count: parent.counts.child_count + 1,
               },
             });
           }

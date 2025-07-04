@@ -1,8 +1,8 @@
-import { PrivateMessageView } from "lemmy-js-client";
 import { FunctionComponent } from "react";
+import { PrivateMessageView } from "threadiverse";
 
 import { cx } from "#/helpers/css";
-import { SwipeActions } from "#/services/db";
+import { SwipeActions } from "#/services/db/types";
 import { useAppSelector } from "#/store";
 
 import DMActionsImpl from "./internal/impl/DMActionsImpl";

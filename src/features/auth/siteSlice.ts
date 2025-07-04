@@ -1,26 +1,36 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { GetSiteResponse } from "lemmy-js-client";
+import {
+  GetSiteResponse,
+  ProviderInfo,
+  ThreadiverseClient,
+  UnsupportedSoftwareError,
+} from "threadiverse";
 
-import { getRemoteHandle } from "#/helpers/lemmy";
 import { customBackOff } from "#/services/lemmy";
 import { AppDispatch, RootState } from "#/store";
 
-import {
-  clientSelector,
-  handleSelector,
-  userHandleSelector,
-} from "./authSelectors";
+import { clientSelector, handleSelector } from "./authSelectors";
 
 interface SiteState {
   failedAttempt: number;
   loading: boolean;
   response: GetSiteResponse | undefined;
+
+  software: ProviderInfo | undefined;
+  softwareError: boolean;
+  unsupportedSoftware: boolean;
+
+  ignoreInstanceOffline: boolean;
 }
 
 const initialState: SiteState = {
   failedAttempt: 0,
   loading: false,
   response: undefined,
+  software: undefined,
+  softwareError: false,
+  unsupportedSoftware: false,
+  ignoreInstanceOffline: false,
 };
 
 export const siteSlice = createSlice({
@@ -39,6 +49,24 @@ export const siteSlice = createSlice({
       state.loading = false;
       state.failedAttempt = 0;
     },
+    loadingSoftware(state) {
+      state.software = undefined;
+    },
+    receivedSoftware(state, action: PayloadAction<ProviderInfo>) {
+      state.software = action.payload;
+      state.softwareError = false;
+    },
+    failedSoftware(state) {
+      state.software = undefined;
+      state.softwareError = true;
+    },
+    receivedUnsupportedSoftware(state) {
+      state.unsupportedSoftware = true;
+      state.softwareError = true;
+    },
+    setIgnoreInstanceOffline(state) {
+      state.ignoreInstanceOffline = true;
+    },
     resetSite() {
       return initialState;
     },
@@ -46,8 +74,17 @@ export const siteSlice = createSlice({
 });
 
 // Action creators are generated for each case reducer function
-export const { loadingSite, failedSite, receivedSite, resetSite } =
-  siteSlice.actions;
+export const {
+  loadingSite,
+  failedSite,
+  receivedSite,
+  receivedSoftware,
+  receivedUnsupportedSoftware,
+  resetSite,
+  setIgnoreInstanceOffline,
+  loadingSoftware,
+  failedSoftware,
+} = siteSlice.actions;
 
 export default siteSlice.reducer;
 
@@ -55,8 +92,11 @@ export const isAdminSelector = (state: RootState) =>
   state.site.response?.my_user?.local_user_view.local_user.admin;
 
 export const isDownvoteEnabledSelector = (state: RootState) =>
-  // @ts-expect-error TODO required changes for lemmy v0.20.0 https://github.com/aeharding/voyager/issues/1683
-  state.site.response?.site_view.local_site.enable_downvotes !== false;
+  // TODO: handle post/comment downvotes being disabled separately, and also disabled upvotes
+  state.site.response?.site_view.local_site.comment_downvotes !== "Disable";
+
+export const localUserViewSelector = (state: RootState) =>
+  state.site.response?.my_user?.local_user_view;
 
 export const localUserSelector = (state: RootState) =>
   state.site.response?.my_user?.local_user_view.local_user;
@@ -92,15 +132,46 @@ export const getSiteIfNeeded =
     dispatch(getSite());
   };
 
-export const getSite =
+export const getSoftware =
   () => async (dispatch: AppDispatch, getState: () => RootState) => {
+    const reqId = siteReqIdSelector(getState());
+    let software;
+
+    dispatch(loadingSoftware());
+
+    try {
+      software = await clientSelector(getState()).getSoftware();
+    } catch (error) {
+      // Site or user changed before site response resolved
+      if (reqId !== siteReqIdSelector(getState())) return;
+
+      if (error instanceof UnsupportedSoftwareError) {
+        dispatch(receivedUnsupportedSoftware());
+      } else {
+        dispatch(failedSoftware());
+      }
+
+      throw error;
+    }
+
+    // Site or user changed before software response resolved
+    if (reqId !== siteReqIdSelector(getState())) return;
+
+    dispatch(receivedSoftware(software));
+  };
+
+export const getSite =
+  (existingSite?: GetSiteResponse) =>
+  async (dispatch: AppDispatch, getState: () => RootState) => {
+    dispatch(getSoftware());
+
     const reqId = siteReqIdSelector(getState());
     let site;
 
     dispatch(loadingSite());
 
     try {
-      site = await clientSelector(getState()).getSite();
+      site = existingSite ?? (await clientSelector(getState()).getSite());
     } catch (error) {
       dispatch(failedSite());
 
@@ -125,14 +196,7 @@ export const getSite =
 export const showNsfw =
   (show: boolean) =>
   async (dispatch: AppDispatch, getState: () => RootState) => {
-    // https://github.com/LemmyNet/lemmy/issues/3565
-    const person = getState().site.response?.my_user?.local_user_view.person;
-
-    if (!person || userHandleSelector(getState()) !== getRemoteHandle(person))
-      throw new Error("user mismatch");
-
     await clientSelector(getState())?.saveUserSettings({
-      avatar: person?.avatar || "",
       show_nsfw: show,
     });
 
@@ -157,3 +221,16 @@ function getSiteReqId(instance: string, handle: string | undefined) {
 
   return `${instance}-${handle}`;
 }
+
+export const modeSelector = createSelector(
+  [
+    (state: RootState) => state.site.software,
+    (state: RootState) => state.site.softwareError,
+  ],
+  (software, softwareError) => {
+    if (softwareError) return null;
+    if (!software) return undefined;
+
+    return ThreadiverseClient.resolveClient(software)?.mode ?? null;
+  },
+);

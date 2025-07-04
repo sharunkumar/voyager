@@ -1,7 +1,7 @@
-import { CommentView, PostView } from "lemmy-js-client";
 import React from "react";
+import { CommentView, PostView } from "threadiverse";
 
-import { OVoteDisplayMode } from "#/services/db";
+import { OVoteDisplayMode } from "#/services/db/types";
 import { useAppSelector } from "#/store";
 
 import HideVoteMode from "./HideVoteMode";

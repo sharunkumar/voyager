@@ -2,7 +2,8 @@ import { useState } from "react";
 
 import Feed, { FetchFn } from "#/features/feed/Feed";
 import { removeTag } from "#/features/tags/userTagSlice";
-import { db, UserTag as UserTagType } from "#/services/db";
+import { db } from "#/services/db";
+import { UserTag as UserTagType } from "#/services/db/types";
 import { LIMIT } from "#/services/lemmy";
 import { useAppDispatch } from "#/store";
 
@@ -18,19 +19,21 @@ export default function BrowseTags({ filter }: BrowseTagsProps) {
     {},
   );
 
-  const fetchFn: FetchFn<UserTagType> = async (pageData) => {
-    if (!("page" in pageData)) return [];
+  const fetchFn: FetchFn<UserTagType> = async (cursor) => {
+    if (typeof cursor === "string") throw new Error("Invalid page data");
 
-    const result = await db.getUserTagsPaginated(
-      pageData.page,
+    const page = cursor ?? 1;
+
+    const data = await db.getUserTagsPaginated(
+      page,
       LIMIT,
       filter === "tagged",
     );
 
     // Reset removed state on refresh
-    if (pageData.page === 1) setRemovedByHandle({});
+    if (!cursor) setRemovedByHandle({});
 
-    return result;
+    return { data, next_page: page + 1 };
   };
 
   function filterFn(tag: UserTagType) {

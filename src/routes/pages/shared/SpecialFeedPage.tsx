@@ -1,5 +1,5 @@
 import { IonBackButton, IonButtons, IonToolbar } from "@ionic/react";
-import { ListingType } from "lemmy-js-client";
+import { ListingType } from "threadiverse";
 
 import { followIdsSelector } from "#/features/auth/siteSlice";
 import ModActions from "#/features/community/mod/ModActions";
@@ -7,8 +7,7 @@ import TitleSearch from "#/features/community/titleSearch/TitleSearch";
 import { TitleSearchProvider } from "#/features/community/titleSearch/TitleSearchProvider";
 import TitleSearchResults from "#/features/community/titleSearch/TitleSearchResults";
 import EmptyHomeFeed from "#/features/feed/empty/home/EmptyHomeFeed";
-import { getSortDuration } from "#/features/feed/endItems/EndPost";
-import { FetchFn } from "#/features/feed/Feed";
+import { AbortLoadError, FetchFn } from "#/features/feed/Feed";
 import FeedContextProvider from "#/features/feed/FeedContext";
 import { PageTypeContext } from "#/features/feed/PageTypeContext";
 import PostCommentFeed, {
@@ -16,8 +15,10 @@ import PostCommentFeed, {
 } from "#/features/feed/PostCommentFeed";
 import { ShowHiddenPostsProvider } from "#/features/feed/postFabs/HidePostsFab";
 import PostFabs from "#/features/feed/postFabs/PostFabs";
-import PostSort from "#/features/feed/PostSort";
-import useFeedSort from "#/features/feed/sort/useFeedSort";
+import { PostSort } from "#/features/feed/sort/PostSort";
+import useFeedSort, {
+  useFeedSortParams,
+} from "#/features/feed/sort/useFeedSort";
 import SpecialFeedMoreActions from "#/features/feed/SpecialFeedMoreActions";
 import useCommonPostFeedParams from "#/features/feed/useCommonPostFeedParams";
 import useFeedUpdate from "#/features/feed/useFeedUpdate";
@@ -36,6 +37,7 @@ import { LIMIT } from "#/services/lemmy";
 import { useAppSelector } from "#/store";
 
 import { FeedContentWithColorContext } from "./FeedContent";
+import { formatTimeLimitedSort } from "./Sort";
 
 interface SpecialFeedProps {
   type: ListingType;
@@ -49,6 +51,7 @@ export default function SpecialFeedPage({ type }: SpecialFeedProps) {
 
   const postFeed = { listingType: type };
   const [sort, setSort] = useFeedSort("posts", postFeed);
+  const sortParams = useFeedSortParams("posts", sort);
 
   const followIds = useAppSelector(followIdsSelector);
   const communityByHandle = useAppSelector(
@@ -63,23 +66,23 @@ export default function SpecialFeedPage({ type }: SpecialFeedProps) {
   const filterSubscribed =
     noSubscribedInFeed && (type === "All" || type === "Local");
 
-  const fetchFn: FetchFn<PostCommentItem> = async (pageData, ...rest) => {
+  const fetchFn: FetchFn<PostCommentItem> = async (page_cursor, ...rest) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     fetchFnLastUpdated;
 
-    const { posts, next_page } = await client.getPosts(
+    if (sortParams === undefined) throw new AbortLoadError();
+
+    return client.getPosts(
       {
-        ...pageData,
+        page_cursor,
         ...commonPostFeedParams,
         limit: LIMIT,
-        sort,
+        ...sortParams,
         type_: type,
         show_read: true,
       },
       ...rest,
     );
-
-    return { data: posts, next_page };
   };
 
   function filterSubscribedFn(item: PostCommentItem) {
@@ -87,8 +90,7 @@ export default function SpecialFeedPage({ type }: SpecialFeedProps) {
 
     const potentialCommunity =
       communityByHandle[getHandle(item.community).toLowerCase()];
-    if (potentialCommunity)
-      return potentialCommunity.subscribed === "NotSubscribed";
+    if (potentialCommunity) return !potentialCommunity.subscribed;
 
     return !followIds.includes(item.community.id);
   }
@@ -97,7 +99,6 @@ export default function SpecialFeedPage({ type }: SpecialFeedProps) {
     // We need the site response to know follows in order to filter
     // subscribed communities before rendering the feed
     if (filterSubscribed && !site) return <CenteredSpinner />;
-    if (!sort) return <CenteredSpinner />;
 
     return (
       <ShowSubscribedIconContext value={type === "All" || type === "Local"}>
@@ -105,7 +106,7 @@ export default function SpecialFeedPage({ type }: SpecialFeedProps) {
           <WaitUntilPostAppearanceResolved>
             <PostCommentFeed
               fetchFn={fetchFn}
-              sortDuration={getSortDuration(sort)}
+              formatSortDuration={() => formatTimeLimitedSort(sort)}
               filterOnRxFn={filterSubscribed ? filterSubscribedFn : undefined}
               renderCustomEmptyContent={
                 type === "Subscribed" ? () => <EmptyHomeFeed /> : undefined

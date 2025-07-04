@@ -1,5 +1,5 @@
 import { IonBackButton, IonButtons, IonTitle, IonToolbar } from "@ionic/react";
-import { CommentReplyView } from "lemmy-js-client";
+import { CommentReplyView } from "threadiverse";
 
 import { FetchFn } from "#/features/feed/Feed";
 import InboxFeed from "#/features/feed/InboxFeed";
@@ -20,26 +20,25 @@ export default function RepliesPage({ type }: RepliesPageProps) {
   const dispatch = useAppDispatch();
   const client = useClient();
 
-  const fetchFn: FetchFn<CommentReplyView> = async (pageData, ...rest) => {
+  const fetchFn: FetchFn<CommentReplyView> = async (page_cursor, ...rest) => {
     // TODO - actually paginate properly if Lemmy implements
     // reply pagination filtering by comment and post
     const response = await client.getReplies(
       {
-        ...pageData,
+        page_cursor,
         limit: 50,
-        sort: "New",
         unread_only: false,
       },
       ...rest,
     );
 
-    const replies = response.replies.filter((reply) =>
+    const data = response.data.filter((reply) =>
       type === "Post" ? isPostReply(reply) : !isPostReply(reply),
     );
 
-    dispatch(receivedInboxItems(replies));
+    dispatch(receivedInboxItems(data));
 
-    return replies;
+    return { ...response, data };
   };
 
   return (

@@ -1,10 +1,11 @@
 import { useIonAlert } from "@ionic/react";
+import { differenceInMinutes } from "date-fns";
 import { pencil } from "ionicons/icons";
-import { CommentView, PostView } from "lemmy-js-client";
 import { MouseEvent } from "react";
+import { CommentView, PostView } from "threadiverse";
 
 import Stat from "#/features/post/detail/Stat";
-import { getCounts } from "#/helpers/lemmyCompat";
+import { isPost } from "#/helpers/lemmy";
 
 import { formatRelativeToNow } from "./Ago";
 
@@ -19,18 +20,26 @@ interface EditedProps {
 export default function Edited({ item, showDate, className }: EditedProps) {
   const [present] = useIonAlert();
 
-  const edited = "comment" in item ? item.comment.updated : item.post.updated;
+  const updated = isPost(item) ? item.post.updated : item.comment.updated;
+
+  const created = new Date(item.counts.published);
+
+  const edited = (() => {
+    if (!updated) return;
+
+    const edited = new Date(updated);
+
+    // Don't show as edited if changed within 5 minutes of creation
+    if (differenceInMinutes(edited, created) < 5) return;
+
+    return edited;
+  })();
 
   const editedLabelIfNeeded = (() => {
-    if (!edited) return;
     if (!showDate) return;
+    if (!edited) return;
 
-    const createdLabel = formatRelativeToNow(
-      new Date(getCounts(item).published),
-    );
-    const editedLabel = formatRelativeToNow(new Date(edited));
-
-    if (createdLabel === editedLabel) return;
+    const editedLabel = formatRelativeToNow(edited);
 
     return editedLabel;
   })();
@@ -40,9 +49,9 @@ export default function Edited({ item, showDate, className }: EditedProps) {
   function presentEdited(e: MouseEvent) {
     e.stopPropagation();
 
-    if (!edited) return;
+    if (!updated) return;
 
-    const date = new Date(edited);
+    const date = new Date(updated);
 
     present({
       header: `Edited ${formatRelativeToNow(date)} Ago`,

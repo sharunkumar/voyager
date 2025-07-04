@@ -1,11 +1,11 @@
 import { useIonAlert } from "@ionic/react";
-import { Person } from "lemmy-js-client";
 import React from "react";
+import { Person } from "threadiverse";
 
 import { getTextColorFor } from "#/helpers/color";
 import { stopIonicTapClick } from "#/helpers/ionic";
 import { getRemoteHandle } from "#/helpers/lemmy";
-import type { UserTag } from "#/services/db";
+import type { UserTag } from "#/services/db/types";
 import { useAppSelector } from "#/store";
 
 import styles from "./UserTag.module.css";

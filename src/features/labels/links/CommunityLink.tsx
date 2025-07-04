@@ -6,9 +6,9 @@ import {
   removeCircleOutline,
   tabletPortraitOutline,
 } from "ionicons/icons";
-import { Community, SubscribedType } from "lemmy-js-client";
 import { createContext, use } from "react";
 import { Link } from "react-router-dom";
+import { Community, SubscribedType } from "threadiverse";
 import { LongPressOptions, useLongPress } from "use-long-press";
 
 import useCommunityActions from "#/features/community/useCommunityActions";
@@ -21,7 +21,7 @@ import {
 } from "#/helpers/ionic";
 import { getHandle } from "#/helpers/lemmy";
 import { useBuildGeneralBrowseLink } from "#/helpers/routes";
-import { OShowSubscribedIcon } from "#/services/db";
+import { OShowSubscribedIcon } from "#/services/db/types";
 import { useAppSelector } from "#/store";
 
 import { renderHandle } from "../Handle";

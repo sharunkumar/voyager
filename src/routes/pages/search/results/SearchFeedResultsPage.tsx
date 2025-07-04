@@ -1,20 +1,23 @@
 import { IonBackButton, IonButtons, IonTitle, IonToolbar } from "@ionic/react";
 import { useParams } from "react-router";
+import { CommentView, PostView } from "threadiverse";
 
 import { receivedComments } from "#/features/comment/commentSlice";
-import { getSortDuration } from "#/features/feed/endItems/EndPost";
-import { FetchFn } from "#/features/feed/Feed";
+import { AbortLoadError, FetchFn } from "#/features/feed/Feed";
 import PostCommentFeed, {
   PostCommentItem,
 } from "#/features/feed/PostCommentFeed";
-import PostSort from "#/features/feed/PostSort";
-import useFeedSort from "#/features/feed/sort/useFeedSort";
+import { SearchSort } from "#/features/feed/sort/SearchSort";
+import useFeedSort, {
+  useFeedSortParams,
+} from "#/features/feed/sort/useFeedSort";
 import { receivedPosts } from "#/features/post/postSlice";
 import AppHeader from "#/features/shared/AppHeader";
 import { AppPage } from "#/helpers/AppPage";
 import { useBuildGeneralBrowseLink } from "#/helpers/routes";
 import useClient from "#/helpers/useClient";
 import FeedContent from "#/routes/pages/shared/FeedContent";
+import { formatTimeLimitedSort } from "#/routes/pages/shared/Sort";
 import { LIMIT } from "#/services/lemmy";
 import { useAppDispatch } from "#/store";
 
@@ -32,27 +35,42 @@ export default function SearchFeedResultsPage({
   }>();
   const buildGeneralBrowseLink = useBuildGeneralBrowseLink();
   const client = useClient();
-  const [sort, setSort] = useFeedSort("posts", {
+  const [sort, setSort] = useFeedSort("search", {
     internal: `${type}Search`,
   });
+  const sortParams = useFeedSortParams("search", sort);
 
   const search = decodeURIComponent(_encodedSearch);
 
-  const fetchFn: FetchFn<PostCommentItem> = async (pageData, ...rest) => {
+  const fetchFn: FetchFn<PostCommentItem> = async (page_cursor, ...rest) => {
+    if (sortParams === undefined) throw new AbortLoadError();
+
     const response = await client.search(
       {
-        ...pageData,
+        page_cursor,
         limit: LIMIT,
         q: search,
         type_: type,
         community_name: community,
-        sort,
+        ...sortParams,
       },
       ...rest,
     );
-    dispatch(receivedPosts(response.posts));
-    dispatch(receivedComments(response.comments));
-    return [...response.posts, ...response.comments];
+
+    const data = response.data as PostCommentItem[];
+
+    switch (type) {
+      case "Posts":
+        dispatch(receivedPosts(data as PostView[]));
+        break;
+      case "Comments":
+        dispatch(receivedComments(data as CommentView[]));
+    }
+
+    return {
+      ...response,
+      data,
+    };
   };
 
   return (
@@ -69,14 +87,14 @@ export default function SearchFeedResultsPage({
           <IonTitle>“{search}”</IonTitle>
 
           <IonButtons slot="end">
-            <PostSort sort={sort} setSort={setSort} />
+            <SearchSort sort={sort} setSort={setSort} />
           </IonButtons>
         </IonToolbar>
       </AppHeader>
       <FeedContent>
         <PostCommentFeed
           fetchFn={fetchFn}
-          sortDuration={getSortDuration(sort)}
+          formatSortDuration={() => formatTimeLimitedSort(sort)}
           filterHiddenPosts={false}
           filterKeywordsAndWebsites={false}
         />
