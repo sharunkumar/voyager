@@ -140,8 +140,8 @@ importers:
         specifier: ^8.0.10
         version: 8.0.10
       mdast-util-gfm-autolink-literal-lemmy:
-        specifier: ^3.0.1
-        version: 3.0.1
+        specifier: ^3.1.0
+        version: 3.1.0
       mdast-util-gfm-strikethrough:
         specifier: ^2.0.0
         version: 2.0.0
@@ -221,8 +221,8 @@ importers:
         specifier: ^11.0.0
         version: 11.0.0
       threadiverse:
-        specifier: ^0.6.1
-        version: 0.6.1
+        specifier: ^0.7.1
+        version: 0.7.1
       ua-parser-js:
         specifier: ^2.0.4
         version: 2.0.4
@@ -2106,8 +2106,8 @@ packages:
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
-  '@types/express-serve-static-core@5.0.6':
-    resolution: {integrity: sha512-3xhRnjJPkULekpSzgtoNYYcTWgEZkp4myc+Saevii5JPnHNvHMRlBSHDbs7Bh1iPPoVTERHEZXyhyLbMEsExsA==}
+  '@types/express-serve-static-core@5.0.7':
+    resolution: {integrity: sha512-R+33OsgWw7rOhD1emjU7dzCDHucJrgJXMA5PYCzJxVil0dsyx5iBEPHqpPfiKNJQb7lZ1vxwoLR4Z87bBUpeGQ==}
 
   '@types/express@5.0.3':
     resolution: {integrity: sha512-wGA0NX93b19/dZC1J18tKWVIYWyyF2ZjT9vin/NRu0qzzvfVzWjs04iq2rQ3H65vCTQYlRqs3YHfY7zjdV+9Kw==}
@@ -4739,8 +4739,8 @@ packages:
   mdast-util-from-markdown@2.0.2:
     resolution: {integrity: sha512-uZhTV/8NBuw0WHkPTrCqDOl0zVe1BIng5ZtHoDk49ME1qqcjYmmLmOf0gELgcRMxN4w2iuIeVso5/6QymSrgmA==}
 
-  mdast-util-gfm-autolink-literal-lemmy@3.0.1:
-    resolution: {integrity: sha512-igitmK29TiBxQMxmZYNhQT1ZumYjVRCw2ZxxaxFHlR+hWQCxZmAVkni/X545+zO3/A4qkEn2XzGbPjl6gZtZFg==}
+  mdast-util-gfm-autolink-literal-lemmy@3.1.0:
+    resolution: {integrity: sha512-i+TwtCxUPUKQRR/oKSQNdNas0SVHlXMu1ywo2A7++6TrUy4zxcTFNDE0BSwuJdQ4gTWmSzCW2W/VlzK05Km+0w==}
 
   mdast-util-gfm-strikethrough@2.0.0:
     resolution: {integrity: sha512-mKKb915TF+OC5ptj5bJ7WFRPdYtuHv0yTRxK2tJvi+BDqbkiG7h7u/9SI89nRAYcmap2xHQL9D+QG/6wSrTtXg==}
@@ -6236,8 +6236,8 @@ packages:
     resolution: {integrity: sha512-wiBrwC1EhBelW12Zy26JeOUkQ5mRu+5o8rpsJk5+2t+Y5vE7e842qtZDQ2g1NpX/29HdyFeJ4nSIhI47ENSxlQ==}
     engines: {node: '>=0.10'}
 
-  threadiverse@0.6.1:
-    resolution: {integrity: sha512-Wxtfp3hyX+RrRxLcrVO+j6K1hfwsN5Awsnrf6+YjYO9frSQOryBen6UkSiySNyglD+lP9mV0ecxdIRgy8SkNxw==}
+  threadiverse@0.7.1:
+    resolution: {integrity: sha512-/41vnnaojBqAzGKGeNQJ0HEYaubR99AZmzp7kzk2Tggx5oBjhbB6nf57tUitJBJjDPs0ZTE/m46EUeGFtZlhPg==}
 
   through2@2.0.5:
     resolution: {integrity: sha512-/mrRod8xqpA+IHSLyGCQ2s8SPHiCDEeQJSep1jqLYeEUClOFG2Qsh+4FU6G9VeqpZnGW/Su8LQGc4YKni5rYSQ==}
@@ -6994,6 +6994,9 @@ packages:
 
   zod@3.25.71:
     resolution: {integrity: sha512-BsBc/NPk7h8WsUWYWYL+BajcJPY8YhjelaWu2NMLuzgraKAz4Lb4/6K11g9jpuDetjMiqhZ6YaexFLOC0Ogi3Q==}
+
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -9078,7 +9081,7 @@ snapshots:
 
   '@types/estree@1.0.8': {}
 
-  '@types/express-serve-static-core@5.0.6':
+  '@types/express-serve-static-core@5.0.7':
     dependencies:
       '@types/node': 24.0.10
       '@types/qs': 6.14.0
@@ -9088,7 +9091,7 @@ snapshots:
   '@types/express@5.0.3':
     dependencies:
       '@types/body-parser': 1.19.6
-      '@types/express-serve-static-core': 5.0.6
+      '@types/express-serve-static-core': 5.0.7
       '@types/serve-static': 1.15.8
 
   '@types/fs-extra@8.1.5':
@@ -9933,7 +9936,7 @@ snapshots:
     dependencies:
       devtools-protocol: 0.0.1464554
       mitt: 3.0.1
-      zod: 3.25.71
+      zod: 3.25.76
 
   ci-info@4.2.0: {}
 
@@ -12103,7 +12106,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  mdast-util-gfm-autolink-literal-lemmy@3.0.1:
+  mdast-util-gfm-autolink-literal-lemmy@3.1.0:
     dependencies:
       '@types/mdast': 4.0.4
       ccount: 2.0.1
@@ -13977,13 +13980,13 @@ snapshots:
 
   text-extensions@1.9.0: {}
 
-  threadiverse@0.6.1:
+  threadiverse@0.7.1:
     dependencies:
       compare-versions: 6.1.1
       lemmy-js-client-v0: lemmy-js-client@0.20.0-alpha.18
       lemmy-js-client-v1: lemmy-js-client@1.0.0-dont-return-actions.1
       openapi-fetch: 0.14.0(patch_hash=8a89bcc59bfa03e0e6a22b2ef455be592450945d7a80aa45c60d994e6db57a67)
-      zod: 3.25.71
+      zod: 3.25.76
     transitivePeerDependencies:
       - supports-color
 
@@ -14806,5 +14809,7 @@ snapshots:
       zod: 3.25.71
 
   zod@3.25.71: {}
+
+  zod@3.25.76: {}
 
   zwitch@2.0.4: {}
