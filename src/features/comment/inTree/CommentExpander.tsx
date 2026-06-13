@@ -55,12 +55,12 @@ export default function CommentExpander({
     try {
       response = await client.getComments({
         parent_id: comment.comment.id,
-        type_: "All",
+        type_: "all",
         limit: 1_000,
         max_depth:
           collapseThreads === OCommentThreadCollapse.All
             ? 1
-            : Math.max((depth += 2), MAX_DEFAULT_COMMENT_DEPTH),
+            : Math.max(depth + 2, MAX_DEFAULT_COMMENT_DEPTH),
       });
     } catch (error) {
       presentToast({

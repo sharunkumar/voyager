@@ -3,7 +3,6 @@ import { CommentView, PostView } from "threadiverse";
 
 import { receivedComments } from "#/features/comment/commentSlice";
 import FeedComment from "#/features/comment/inFeed/FeedComment";
-import CommentHr from "#/features/comment/inTree/CommentHr";
 import { usePostAppearance } from "#/features/post/appearance/PostAppearanceProvider";
 import Post from "#/features/post/inFeed/Post";
 import {
@@ -28,8 +27,10 @@ import styles from "./PostCommentFeed.module.css";
 
 export type PostCommentItem = PostView | CommentView;
 
-interface PostCommentFeed
-  extends Omit<FeedProps<PostCommentItem>, "renderItemContent"> {
+interface PostCommentFeed extends Omit<
+  FeedProps<PostCommentItem>,
+  "renderItemContent"
+> {
   communityName?: string;
   filterHiddenPosts?: boolean;
   filterKeywordsAndWebsites?: boolean;
@@ -107,12 +108,14 @@ export default function PostCommentFeed({
         return (
           <>
             {renderItem(item)}
-            <CommentHr depth={0} />
+
+            <div className={styles.hr} />
           </>
         );
 
       return renderItem(item);
     },
+
     [postAppearance, renderItem],
   );
 

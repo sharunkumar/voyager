@@ -11,11 +11,7 @@ import {
   IonToolbar,
 } from "@ionic/react";
 import { close } from "ionicons/icons";
-import {
-  useEffect,
-  experimental_useEffectEvent as useEffectEvent,
-  useState,
-} from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { VList } from "virtua";
 
 import { AppPage } from "#/helpers/AppPage";
@@ -26,7 +22,7 @@ import sharedStyles from "#/features/shared/shared.module.css";
 import styles from "./GenericSelectorModal.module.css";
 
 interface GenericSelectorModalProps<I> {
-  search: (query: string) => Promise<I[]>;
+  search: (query: string, signal?: AbortSignal) => Promise<I[]>;
   onDismiss: (item?: I) => void;
   getIndex: (item: I) => number;
   getLabel: (item: I) => string;
@@ -44,14 +40,20 @@ export default function GenericSelectorModal<I>({
 }: GenericSelectorModalProps<I>) {
   const [items, setItems] = useState<I[]>([]);
 
-  async function query(q: string) {
-    setItems(await search(q));
+  async function query(q: string, signal?: AbortSignal) {
+    setItems(await search(q, signal));
   }
 
   const queryEvent = useEffectEvent(query);
 
   useEffect(() => {
-    queryEvent("");
+    const abortController = new AbortController();
+
+    // See https://react.dev/learn/you-might-not-need-an-effect#fetching-data
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    queryEvent("", abortController.signal);
+
+    return () => abortController.abort();
   }, []);
 
   return (
@@ -82,10 +84,8 @@ export default function GenericSelectorModal<I>({
       </AppHeader>
       <IonContent>
         <IonList className={styles.list}>
-          <VList count={items.length}>
-            {(i) => {
-              const item = items[i]!;
-
+          <VList data={items}>
+            {(item) => {
               return (
                 <IonItem key={getIndex(item)} onClick={() => onDismiss(item)}>
                   <IonLabel>{getLabel(item)}</IonLabel>

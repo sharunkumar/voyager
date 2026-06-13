@@ -2,12 +2,7 @@ import { Capacitor } from "@capacitor/core";
 import { isPlatform } from "@ionic/core";
 import { NavMode, NavModes } from "capacitor-android-nav-mode";
 import { memoize } from "es-toolkit";
-import {
-  share,
-  shareOutline,
-  shareSocial,
-  shareSocialOutline,
-} from "ionicons/icons";
+import { shareSocialOutline } from "ionicons/icons";
 import { UAParser } from "ua-parser-js";
 
 import { getDeviceMode } from "#/features/settings/syncStorage";
@@ -59,10 +54,10 @@ export function getSafeArea() {
   }
 
   return {
-    top: parseValue(style.getPropertyValue("--sat")),
-    right: parseValue(style.getPropertyValue("--sar")),
-    bottom: parseValue(style.getPropertyValue("--sab")),
-    left: parseValue(style.getPropertyValue("--sal")),
+    top: parseValue(style.getPropertyValue("--ion-safe-area-top")),
+    right: parseValue(style.getPropertyValue("--ion-safe-area-right")),
+    bottom: parseValue(style.getPropertyValue("--ion-safe-area-bottom")),
+    left: parseValue(style.getPropertyValue("--ion-safe-area-left")),
   };
 }
 
@@ -89,4 +84,4 @@ export function getAndroidNavMode() {
 
 export const isIosTheme = memoize(() => getDeviceMode() === "ios");
 
-export const getShareIcon = memoize((filled = false) => shareSocialOutline);
+export const getShareIcon = memoize(() => shareSocialOutline);

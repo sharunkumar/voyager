@@ -1,5 +1,5 @@
 import { subDays, subMinutes, subMonths, subSeconds, subYears } from "date-fns";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { formatRelativeToNow } from "./Ago";
 
@@ -101,12 +101,43 @@ describe("formatRelativeToNow Function", () => {
 
     it(`should format ${name} correctly in verbose format`, () => {
       const result = formatRelativeToNow(date, "verbose");
+      const expectedValues =
+        typeof expected.verbose === "string"
+          ? [expected.verbose]
+          : expected.verbose;
 
-      if (typeof expected.verbose === "string") {
-        expect(result).toBe(expected.verbose);
-      } else {
-        expect(result).toBeOneOf(expected.verbose);
-      }
+      expect(result).toBeOneOf(expectedValues);
+    });
+  });
+
+  describe("DST/future date edge cases", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.unstubAllEnvs();
+    });
+
+    beforeEach(() => {
+      vi.stubEnv("TZ", "America/Chicago");
+    });
+
+    it.todo("does not product weird 0.09999999999999998y value", () => {
+      // This test reproduces the EXACT bug the user saw by using real dates + DST transition
+      // https://lemmy.ml/post/38394736
+      // https://github.com/date-fns/date-fns/issues/3896
+      // Maybe fixed by switching to temporal api eventually
+
+      // Mock the current time
+      const mockNow = new Date("2025-11-02T06:59:59.999Z");
+      vi.useFakeTimers();
+      vi.setSystemTime(mockNow);
+
+      // Create a date that's slightly in the future of DST transition
+      const slightlyFuture = new Date("2025-11-02T07:00:00.000Z");
+
+      // Test what formatRelativeToNow produces
+      const result = formatRelativeToNow(slightlyFuture, "ultrashort");
+
+      expect(result).toBe("<1s");
     });
   });
 });

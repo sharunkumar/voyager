@@ -59,6 +59,8 @@ import TabbedRoutes from "#/routes/TabbedRoutes";
 import Auth from "./Auth";
 import Listeners from "./listeners";
 // Setup global app lifecycle listeners
+import { SharedDialogContextProvider } from "#/features/auth/SharedDialogContext";
+
 import "./listeners";
 
 // index.tsx ensures android nav mode resolves before app is rendered
@@ -71,6 +73,7 @@ import "./listeners";
   }
 
   setupIonicReact({
+    animated: !("__E2E_DISABLE_ANIMATIONS" in window), // e2e tests inject flag
     mode: getDeviceMode(),
     statusTap: false, // custom implementation listeners/statusTap.ts
     swipeBackEnabled:
@@ -93,13 +96,15 @@ export default function App() {
                     <TabContextProvider>
                       <AppToastProvider>
                         <IonApp>
-                          <Auth>
-                            <OutletProvider>
-                              <TabbedRoutes>
-                                <Listeners />
-                              </TabbedRoutes>
-                            </OutletProvider>
-                          </Auth>
+                          <SharedDialogContextProvider>
+                            <Auth>
+                              <OutletProvider>
+                                <TabbedRoutes>
+                                  <Listeners />
+                                </TabbedRoutes>
+                              </OutletProvider>
+                            </Auth>
+                          </SharedDialogContextProvider>
                         </IonApp>
                       </AppToastProvider>
                     </TabContextProvider>

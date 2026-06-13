@@ -8,28 +8,29 @@ import HideVoteMode from "./HideVoteMode";
 import SeparateVoteMode from "./SeparateVoteMode";
 import TotalVoteMode from "./TotalVoteMode";
 
-interface VoteProps {
+export interface VoteProps {
   item: PostView | CommentView;
   className?: string;
+  disabled?: boolean;
 }
 
-export default function Vote({
-  item,
-  className,
-}: VoteProps): React.ReactElement {
+export default function Vote(props: VoteProps): React.ReactNode {
   const voteDisplayMode = useAppSelector(
     (state) => state.settings.appearance.voting.voteDisplayMode,
   );
 
   switch (voteDisplayMode) {
     case OVoteDisplayMode.Separate:
-      return <SeparateVoteMode item={item} className={className} />;
+      return <SeparateVoteMode {...props} />;
 
     case OVoteDisplayMode.Hide:
-      return <HideVoteMode item={item} className={className} />;
+      // the icon is only shown with hidden vote mode for clicking to vote
+      if (props.disabled) return;
+
+      return <HideVoteMode {...props} />;
 
     case OVoteDisplayMode.Total: {
-      return <TotalVoteMode item={item} className={className} />;
+      return <TotalVoteMode {...props} />;
     }
   }
 }

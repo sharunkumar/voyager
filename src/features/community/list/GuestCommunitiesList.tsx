@@ -18,7 +18,7 @@ import ResolvedCommunitiesList from "./ResolvedCommunitiesList";
  *
  * TODO in the future Local/All will be configurable in an explore view
  */
-const SHOW_LOCAL_ONLY = ["lemmynsfw.com"];
+const SHOW_LOCAL_ONLY = ["fedinsfw.app"];
 
 export default function GuestCommunitiesList({ actor }: CommunitiesListProps) {
   const [communities, setCommunities] = useState<Community[] | undefined>();
@@ -40,12 +40,12 @@ export default function GuestCommunitiesList({ actor }: CommunitiesListProps) {
         case "lemmyv1":
           return {
             mode,
-            sort: "ActiveSixMonths",
+            sort: "active_six_months",
           };
         case "piefed":
           return {
             mode,
-            sort: "Active",
+            sort: "Top",
           };
       }
     })();
@@ -55,7 +55,7 @@ export default function GuestCommunitiesList({ actor }: CommunitiesListProps) {
     try {
       ({ data: communities } = await client.listCommunities({
         ...commonPostFeedParams,
-        type_: SHOW_LOCAL_ONLY.includes(actor) ? "Local" : "All",
+        type_: SHOW_LOCAL_ONLY.includes(actor) ? "local" : "all",
         ...sortParams,
         limit: 50,
       }));
@@ -76,10 +76,12 @@ export default function GuestCommunitiesList({ actor }: CommunitiesListProps) {
   const [oldClient, setOldClient] = useState<typeof client | undefined>(
     undefined,
   );
+  const [oldMode, setOldMode] = useState<typeof mode | undefined>(undefined);
 
-  if (oldClient !== client) {
-    setOldClient(client);
+  if (oldClient !== client || oldMode !== mode) {
     hardUpdate();
+    setOldClient(client);
+    setOldMode(mode);
   }
 
   if (communities === undefined) return <CenteredSpinner />;

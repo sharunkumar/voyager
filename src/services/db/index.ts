@@ -37,6 +37,7 @@ export interface GlobalSettingValueTypes {
   compact_show_voting_buttons: boolean;
   compact_thumbnail_position_type: types.CompactThumbnailPositionType;
   compact_thumbnail_size: types.CompactThumbnailSizeType;
+  confirm_leave_feed_prompt: boolean;
   default_comment_sort_lemmyv0: VgerCommentSortTypeByMode["lemmyv0"];
   default_comment_sort_lemmyv1: VgerCommentSortTypeByMode["lemmyv1"];
   default_comment_sort_piefed: VgerCommentSortTypeByMode["piefed"];
@@ -55,6 +56,7 @@ export interface GlobalSettingValueTypes {
   filtered_websites: string[];
   hide_alt_text: boolean;
   highlight_new_account: boolean;
+  highlight_new_comments: boolean;
   infinite_scrolling: boolean;
   jump_button_position: types.JumpButtonPositionType;
   large_show_voting_buttons: boolean;
@@ -69,6 +71,7 @@ export interface GlobalSettingValueTypes {
   remember_community_comment_sort: boolean;
   remember_community_post_sort: boolean;
   remember_post_appearance_type: boolean;
+  rich_markdown_editor: boolean;
   show_collapsed_comment: boolean;
   show_comment_images: boolean;
   show_community_icons: boolean;
@@ -110,8 +113,7 @@ interface DynamicSettingValueTypes {
 }
 
 export interface SettingValueTypes
-  extends GlobalSettingValueTypes,
-    DynamicSettingValueTypes {}
+  extends GlobalSettingValueTypes, DynamicSettingValueTypes {}
 
 export const ALL_GLOBAL_SETTINGS = arrayOfAll<keyof GlobalSettingValueTypes>()([
   "always_show_author",
@@ -140,6 +142,7 @@ export const ALL_GLOBAL_SETTINGS = arrayOfAll<keyof GlobalSettingValueTypes>()([
   "filtered_keywords",
   "filtered_websites",
   "highlight_new_account",
+  "highlight_new_comments",
   "infinite_scrolling",
   "jump_button_position",
   "large_show_voting_buttons",
@@ -153,6 +156,7 @@ export const ALL_GLOBAL_SETTINGS = arrayOfAll<keyof GlobalSettingValueTypes>()([
   "remember_community_comment_sort",
   "remember_community_post_sort",
   "remember_post_appearance_type",
+  "rich_markdown_editor",
   "show_collapsed_comment",
   "show_comment_images",
   "show_community_icons",
@@ -178,6 +182,7 @@ export const ALL_GLOBAL_SETTINGS = arrayOfAll<keyof GlobalSettingValueTypes>()([
   "default_share",
   "default_search_sort_by_feed",
   "default_community_sort_by_feed",
+  "confirm_leave_feed_prompt",
 ]);
 
 export interface ISettingItem<T extends keyof SettingValueTypes> {

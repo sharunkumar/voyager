@@ -48,10 +48,7 @@ export default function ProfilePage() {
 
     return (
       <Profile
-        person={{
-          person: myPerson.local_user_view.person,
-          counts: myPerson.local_user_view.counts,
-        }}
+        person={{ person: myPerson.local_user_view.person }}
         onPull={() => dispatch(getSite()) satisfies Promise<void>}
       />
     );
@@ -63,7 +60,10 @@ export default function ProfilePage() {
         <IonToolbar>
           {!accountsListEmpty && (
             <IonButtons slot="secondary">
-              <IonButton onClick={() => presentAccountSwitcher()}>
+              <IonButton
+                aria-label="Accounts"
+                onClick={() => presentAccountSwitcher()}
+              >
                 {isIosTheme() ? (
                   "Accounts"
                 ) : (

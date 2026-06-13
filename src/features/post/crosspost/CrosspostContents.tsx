@@ -1,11 +1,11 @@
-import { IonIcon } from "@ionic/react";
-import { IonSkeletonText } from "@ionic/react";
-import { repeat } from "ionicons/icons";
-import { arrowUpSharp } from "ionicons/icons";
-import { chatbubbleOutline } from "ionicons/icons";
+import { IonIcon, IonSkeletonText } from "@ionic/react";
+import { arrowUpSharp, chatbubbleOutline, repeat } from "ionicons/icons";
+import { use } from "react";
 import { PostView } from "threadiverse";
 
+import Vote from "#/features/labels/vote/Vote";
 import LargePostContents from "#/features/post/inFeed/large/LargePostContents";
+import { ShareImageContext } from "#/features/share/asImage/ShareAsImage";
 import PostTitleMarkdown from "#/features/shared/markdown/PostTitleMarkdown";
 import { cx } from "#/helpers/css";
 import { formatNumber } from "#/helpers/number";
@@ -13,6 +13,7 @@ import { formatNumber } from "#/helpers/number";
 import { CrosspostProps } from "./Crosspost";
 import { useCopyPostImageDataIfNeeded } from "./useCopyPostImageDataIfNeeded";
 
+import sharedStyles from "#/features/labels/links/shared.module.css";
 import styles from "./CrosspostContents.module.css";
 
 interface CrosspostContentsProps extends CrosspostProps {
@@ -50,22 +51,31 @@ export default function CrosspostContents({
       >
         <IonIcon className={styles.crosspostIcon} icon={repeat} />
         {crosspost ? (
-          crosspost.community.title
+          <span
+            className={cx(
+              sharedStyles.linkContainer,
+              use(ShareImageContext).hideCommunity
+                ? sharedStyles.hide
+                : undefined,
+            )}
+          >
+            {crosspost.community.title}
+          </span>
         ) : (
           <IonSkeletonText className={styles.communityIonSkeletonText} />
         )}
-        <div className={styles.stat}>
-          <IonIcon icon={arrowUpSharp} />{" "}
-          {crosspost ? (
-            formatNumber(crosspost.counts.score)
-          ) : (
+        {crosspost ? (
+          <Vote item={crosspost} disabled />
+        ) : (
+          <div className={styles.stat}>
+            <IonIcon icon={arrowUpSharp} />{" "}
             <IonSkeletonText className={styles.statIonSkeletonText} />
-          )}
-        </div>
+          </div>
+        )}
         <div className={styles.stat}>
           <IonIcon icon={chatbubbleOutline} />{" "}
           {crosspost ? (
-            formatNumber(crosspost.counts.comments)
+            formatNumber(crosspost.post.comments)
           ) : (
             <IonSkeletonText className={styles.statIonSkeletonText} />
           )}

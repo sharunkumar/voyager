@@ -3,25 +3,24 @@ import { use } from "react";
 import { PageTypeContext } from "#/features/feed/PageTypeContext";
 import CommunityLink from "#/features/labels/links/CommunityLink";
 import PersonLink from "#/features/labels/links/PersonLink";
-import Nsfw, { isNsfw } from "#/features/labels/Nsfw";
 import Save from "#/features/labels/Save";
 import ModeratableItem, {
   ModeratableItemBannerOutlet,
 } from "#/features/moderation/ModeratableItem";
 import ModqueueItemActions from "#/features/moderation/ModqueueItemActions";
+import ShareButton from "#/features/post/actions/ShareButton";
 import Crosspost from "#/features/post/crosspost/Crosspost";
 import AnnouncementIcon from "#/features/post/detail/AnnouncementIcon";
 import MoreActions from "#/features/post/shared/MoreActions";
 import MoreModActions from "#/features/post/shared/MoreModAction";
+import PostBadges from "#/features/post/shared/PostBadges";
 import { SaveButton } from "#/features/post/shared/SaveButton";
 import useCrosspostUrl from "#/features/post/shared/useCrosspostUrl";
-import { VoteButton } from "#/features/post/shared/VoteButton";
 import PostTitleMarkdown from "#/features/shared/markdown/PostTitleMarkdown";
 import { cx } from "#/helpers/css";
 import { useInModqueue } from "#/routes/pages/shared/ModqueuePage";
 import { useAppSelector } from "#/store";
 
-import ShareButton from "../../actions/ShareButton";
 import { PostProps } from "../Post";
 import PreviewStats from "../PreviewStats";
 import LargePostContents from "./LargePostContents";
@@ -84,8 +83,8 @@ export default function LargePost({ post }: PostProps) {
           )}
 
           <div className={styles.title}>
-            <PostTitleMarkdown>{post.post.name}</PostTitleMarkdown>{" "}
-            {isNsfw(post) && <Nsfw />}
+            <PostTitleMarkdown>{post.post.name}</PostTitleMarkdown>
+            <PostBadges post={post} />
           </div>
         </div>
 

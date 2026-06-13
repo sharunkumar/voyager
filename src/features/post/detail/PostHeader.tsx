@@ -1,12 +1,11 @@
 import { IonItem } from "@ionic/react";
-import { use, useCallback, useMemo, useRef } from "react";
+import { use, useCallback, useRef } from "react";
 import AnimateHeight from "react-animate-height";
 import { CommentView, PostView } from "threadiverse";
 
 import { SharedDialogContext } from "#/features/auth/SharedDialogContext";
 import CommunityLink from "#/features/labels/links/CommunityLink";
 import PersonLink from "#/features/labels/links/PersonLink";
-import Nsfw, { isNsfw } from "#/features/labels/Nsfw";
 import ModeratableItem, {
   ModeratableItemBannerOutlet,
 } from "#/features/moderation/ModeratableItem";
@@ -16,8 +15,9 @@ import Crosspost from "#/features/post/crosspost/Crosspost";
 import LargeFeedPostMedia from "#/features/post/inFeed/large/media/LargeFeedPostMedia";
 import PostLink from "#/features/post/link/PostLink";
 import { togglePostCollapse } from "#/features/post/postSlice";
+import PostBadges from "#/features/post/shared/PostBadges";
 import useCrosspostUrl from "#/features/post/shared/useCrosspostUrl";
-import useIsPostUrlMedia from "#/features/post/useIsPostUrlMedia";
+import usePostUrlIsMedia from "#/features/post/usePostUrlIsMedia";
 import Markdown from "#/features/shared/markdown/Markdown";
 import PostTitleMarkdown from "#/features/shared/markdown/PostTitleMarkdown";
 import { cx } from "#/helpers/css";
@@ -40,7 +40,8 @@ interface PostHeaderProps {
 
   // For Share as Image
   showPostActions?: boolean;
-  showPostText?: boolean;
+  shouldHide?: "except-title" | "body";
+  collapsed?: boolean;
   constrainHeight?: boolean;
 
   className?: string;
@@ -50,14 +51,16 @@ export default function PostHeader({
   post,
   onPrependComment,
   showPostActions = true,
-  showPostText = true,
+  shouldHide,
   constrainHeight = true,
   className,
+  collapsed: collapsedProp,
 }: PostHeaderProps) {
   const dispatch = useAppDispatch();
-  const collapsed = useAppSelector(
+  const collapsedFromStore = useAppSelector(
     (state) => !!state.post.postCollapsedById[post.post.id],
   );
+  const collapsed = collapsedProp ?? collapsedFromStore;
   const titleRef = useRef<HTMLDivElement>(null);
   const { presentLoginIfNeeded, presentCommentReply } =
     use(SharedDialogContext);
@@ -70,11 +73,7 @@ export default function PostHeader({
   );
   const presentToast = useAppToast();
 
-  const isPostUrlMedia = useIsPostUrlMedia();
-  const urlIsMedia = useMemo(
-    () => isPostUrlMedia(post),
-    [post, isPostUrlMedia],
-  );
+  const postUrlIsMedia = usePostUrlIsMedia(post);
 
   function scrollToTitle() {
     const titleTop = (() => {
@@ -105,7 +104,7 @@ export default function PostHeader({
   const renderMedia = useCallback(() => {
     if (!post) return;
 
-    if (urlIsMedia) {
+    if (postUrlIsMedia) {
       return (
         <LargeFeedPostMedia
           className={styles.lightboxMedia}
@@ -118,7 +117,7 @@ export default function PostHeader({
         />
       );
     }
-  }, [post, urlIsMedia, constrainHeight]);
+  }, [post, postUrlIsMedia, constrainHeight]);
 
   const renderText = useCallback(() => {
     if (!post) return;
@@ -133,10 +132,14 @@ export default function PostHeader({
       );
     }
 
-    if (post.post.body?.trim() && urlIsMedia !== "from-body") {
+    if (
+      post.post.body?.trim() &&
+      postUrlIsMedia !== "from-body" &&
+      shouldHide !== "body"
+    ) {
       return (
         <>
-          {post.post.url && !urlIsMedia && <PostLink post={post} />}
+          {post.post.url && !postUrlIsMedia && <PostLink post={post} />}
           <Markdown
             className={cx(styles.markdown, "collapse-md-margins")}
             id={post.post.ap_id}
@@ -147,10 +150,10 @@ export default function PostHeader({
       );
     }
 
-    if (post.post.url && !urlIsMedia) {
+    if (post.post.url && !postUrlIsMedia) {
       return <PostLink className={styles.postLink} post={post} />;
     }
-  }, [post, crosspostUrl, urlIsMedia]);
+  }, [post, crosspostUrl, postUrlIsMedia, shouldHide]);
 
   const text = renderText();
 
@@ -172,15 +175,17 @@ export default function PostHeader({
         }}
       >
         <div className={styles.container}>
-          {showPostText && !crosspostUrl && renderMedia()}
+          {(!shouldHide || shouldHide === "body") &&
+            !crosspostUrl &&
+            renderMedia()}
           <div className={styles.postDeets}>
             <ModeratableItemBannerOutlet />
             <div>
               <div className={styles.title} ref={titleRef}>
-                <PostTitleMarkdown>{post.post.name}</PostTitleMarkdown>{" "}
-                {isNsfw(post) && <Nsfw />}
+                <PostTitleMarkdown>{post.post.name}</PostTitleMarkdown>
+                <PostBadges post={post} />
               </div>
-              {showPostText && text && (
+              {shouldHide !== "except-title" && text && (
                 <AnimateHeight duration={200} height={collapsed ? 0 : "auto"}>
                   <div className={styles.textContent} slot="content">
                     {text}

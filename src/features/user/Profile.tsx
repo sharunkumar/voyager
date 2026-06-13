@@ -32,9 +32,11 @@ import { useAppDispatch, useAppSelector } from "#/store";
 
 import Scores from "./Scores";
 
-interface ProfileProps
-  extends Pick<ComponentProps<typeof PostCommentFeed>, "onPull"> {
-  person: Pick<PersonView, "person" | "counts">;
+interface ProfileProps extends Pick<
+  ComponentProps<typeof PostCommentFeed>,
+  "onPull"
+> {
+  person: Pick<PersonView, "person">;
 }
 
 export default function Profile({ person, onPull }: ProfileProps) {
@@ -43,7 +45,7 @@ export default function Profile({ person, onPull }: ProfileProps) {
   const client = useClient();
   const myHandle = useAppSelector(userHandleSelector);
   const { present: presentModZoneActions, role } = useModZoneActions({
-    type: "ModeratorView",
+    type: "moderator_view",
   });
   const dispatch = useAppDispatch();
 
@@ -71,8 +73,8 @@ export default function Profile({ person, onPull }: ProfileProps) {
   const header = (
     <MaxWidthContainer>
       <Scores
-        aggregates={person.counts}
-        accountCreated={person.person.published}
+        aggregates={person.person}
+        accountCreated={person.person.published_at}
       />
       <IonList inset>
         <IonItem

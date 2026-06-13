@@ -21,8 +21,9 @@ import Vote from "./vote/Vote";
 
 import styles from "./GalleryPostActions.module.css";
 
-export interface GalleryPostActionsProps
-  extends React.ComponentProps<typeof AltText> {
+export interface GalleryPostActionsProps extends React.ComponentProps<
+  typeof AltText
+> {
   post: PostView;
   src: string;
   alt?: string;
@@ -85,10 +86,16 @@ export default function GalleryPostActions({
           >
             <div className={styles.section}>
               <IonIcon icon={chatbubbleOutline} />
-              <div className={styles.amount}>{post.counts.comments}</div>
+              <div className={styles.amount}>{post.post.comments}</div>
             </div>
           </Link>
-          <IonIcon icon={getShareIcon()} onClick={shareImage} />
+          <button
+            className={styles.shareButton}
+            aria-label="Share"
+            onClick={shareImage}
+          >
+            <IonIcon icon={getShareIcon()} />
+          </button>
           {isNative() ? (
             <GalleryActions post={post} src={src} videoRef={videoRef} />
           ) : (

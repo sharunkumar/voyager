@@ -2,6 +2,9 @@ import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { differenceBy, groupBy, sortBy, uniqBy } from "es-toolkit";
 import {
   GetUnreadCountResponse,
+  Notification,
+  NotificationDataType,
+  NotificationView,
   PageCursor,
   PrivateMessageView,
 } from "threadiverse";
@@ -12,6 +15,54 @@ import { AppDispatch, RootState } from "#/store";
 
 import { InboxItemView } from "./InboxItem";
 
+export type PrivateMessageNotification = NotificationView & {
+  data: Extract<NotificationView["data"], { type_: "private_message" }>;
+};
+
+export function isPrivateMessageNotification(
+  item: NotificationView,
+): item is PrivateMessageNotification {
+  return item.data.type_ === "private_message";
+}
+
+/**
+ * A private message stored in the conversation/messages collection.
+ *
+ * `notificationId` is the server's notification row id (used for mark-read
+ * and for keying into `readByInboxItemId`). Undefined for locally-synthesized
+ * outgoing messages — the sender doesn't receive a server notification for
+ * their own send, so there's nothing to ACK and they're treated as read.
+ *
+ * Read state lives on `readByInboxItemId` (the same overlay used by the
+ * unified inbox), so both views derive from the same source of truth.
+ */
+export interface Message {
+  view: PrivateMessageView;
+  notificationId?: number;
+}
+
+export function messageFromNotification(
+  notification: PrivateMessageNotification,
+): Message {
+  return {
+    view: notification.data,
+    notificationId: notification.notification.id,
+  };
+}
+
+export function getMessageId(message: Message): number {
+  return message.view.private_message.id;
+}
+
+export function isMessageRead(
+  message: Message,
+  readByInboxItemId: Record<string, boolean>,
+): boolean {
+  // Synthetic outgoing messages have no server notification; treat as read.
+  if (message.notificationId === undefined) return true;
+  return !!readByInboxItemId[`private_message_${message.notificationId}`];
+}
+
 interface PostState {
   counts: {
     mentions: number;
@@ -21,7 +72,8 @@ interface PostState {
   lastUpdatedCounts: number;
   readByInboxItemId: Record<string, boolean>;
   messageSyncState: "init" | "syncing" | "synced";
-  messages: PrivateMessageView[];
+  messages: Message[];
+  messagesLoading: boolean;
 }
 
 const initialState: PostState = {
@@ -34,6 +86,7 @@ const initialState: PostState = {
   readByInboxItemId: {},
   messageSyncState: "init",
   messages: [],
+  messagesLoading: false,
 };
 
 export const inboxSlice = createSlice({
@@ -51,28 +104,32 @@ export const inboxSlice = createSlice({
     },
     receivedInboxItems: (state, action: PayloadAction<InboxItemView[]>) => {
       for (const item of action.payload) {
-        state.readByInboxItemId[getInboxItemId(item)] =
-          getInboxItemReadStatus(item);
+        state.readByInboxItemId[getNotificationKey(item.notification)] =
+          item.notification.read;
       }
     },
-    setReadStatus: (
+    setNotificationReadStatus: (
       state,
-      action: PayloadAction<{ item: InboxItemView; read: boolean }>,
+      action: PayloadAction<{
+        kind: NotificationDataType;
+        notificationId: number;
+        read: boolean;
+      }>,
     ) => {
-      state.readByInboxItemId[getInboxItemId(action.payload.item)] =
-        action.payload.read;
+      state.readByInboxItemId[
+        `${action.payload.kind}_${action.payload.notificationId}`
+      ] = action.payload.read;
     },
     setAllReadStatus: (state) => {
       for (const [id, read] of Object.entries(state.readByInboxItemId)) {
         if (read) continue;
-
         state.readByInboxItemId[id] = true;
       }
     },
-    receivedMessages: (state, action: PayloadAction<PrivateMessageView[]>) => {
+    receivedMessages: (state, action: PayloadAction<Message[]>) => {
       state.messages = uniqBy(
         [...action.payload, ...state.messages],
-        (m) => m.private_message.id,
+        getMessageId,
       );
     },
     sync: (state) => {
@@ -89,6 +146,9 @@ export const inboxSlice = createSlice({
       state.messageSyncState = "init";
       state.messages = [];
     },
+    setMessagesLoading: (state, action: PayloadAction<boolean>) => {
+      state.messagesLoading = action.payload;
+    },
   },
 });
 
@@ -96,7 +156,7 @@ export const inboxSlice = createSlice({
 export const {
   receivedInboxCounts,
   receivedInboxItems,
-  setReadStatus,
+  setNotificationReadStatus,
   receivedMessages,
   resetInbox,
   resetMessages,
@@ -104,6 +164,7 @@ export const {
   syncComplete,
   syncFail,
   setAllReadStatus: markAllReadInCache,
+  setMessagesLoading,
 } = inboxSlice.actions;
 
 export default inboxSlice.reducer;
@@ -134,65 +195,81 @@ export const getInboxCounts =
 
 export const syncMessages =
   () => async (dispatch: AppDispatch, getState: () => RootState) => {
-    const jwt = jwtSelector(getState());
-
-    if (!jwt) {
-      dispatch(resetInbox());
-      return;
-    }
-
-    const syncState = getState().inbox.messageSyncState;
-
-    switch (syncState) {
-      case "syncing":
-        break;
-      case "init":
-      case "synced": {
-        dispatch(sync());
-
-        let page_cursor: PageCursor | undefined;
-        let fetchedPageCount = 0;
-
-        while (true) {
-          let privateMessages;
-
-          try {
-            const results = await clientSelector(getState()).getPrivateMessages(
-              {
-                limit: (() => {
-                  if (syncState === "init") return 50; // initial sync, expect many messages
-                  if (!page_cursor) return 1; // poll to check for new messages
-
-                  return 20; // detected new messages, kick off sync
-                })(),
-                page_cursor,
-              },
-            );
-            privateMessages = results.data;
-            fetchedPageCount++;
-            page_cursor = results.next_page;
-          } catch (e) {
-            dispatch(syncFail());
-            throw e;
-          }
-
-          const newMessages = differenceBy(
-            privateMessages,
-            getState().inbox.messages,
-            (msg) => msg.private_message.id,
-          );
-
-          dispatch(receivedMessages(privateMessages));
-          dispatch(receivedUsers(privateMessages.map((msg) => msg.creator)));
-          dispatch(receivedUsers(privateMessages.map((msg) => msg.recipient)));
-
-          if (!newMessages.length || fetchedPageCount > 10) break;
-        }
-
-        dispatch(syncComplete());
-      }
+    dispatch(setMessagesLoading(true));
+    try {
+      await _syncMessages(dispatch, getState);
+    } finally {
+      dispatch(setMessagesLoading(false));
     }
   };
+
+const _syncMessages = async (
+  dispatch: AppDispatch,
+  getState: () => RootState,
+) => {
+  const jwt = jwtSelector(getState());
+
+  if (!jwt) {
+    dispatch(resetInbox());
+    return;
+  }
+
+  const syncState = getState().inbox.messageSyncState;
+
+  switch (syncState) {
+    case "syncing":
+      break;
+    case "init":
+    case "synced": {
+      dispatch(sync());
+
+      let page_cursor: PageCursor | undefined;
+      let fetchedPageCount = 0;
+
+      while (true) {
+        let privateMessages: PrivateMessageNotification[];
+
+        try {
+          const results = await clientSelector(getState()).getNotifications({
+            type_: "private_message",
+            limit: (() => {
+              if (syncState === "init") return 50; // initial sync, expect many messages
+              if (!page_cursor) return 1; // poll to check for new messages
+
+              return 20; // detected new messages, kick off sync
+            })(),
+            page_cursor,
+          });
+          privateMessages = results.data.filter(isPrivateMessageNotification);
+          fetchedPageCount++;
+          page_cursor = results.next_page;
+        } catch (e) {
+          dispatch(syncFail());
+          throw e;
+        }
+
+        const messages = privateMessages.map(messageFromNotification);
+
+        const newMessages = differenceBy(
+          messages,
+          getState().inbox.messages,
+          getMessageId,
+        );
+
+        dispatch(receivedMessages(messages));
+        // Populate the shared read overlay so the conversation view can
+        // derive read state from the same source as the unified inbox.
+        dispatch(receivedInboxItems(privateMessages));
+        dispatch(receivedUsers(privateMessages.map((m) => m.data.creator)));
+        dispatch(receivedUsers(privateMessages.map((m) => m.data.recipient)));
+
+        if (!newMessages.length || fetchedPageCount > 10) break;
+      }
+
+      dispatch(syncComplete());
+    }
+  }
+};
 
 export const markAllRead =
   () => async (dispatch: AppDispatch, getState: () => RootState) => {
@@ -212,86 +289,61 @@ export const conversationsByPersonIdSelector = createSelector(
     return sortBy(
       Object.values(
         groupBy(messages, (m) =>
-          m.private_message.creator_id === myUserId
-            ? m.private_message.recipient_id
-            : m.private_message.creator_id,
+          m.view.private_message.creator_id === myUserId
+            ? m.view.private_message.recipient_id
+            : m.view.private_message.creator_id,
         ),
       ).map((messages) =>
-        sortBy(messages, [(m) => -Date.parse(m.private_message.published)]),
+        sortBy(messages, [
+          (m) => -Date.parse(m.view.private_message.published_at),
+        ]),
       ),
-      [(group) => -Date.parse(group[0]!.private_message.published)],
+      [(group) => -Date.parse(group[0]!.view.private_message.published_at)],
     );
   },
 );
 
-export function getInboxItemId(item: InboxItemView): string {
-  if ("comment_reply" in item) {
-    return `repl_${item.comment_reply.id}`;
-  }
-
-  if ("private_message" in item) {
-    return `dm_${item.private_message.id}`;
-  }
-
-  return `mention_${item.person_mention.id}`;
+export function getNotificationKey(notification: Notification): string {
+  return `${notification.kind}_${notification.id}`;
 }
 
-export function getInboxItemReadStatus(item: InboxItemView): boolean {
-  if ("comment_reply" in item) {
-    return item.comment_reply.read;
-  }
-
-  if ("private_message" in item) {
-    return item.private_message.read;
-  }
-
-  return item.person_mention.read;
-}
-
-export function getInboxItemPublished(item: InboxItemView): string {
-  if ("comment_reply" in item) {
-    return item.comment_reply.published;
-  }
-
-  if ("private_message" in item) {
-    return item.private_message.published;
-  }
-
-  return item.person_mention.published;
-}
-
-export const markRead =
-  (item: InboxItemView, read: boolean) =>
+export const markNotificationRead =
+  (
+    args: { kind: NotificationDataType; notificationId: number },
+    read: boolean,
+  ) =>
   async (dispatch: AppDispatch, getState: () => RootState) => {
     const client = clientSelector(getState());
 
-    const initialRead =
-      !!getState().inbox.readByInboxItemId[getInboxItemId(item)];
+    const key = `${args.kind}_${args.notificationId}`;
+    const initialRead = !!getState().inbox.readByInboxItemId[key];
 
-    dispatch(setReadStatus({ item, read }));
+    dispatch(setNotificationReadStatus({ ...args, read }));
 
     try {
-      if ("person_mention" in item) {
-        await client.markPersonMentionAsRead({
-          read,
-          person_mention_id: item.person_mention.id,
-        });
-      } else if ("comment_reply" in item) {
-        await client.markCommentReplyAsRead({
-          read,
-          comment_reply_id: item.comment_reply.id,
-        });
-      } else if ("private_message" in item) {
-        await client.markPrivateMessageAsRead({
-          read,
-          private_message_id: item.private_message.id,
-        });
-      }
+      await client.markNotificationAsRead({
+        kind: args.kind,
+        notification_id: args.notificationId,
+        read,
+      });
     } catch (error) {
-      dispatch(setReadStatus({ item, read: initialRead }));
-
+      dispatch(setNotificationReadStatus({ ...args, read: initialRead }));
       throw error;
     }
 
     dispatch(getInboxCounts(true));
+  };
+
+export const markMessageRead =
+  (message: Message, read: boolean) => async (dispatch: AppDispatch) => {
+    // Synthetic outgoing messages have no server notification — nothing to
+    // ACK, and they're already treated as read by `isMessageRead`.
+    if (message.notificationId === undefined) return;
+
+    await dispatch(
+      markNotificationRead(
+        { kind: "private_message", notificationId: message.notificationId },
+        read,
+      ),
+    );
   };

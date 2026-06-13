@@ -8,10 +8,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV BUILD_FOSS_ONLY=true
 
-# enable corepack & set network-timeout
-RUN corepack enable && \
-  pnpm config set network-timeout 300000
-
+RUN npm install -g corepack && corepack enable
 
 # stage 1: build
 FROM base AS builder
@@ -21,7 +18,7 @@ RUN apk add --no-cache git
 
 # Prepare build deps
 # Copy .env conditionally https://stackoverflow.com/a/31532674/1319878
-COPY package.json pnpm-lock.yaml .npmrc .en[v] ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .en[v] ./
 COPY patches ./patches
 
 # Add APP_VERSION to .env if it doesn't already exist

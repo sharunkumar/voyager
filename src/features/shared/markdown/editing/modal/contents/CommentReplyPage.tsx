@@ -7,13 +7,7 @@ import {
 } from "@ionic/react";
 import { arrowBackSharp, send } from "ionicons/icons";
 import { RefObject, useEffect, useRef, useState } from "react";
-import {
-  CommentReplyView,
-  CommentView,
-  PersonMentionView,
-  PostView,
-  ResolveObjectResponse,
-} from "threadiverse";
+import { CommentView, PostView, ResolveObjectResponse } from "threadiverse";
 
 import {
   getInstanceFromHandle,
@@ -38,11 +32,7 @@ import {
   useTemporarySelectedAccount,
 } from "./TemporarySelectedAccountContext";
 
-export type CommentReplyItem =
-  | CommentView
-  | PostView
-  | PersonMentionView
-  | CommentReplyView;
+export type CommentReplyItem = CommentView | PostView;
 
 interface CommentReplyPageProps {
   dismiss: (reply?: CommentView | undefined) => void;
@@ -221,7 +211,7 @@ function CommentReplyPageWithAccount({
       <AppHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonButton onClick={() => dismiss()}>
+            <IonButton aria-label="Cancel" onClick={() => dismiss()}>
               {isIosTheme() ? (
                 "Cancel"
               ) : (
@@ -246,6 +236,7 @@ function CommentReplyPageWithAccount({
               <IonSpinner />
             ) : (
               <IonButton
+                aria-label="Post"
                 strong
                 type="submit"
                 disabled={isSubmitDisabled}

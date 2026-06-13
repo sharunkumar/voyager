@@ -33,18 +33,9 @@ export default function ModlogItemMoreActions({
   const { navigateToCommunity, navigateToUser } = useAppNavigation();
   const [presentActionSheet] = useIonActionSheet();
 
-  const community = "community" in item ? item.community : undefined;
-
-  const person = (() => {
-    if ("commenter" in item) return item.commenter;
-    if ("banned_person" in item) return item.banned_person;
-    if ("modded_person" in item) return item.modded_person;
-  })();
-
-  const moderator = (() => {
-    if ("moderator" in item) return item.moderator;
-    if ("admin" in item) return item.admin;
-  })();
+  const community = item.target_community;
+  const person = item.target_person;
+  const moderator = item.moderator;
 
   const present = useCallback(() => {
     presentActionSheet({
@@ -103,15 +94,15 @@ export default function ModlogItemMoreActions({
   );
 
   return (
-    <button className={styles.button}>
-      <IonIcon
-        className={styles.ellipsisIcon}
-        icon={ellipsisHorizontal}
-        onClick={(e) => {
-          e.stopPropagation();
-          present();
-        }}
-      />
+    <button
+      className={styles.button}
+      aria-label="More options"
+      onClick={(e) => {
+        e.stopPropagation();
+        present();
+      }}
+    >
+      <IonIcon className={styles.ellipsisIcon} icon={ellipsisHorizontal} />
     </button>
   );
 }

@@ -72,6 +72,7 @@ import {
 import { AppDispatch, RootState } from "#/store";
 
 import { custom } from "./custom";
+import { canConfigureConfirmLeaveFeedPrompt } from "./general/other/ConfirmLeaveFeedPrompt";
 import {
   getLocalStorageInitialState,
   LOCALSTORAGE_KEYS,
@@ -89,7 +90,11 @@ export {
 
 export interface SettingsState {
   ready: boolean;
-  databaseError: Error | undefined;
+  errors: {
+    database: Error | undefined;
+    unsupportedSystemWebview: string | undefined;
+  };
+
   appearance: {
     font: {
       fontSizeMultiplier: number;
@@ -142,6 +147,7 @@ export interface SettingsState {
       showJumpButton: boolean;
       jumpButtonPosition: JumpButtonPositionType;
       highlightNewAccount: boolean;
+      highlightNewComments: boolean;
       touchFriendlyLinks: boolean;
       showCommentImages: boolean;
       showCollapsed: boolean;
@@ -180,9 +186,11 @@ export interface SettingsState {
     linkHandler: LinkHandlerType;
     preferNativeApps: boolean;
     defaultFeed: DefaultFeedType | undefined;
+    confirmLeaveFeedPrompt: boolean;
     noSubscribedInFeed: boolean;
     thumbnailinatorEnabled: boolean;
     defaultShare: PostCommentShareType;
+    richMarkdownEditor: boolean;
   };
   tags: {
     enabled: boolean;
@@ -199,7 +207,10 @@ export interface SettingsState {
 const baseState: SettingsState = custom({
   ready: false,
 
-  databaseError: undefined,
+  errors: {
+    database: undefined,
+    unsupportedSystemWebview: undefined,
+  },
 
   appearance: {
     commentsTheme: "rainbow",
@@ -253,6 +264,7 @@ const baseState: SettingsState = custom({
     comments: {
       collapseCommentThreads: OCommentThreadCollapse.Never,
       highlightNewAccount: true,
+      highlightNewComments: false,
       jumpButtonPosition: OJumpButtonPositionType.RightBottom,
       rememberCommunitySort: false,
       showCollapsed: false,
@@ -271,9 +283,10 @@ const baseState: SettingsState = custom({
       sort: {
         lemmyv0: "TopAll",
         lemmyv1: "ActiveSixMonths",
-        piefed: "Active",
+        piefed: "Top",
       },
     },
+    confirmLeaveFeedPrompt: canConfigureConfirmLeaveFeedPrompt,
     defaultFeed: undefined,
     // TODO: Enable by default in late June 2025
     // (devices have been updated to support go.getvoyager.app links)
@@ -306,6 +319,7 @@ const baseState: SettingsState = custom({
       upvoteOnSave: false,
     },
     preferNativeApps: true,
+    richMarkdownEditor: false,
     safari: {
       alwaysUseReaderMode: false,
     },
@@ -313,7 +327,7 @@ const baseState: SettingsState = custom({
       rememberCommunitySort: false,
       sort: {
         lemmyv0: "TopAll",
-        lemmyv1: "TopAll",
+        lemmyv1: "New",
         piefed: "Active",
       },
     },
@@ -353,7 +367,10 @@ export const settingsSlice = createSlice({
 
   reducers: {
     setDatabaseError(state, action: PayloadAction<Error>) {
-      state.databaseError = action.payload;
+      state.errors.database = action.payload;
+    },
+    setUnsupportedSystemWebviewError(state, action: PayloadAction<string>) {
+      state.errors.unsupportedSystemWebview = action.payload;
     },
 
     setAlwaysShowAuthor(state, action: PayloadAction<boolean>) {
@@ -401,6 +418,10 @@ export const settingsSlice = createSlice({
     ) {
       state.appearance.compact.thumbnailSize = action.payload;
       db.setSetting("compact_thumbnail_size", action.payload);
+    },
+    setConfirmLeaveFeedPrompt(state, action: PayloadAction<boolean>) {
+      state.general.confirmLeaveFeedPrompt = action.payload;
+      db.setSetting("confirm_leave_feed_prompt", action.payload);
     },
     setDefaultCommentSort(
       state,
@@ -485,6 +506,10 @@ export const settingsSlice = createSlice({
       state.general.comments.highlightNewAccount = action.payload;
       db.setSetting("highlight_new_account", action.payload);
     },
+    setHighlightNewComments(state, action: PayloadAction<boolean>) {
+      state.general.comments.highlightNewComments = action.payload;
+      db.setSetting("highlight_new_comments", action.payload);
+    },
     setInfiniteScrolling(state, action: PayloadAction<boolean>) {
       state.general.posts.infiniteScrolling = action.payload;
 
@@ -558,6 +583,10 @@ export const settingsSlice = createSlice({
     setRememberPostAppearance(state, action: PayloadAction<boolean>) {
       state.appearance.posts.rememberType = action.payload;
       db.setSetting("remember_post_appearance_type", action.payload);
+    },
+    setRichMarkdownEditor(state, action: PayloadAction<boolean>) {
+      state.general.richMarkdownEditor = action.payload;
+      db.setSetting("rich_markdown_editor", action.payload);
     },
     setShowCollapsedComment(state, action: PayloadAction<boolean>) {
       state.general.comments.showCollapsed = action.payload;
@@ -852,6 +881,13 @@ export const defaultThreadCollapse = createSelector(
   },
 );
 
+export const hasErrorsSelector = createSelector(
+  [(state: RootState) => state.settings.errors],
+  (errors): boolean => {
+    return !!errors.database || !!errors.unsupportedSystemWebview;
+  },
+);
+
 export const {
   setAlwaysShowAuthor,
   setAlwaysUseReaderMode,
@@ -863,6 +899,7 @@ export const {
   setCompactShowSelfPostThumbnails,
   setCompactShowVotingButtons,
   setCompactThumbnailSize,
+  setConfirmLeaveFeedPrompt,
   setDatabaseError,
   setDefaultCommentSort,
   setDefaultFeed,
@@ -879,6 +916,7 @@ export const {
   setFontSizeMultiplier,
   setHideAltText,
   setHighlightNewAccount,
+  setHighlightNewComments,
   setInfiniteScrolling,
   setJumpButtonPosition,
   setLargeShowVotingButtons,
@@ -895,6 +933,7 @@ export const {
   setRememberCommunityCommentSort,
   setRememberCommunityPostSort,
   setRememberPostAppearance,
+  setRichMarkdownEditor,
   setShowCollapsedComment,
   setShowCommentImages,
   setShowCommunityIcons,
@@ -914,6 +953,7 @@ export const {
   settingsReady,
   setTouchFriendlyLinks,
   setTwoColumnLayout,
+  setUnsupportedSystemWebviewError,
   setUpvoteOnSave,
   setUserDarkMode,
   setUserInstanceUrlDisplay,
@@ -980,6 +1020,7 @@ function hydrateStateWithGlobalSettings(
       comments: {
         collapseCommentThreads: settings.collapse_comment_threads,
         highlightNewAccount: settings.highlight_new_account,
+        highlightNewComments: settings.highlight_new_comments,
         jumpButtonPosition: settings.jump_button_position,
         rememberCommunitySort: settings.remember_community_comment_sort,
         showCollapsed: settings.show_collapsed_comment,
@@ -993,6 +1034,7 @@ function hydrateStateWithGlobalSettings(
         tapToCollapse: settings.tap_to_collapse,
         touchFriendlyLinks: settings.touch_friendly_links,
       },
+      confirmLeaveFeedPrompt: settings.confirm_leave_feed_prompt,
       defaultShare: settings.default_share,
       enableHapticFeedback: settings.enable_haptic_feedback,
       linkHandler: settings.link_handler,
@@ -1020,6 +1062,7 @@ function hydrateStateWithGlobalSettings(
         upvoteOnSave: settings.upvote_on_save,
       },
       preferNativeApps: settings.prefer_native_apps,
+      richMarkdownEditor: settings.rich_markdown_editor,
       safari: {
         alwaysUseReaderMode: settings.always_use_reader_mode,
       },

@@ -1,6 +1,6 @@
 import { IonIcon } from "@ionic/react";
 import { chevronDownOutline } from "ionicons/icons";
-import { RefObject } from "react";
+import { RefObject, use } from "react";
 import { Comment, CommentView } from "threadiverse";
 
 import Ago from "#/features/labels/Ago";
@@ -9,8 +9,8 @@ import PersonLink from "#/features/labels/links/PersonLink";
 import Vote from "#/features/labels/vote/Vote";
 import ModqueueItemActions from "#/features/moderation/ModqueueItemActions";
 import { ModeratorRole } from "#/features/moderation/useCanModerate";
-import { ActionButton } from "#/features/post/actions/ActionButton";
 import ActionsContainer from "#/features/post/actions/ActionsContainer";
+import { ShareImageContext } from "#/features/share/asImage/ShareAsImage";
 import UserScore from "#/features/tags/UserScore";
 import UserTag from "#/features/tags/UserTag";
 import { cx } from "#/helpers/css";
@@ -43,6 +43,7 @@ export default function CommentHeader({
   rootIndex,
   commentEllipsisHandleRef,
 }: CommentHeaderProps) {
+  const { capturing } = use(ShareImageContext);
   const showCollapsedComment = useAppSelector(
     (state) => state.settings.general.comments.showCollapsed,
   );
@@ -53,6 +54,8 @@ export default function CommentHeader({
   );
 
   function renderActions() {
+    if (capturing) return;
+
     if (inModqueue) return <ModqueueItemActions itemView={commentView} />;
 
     if (canModerate)
@@ -66,19 +69,17 @@ export default function CommentHeader({
       <>
         <ActionsContainer className={collapsed ? "ion-hide" : undefined}>
           {renderActions()}
-          <ActionButton>
-            <CommentEllipsis
-              comment={commentView}
-              rootIndex={rootIndex}
-              ref={commentEllipsisHandleRef}
-            />
-          </ActionButton>
+          <CommentEllipsis
+            comment={commentView}
+            rootIndex={rootIndex}
+            ref={commentEllipsisHandleRef}
+          />
           <Ago date={agoTimestamp} />
         </ActionsContainer>
         {collapsed && (
           <>
             <div className={styles.amountCollapsed}>
-              {commentView.counts.child_count +
+              {commentView.comment.child_count +
                 (showCollapsedComment || stub ? 0 : 1)}
             </div>
             <IonIcon
@@ -108,7 +109,7 @@ export default function CommentHeader({
               deleted their <span className="ion-text-nowrap">comment :(</span>
             </div>
             <div className={styles.spacer} />
-            {renderAside(comment.updated || comment.published)}
+            {renderAside(comment.updated_at || comment.published_at)}
           </>
         );
       case StubType.ModRemoved:
@@ -127,7 +128,7 @@ export default function CommentHeader({
               &apos;s comment
             </div>
             <div className={styles.spacer} />
-            {renderAside(comment.updated || comment.published)}
+            {renderAside(comment.updated_at || comment.published_at)}
           </>
         );
       default:
@@ -170,7 +171,7 @@ export default function CommentHeader({
             ) : (
               <div className={styles.spacer} />
             )}
-            {renderAside(comment.published)}
+            {renderAside(comment.published_at)}
           </>
         );
     }

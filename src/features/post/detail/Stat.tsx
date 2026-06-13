@@ -5,11 +5,13 @@ import { cx } from "#/helpers/css";
 import sharedStyles from "#/features/shared/shared.module.css";
 import styles from "./Stat.module.css";
 
-interface StatProps
-  extends React.HTMLAttributes<HTMLDivElement & HTMLButtonElement> {
+interface StatProps extends React.HTMLAttributes<
+  HTMLDivElement & HTMLButtonElement
+> {
   button?: boolean;
   icon: string;
   iconClassName?: string;
+  disabled?: boolean;
   children?: React.ReactNode;
 }
 
@@ -19,9 +21,10 @@ export default function Stat({
   iconClassName,
   className,
   children,
+  disabled,
   ...rest
 }: StatProps) {
-  const El = button ? "button" : "div";
+  const El = button && !disabled ? "button" : "div";
 
   return (
     <El

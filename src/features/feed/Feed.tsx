@@ -10,7 +10,7 @@ import React, {
   use,
   useCallback,
   useEffect,
-  experimental_useEffectEvent as useEffectEvent,
+  useEffectEvent,
   useMemo,
   useRef,
   useState,
@@ -19,7 +19,7 @@ import { PageCursor } from "threadiverse";
 import { VListHandle } from "virtua";
 
 import { CenteredSpinner } from "#/features/shared/CenteredSpinner";
-import AppVList from "#/helpers/AppVList";
+import { AppVList } from "#/helpers/virtua";
 import { FeedSearchContext } from "#/routes/pages/shared/CommunityPage";
 import { isSafariFeedHackEnabled } from "#/routes/pages/shared/FeedContent";
 import { LIMIT as DEFAULT_LIMIT } from "#/services/lemmy";
@@ -42,10 +42,9 @@ interface FetchFnResult<I> {
   next_page?: PageCursor;
 }
 
-export interface FeedProps<I>
-  extends Partial<
-    Pick<EndPostProps, "formatSortDuration" | "renderCustomEmptyContent">
-  > {
+export interface FeedProps<I> extends Partial<
+  Pick<EndPostProps, "formatSortDuration" | "renderCustomEmptyContent">
+> {
   itemsRef?: React.RefObject<I[] | undefined>;
   fetchFn: FetchFn<I>;
 
@@ -264,21 +263,13 @@ export default function Feed<I>({
     if (loading || loadFailed || filteredItems.length > FETCH_MORE_THRESHOLD)
       return;
 
+    // Data fetching synchronized to feed state.
+    // See https://react.dev/learn/you-might-not-need-an-effect#fetching-data
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchMore();
   }, [filteredItems, items, cursor, loading, limit, loadFailed, fetchMore]);
 
   const virtuaHandle = useRef<VListHandle>(null);
-
-  const onScroll = useRangeChange(
-    virtuaHandle,
-    function onRangeChange(start, end) {
-      updateReadPosts(start, end);
-
-      if (end + 10 > filteredItems.length && !loadFailed && infiniteScrolling) {
-        fetchMore();
-      }
-    },
-  );
 
   function updateReadPosts(start: number, end: number) {
     if (start < 0 || end < 0 || (!start && !end)) return; // no items rendered
@@ -298,9 +289,23 @@ export default function Feed<I>({
     startRangeRef.current = start;
   }
 
+  const onScroll = useRangeChange(
+    virtuaHandle,
+    function onRangeChange(start, end) {
+      updateReadPosts(start, end);
+
+      if (end + 10 > filteredItems.length && !loadFailed && infiniteScrolling) {
+        fetchMore();
+      }
+    },
+  );
+
   const fetchMoreEvent = useEffectEvent(fetchMore);
 
   useEffect(() => {
+    // Refresh when fetchFn changes (sort/community/etc.).
+    // See https://react.dev/learn/you-might-not-need-an-effect#fetching-data
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchMoreEvent(true);
   }, [fetchFn]);
 
@@ -373,8 +378,6 @@ export default function Feed<I>({
             setIsListAtTop(offset < 10);
             setScrolledPastSearch(offset > 40);
           }}
-          /* Large posts reflow with image load, so mount to dom a bit sooner */
-          overscan={1}
         >
           {header}
           {filteredItems.map((item, i) => (

@@ -84,7 +84,7 @@ export default function PrivateMessagePage({
 
     setCanDismiss(true);
     dismiss(message.private_message_view);
-    dispatch(receivedMessages([message.private_message_view]));
+    dispatch(receivedMessages([{ view: message.private_message_view }]));
   }
 
   return (
@@ -92,7 +92,7 @@ export default function PrivateMessagePage({
       <AppHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonButton onClick={() => dismiss()}>
+            <IonButton aria-label="Cancel" onClick={() => dismiss()}>
               {isIosTheme() ? (
                 "Cancel"
               ) : (
@@ -106,6 +106,7 @@ export default function PrivateMessagePage({
               <IonSpinner />
             ) : (
               <IonButton
+                aria-label="Send"
                 strong
                 type="submit"
                 disabled={isSubmitDisabled}

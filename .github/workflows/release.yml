@@ -35,11 +35,12 @@ jobs:
     outputs:
       app_version: ${{ steps.app_version.outputs.app_version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - name: Install Node.js
+        uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version-file: .tool-versions
 
       - name: Get current version from package.json
         id: app_version
@@ -63,20 +64,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - name: Install Node.js
+        uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version-file: .tool-versions
           cache: pnpm
 
       - name: 📦 Install dependencies
-        run: pnpm install  --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Run trapeze (update iOS and Android version/code)
-        run: pnpm exec trapeze run trapeze.yaml -y
+        run: pnpm trapeze run trapeze.yaml -y
         env:
           APP_BUILD: ${{ needs.app_build.outputs.app_build }}
           APP_VERSION: ${{ needs.app_version.outputs.app_version }}
@@ -104,7 +107,7 @@ jobs:
           echo EOF >> $GITHUB_OUTPUT
 
       - name: Upload bumped version artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-data
           path: ${{ steps.determine_changes.outputs.files }}
@@ -120,7 +123,8 @@ jobs:
     permissions:
       contents: write # needed for create_release, even though it won't be called
       packages: write # docker release
-      id-token: write # aws
+      id-token: write # aws + attestation
+      attestations: write
 
   push_release:
     needs: [bump_src, app_build, app_version]
@@ -128,17 +132,17 @@ jobs:
     if: inputs.release_behavior == 'publish_release'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false # Don't clobber the PAT below
 
       - name: Download bumped version artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: release-data
 
       - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@cb9bde2e2525e640591a934b1fd28eef1dcaf5e5 # v6.2.0
+        uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7.0.0
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}

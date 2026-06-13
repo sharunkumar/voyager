@@ -1,42 +1,35 @@
 import { IonIcon, IonItem } from "@ionic/react";
-import { albums, chatbubble, mail, personCircle } from "ionicons/icons";
 import { useCallback, useRef } from "react";
-import {
-  CommentReplyView,
-  PersonMentionView,
-  PrivateMessageView,
-} from "threadiverse";
+import { NotificationView } from "threadiverse";
 import { useLongPress } from "use-long-press";
 
-import CommentMarkdown from "#/features/comment/CommentMarkdown";
 import Ago from "#/features/labels/Ago";
-import CommunityLink from "#/features/labels/links/CommunityLink";
-import PersonLink from "#/features/labels/links/PersonLink";
-import PostTitleMarkdown from "#/features/shared/markdown/PostTitleMarkdown";
 import SlidingInbox from "#/features/shared/sliding/SlidingInbox";
 import { cx } from "#/helpers/css";
 import { isTouchDevice } from "#/helpers/device";
 import { stopIonicTapClick } from "#/helpers/ionic";
-import { getHandle } from "#/helpers/lemmy";
 import { filterEvents } from "#/helpers/longPress";
 import { useBuildGeneralBrowseLink } from "#/helpers/routes";
 import useAppToast from "#/helpers/useAppToast";
-import { isPostReply } from "#/routes/pages/inbox/RepliesPage";
 import { useOpenInSecondColumnIfNeededProps } from "#/routes/twoColumn/useOpenInSecondColumnIfNeededProps";
 import { useAppDispatch, useAppSelector } from "#/store";
 
+import {
+  getInboxItemBody,
+  getInboxItemFooterDetails,
+  getInboxItemHeader,
+  getInboxItemIcon,
+  getInboxItemLink,
+} from "./inboxItemContents";
 import InboxItemMoreActions, {
   InboxItemMoreActionsHandle,
 } from "./InboxItemMoreActions";
-import { getInboxItemId, markRead as markReadAction } from "./inboxSlice";
+import { getNotificationKey, markNotificationRead } from "./inboxSlice";
 import VoteArrow from "./VoteArrow";
 
 import styles from "./InboxItem.module.css";
 
-export type InboxItemView =
-  | PersonMentionView
-  | CommentReplyView
-  | PrivateMessageView;
+export type InboxItemView = NotificationView;
 
 interface InboxItemProps {
   item: InboxItemView;
@@ -50,121 +43,27 @@ export default function InboxItem({ item }: InboxItemProps) {
   );
   const presentToast = useAppToast();
   const storeVote = useAppSelector((state) =>
-    "comment" in item
-      ? state.comment.commentVotesById[item.comment.id]
+    item.data.type_ === "comment"
+      ? state.comment.commentVotesById[item.data.comment.id]
       : undefined,
   );
 
   const vote =
-    "comment" in item
-      ? (storeVote ?? (item.my_vote as 1 | 0 | -1 | undefined))
+    item.data.type_ === "comment"
+      ? (storeVote ?? (item.data.my_vote as 1 | 0 | -1 | undefined))
       : undefined;
-
-  function renderHeader() {
-    if ("person_mention" in item) {
-      return (
-        <>
-          <strong>{item.creator.name}</strong> mentioned you on the post{" "}
-          <strong>
-            <PostTitleMarkdown>{item.post.name}</PostTitleMarkdown>
-          </strong>
-        </>
-      );
-    }
-    if ("comment_reply" in item) {
-      if (isPostReply(item)) {
-        return (
-          <>
-            <strong>{item.creator.name}</strong> replied to your post{" "}
-            <strong>
-              <PostTitleMarkdown>{item.post.name}</PostTitleMarkdown>
-            </strong>
-          </>
-        );
-      } else {
-        return (
-          <>
-            <strong>{item.creator.name}</strong> replied to your comment in{" "}
-            <strong>
-              <PostTitleMarkdown>{item.post.name}</PostTitleMarkdown>
-            </strong>
-          </>
-        );
-      }
-    }
-    if ("private_message" in item) {
-      return (
-        <>
-          <strong>{getHandle(item.creator)}</strong> sent you a private message
-        </>
-      );
-    }
-  }
-
-  function renderContents() {
-    if ("comment" in item) {
-      return item.comment.content;
-    }
-
-    return item.private_message.content;
-  }
-
-  function renderFooterDetails() {
-    if ("comment" in item) {
-      return (
-        <>
-          <PersonLink
-            person={item.creator}
-            className={styles.label}
-            showBadge={false}
-            sourceUrl={getSourceUrl()}
-          />{" "}
-          in{" "}
-          <CommunityLink
-            community={item.community}
-            subscribed={item.subscribed}
-            hideIcon
-            className={styles.label}
-          />
-        </>
-      );
-    }
-  }
-
-  function getLink() {
-    if ("comment" in item) {
-      return buildGeneralBrowseLink(
-        `/c/${getHandle(item.community)}/comments/${item.post.id}/${
-          item.comment.path
-        }`,
-      );
-    }
-
-    return `/inbox/messages/${getHandle(item.creator)}`;
-  }
-
-  function getDate() {
-    if ("comment" in item) return item.comment.published;
-
-    return item.private_message.published;
-  }
-
-  function getSourceUrl() {
-    if ("comment" in item) return item.comment.ap_id;
-  }
-
-  function getIcon() {
-    if ("person_mention" in item) return personCircle;
-    if ("comment_reply" in item) {
-      if (isPostReply(item)) return albums;
-      return chatbubble;
-    }
-    if ("private_message" in item) return mail;
-  }
 
   async function markRead() {
     try {
-      await dispatch(markReadAction(item, true));
+      await dispatch(
+        markNotificationRead(
+          {
+            kind: item.notification.kind,
+            notificationId: item.notification.id,
+          },
+          true,
+        ),
+      );
     } catch (error) {
       presentToast({
         message: "Failed to mark item as read",
@@ -175,7 +74,7 @@ export default function InboxItem({ item }: InboxItemProps) {
     }
   }
 
-  const read = !!readByInboxItemId[getInboxItemId(item)];
+  const read = !!readByInboxItemId[getNotificationKey(item.notification)];
 
   const ellipsisHandleRef = useRef<InboxItemMoreActionsHandle>(undefined);
 
@@ -190,7 +89,9 @@ export default function InboxItem({ item }: InboxItemProps) {
     filterEvents,
   });
 
-  const itemLinkProps = useOpenInSecondColumnIfNeededProps(getLink());
+  const itemLinkProps = useOpenInSecondColumnIfNeededProps(
+    getInboxItemLink(item, buildGeneralBrowseLink),
+  );
   const contents = (
     <IonItem
       mode="ios" // Use iOS style activatable tap highlight
@@ -211,21 +112,17 @@ export default function InboxItem({ item }: InboxItemProps) {
     >
       <div className={styles.container}>
         <div className={styles.startContent}>
-          <IonIcon className={styles.typeIcon} icon={getIcon()} />
+          <IonIcon className={styles.typeIcon} icon={getInboxItemIcon(item)} />
           <VoteArrow vote={vote} />
         </div>
         <div className={styles.content}>
-          <div>{renderHeader()}</div>
-          <div className={styles.body}>
-            <CommentMarkdown id={getItemId(item)}>
-              {renderContents()}
-            </CommentMarkdown>
-          </div>
+          <div>{getInboxItemHeader(item)}</div>
+          <div className={styles.body}>{getInboxItemBody(item)}</div>
           <div className={styles.footer}>
-            <div>{renderFooterDetails()}</div>
+            <div>{getInboxItemFooterDetails(item)}</div>
             <aside>
               <InboxItemMoreActions item={item} ref={ellipsisHandleRef} />
-              <Ago date={getDate()} />
+              <Ago date={item.notification.published_at} />
             </aside>
           </div>
         </div>
@@ -239,18 +136,4 @@ export default function InboxItem({ item }: InboxItemProps) {
       <div className={styles.hr} />
     </>
   );
-}
-
-function getItemId(item: InboxItemView): string {
-  switch (true) {
-    case "person_mention" in item:
-      return `mention-${item.person_mention.id}`;
-    case "comment_reply" in item:
-      return `comment-reply-${item.comment_reply.id}`;
-    case "private_message" in item:
-      return `private-message-${item.private_message.id}`;
-  }
-
-  // typescript should be smarter (this shouldn't be necessary)
-  throw new Error("getItemId: Unexpected item");
 }

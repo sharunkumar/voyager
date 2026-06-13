@@ -16,11 +16,11 @@ export default function CommentMarkdown(mdProps: CommentMarkdownProps) {
   return (
     <Markdown
       {...mdProps}
+      preventInteractionPropagation
       components={{
         img: (props) =>
           !showCommentImages ? (
             <InAppExternalLink
-              // @ts-expect-error React experimental change...
               href={props.src}
               target="_blank"
               rel="noopener noreferrer"
@@ -28,7 +28,6 @@ export default function CommentMarkdown(mdProps: CommentMarkdownProps) {
               {props.alt || "Image"}
             </InAppExternalLink>
           ) : (
-            // @ts-expect-error React experimental change...
             <MarkdownImg
               small
               {...props}

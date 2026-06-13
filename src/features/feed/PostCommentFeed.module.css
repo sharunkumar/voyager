@@ -1,3 +1,7 @@
 .thickBottomBorder {
   border-bottom: 8px solid var(--thick-separator-color);
 }
+
+.hr {
+  composes: hr from "#/features/shared/shared.module.css";
+}

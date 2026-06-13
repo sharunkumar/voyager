@@ -1,10 +1,6 @@
 import { IonLoading } from "@ionic/react";
-import {
-  useEffect,
-  experimental_useEffectEvent as useEffectEvent,
-  useState,
-} from "react";
-import { Instance } from "threadiverse";
+import { useEffect, useEffectEvent, useState } from "react";
+import { Instance, UnsupportedError } from "threadiverse";
 
 import useAppToast from "#/helpers/useAppToast";
 import useClient from "#/helpers/useClient";
@@ -26,16 +22,21 @@ export default function InstanceSelectorModal(
 
   const presentToast = useAppToast();
 
-  const getInstancesEvent = useEffectEvent(async () => {
+  const getInstancesEvent = useEffectEvent(async (signal: AbortSignal) => {
     let instances;
 
     setLoading(true);
 
     try {
-      instances = await client.getFederatedInstances();
+      instances = await client.getFederatedInstances({ signal });
     } catch (error) {
+      if (signal.aborted) return;
+
       presentToast({
-        message: "Failed to load instance list",
+        message:
+          error instanceof UnsupportedError
+            ? "Instance list not supported on this server"
+            : "Failed to load instance list",
         color: "danger",
       });
       props.onDismiss();
@@ -49,7 +50,13 @@ export default function InstanceSelectorModal(
   });
 
   useEffect(() => {
-    getInstancesEvent();
+    const abortController = new AbortController();
+
+    // See https://react.dev/learn/you-might-not-need-an-effect#fetching-data
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    getInstancesEvent(abortController.signal);
+
+    return () => abortController.abort();
   }, []);
 
   async function search(query: string) {

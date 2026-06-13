@@ -7,10 +7,7 @@ import { receivedCommunity } from "#/features/community/communitySlice";
 import { receivedPosts } from "#/features/post/postSlice";
 import { extractLemmyLinkFromPotentialFediRedirectService } from "#/features/share/fediRedirect";
 import { getDetermineSoftware } from "#/features/shared/useDetermineSoftware";
-import {
-  COMMENT_VIA_POST_PATH,
-  PIEFED_COMMENT_PATH_AND_HASH,
-} from "#/features/shared/useLemmyUrlHandler";
+import { POTENTIAL_OBJECTS } from "#/features/shared/useLemmyUrlHandler";
 import { receivedUsers } from "#/features/user/userSlice";
 import { isLemmyError } from "#/helpers/lemmyErrors";
 import { isPiefedError } from "#/helpers/piefedErrors";
@@ -62,42 +59,37 @@ export const resolveObject =
     dispatch: AppDispatch,
     getState: () => RootState,
   ): Promise<ResolveObjectResponse> => {
-    let object;
+    let object: ResolveObjectResponse;
 
     const q = normalizeObjectUrl(findFedilinkFromQuirkUrl(url));
 
     try {
       object = await clientSelector(getState()).resolveObject(
-        {
-          q,
-        },
+        { q },
         { signal },
       );
-    } catch (error) {
-      if (isNotFoundError(error)) {
-        try {
-          // FINE. We'll do it the hard/insecure way and ask original instance >:(
-          const fedilink = await resolveFedilink(q, { signal });
+    } catch (primaryError) {
+      if (!isNotFoundError(primaryError)) throw primaryError;
 
-          if (!fedilink) {
-            throw new Error("Could not find fedilink");
-          }
+      // FINE. We'll do it the hard/insecure way and ask original instance >:(
+      const fedilink = await resolveFedilink(q, { signal });
 
-          object = await clientSelector(getState()).resolveObject(
-            {
-              q: fedilink,
-            },
-            { signal },
-          );
-        } catch (error) {
-          if (isNotFoundError(error)) {
-            dispatch(couldNotFindUrl(url));
-          }
+      if (!fedilink) {
+        // Both the primary lookup and the fedilink fallback have nothing to
+        // give us — the object truly isn't findable. Mark it so the UI can
+        // dismiss its loading state and fall back to a plain link.
+        dispatch(couldNotFindUrl(url));
+        throw new Error("Could not find fedilink", { cause: primaryError });
+      }
 
-          throw error;
-        }
-      } else {
-        throw error;
+      try {
+        object = await clientSelector(getState()).resolveObject(
+          { q: fedilink },
+          { signal },
+        );
+      } catch (fallbackError) {
+        if (isNotFoundError(fallbackError)) dispatch(couldNotFindUrl(url));
+        throw fallbackError;
       }
     }
 
@@ -133,8 +125,14 @@ export function normalizeObjectUrl(objectUrl: string) {
   return url;
 }
 
-export function unfurlRedirectServiceIfNeeded(url: string): string {
-  const potentialUrl = extractLemmyLinkFromPotentialFediRedirectService(url);
+export function unfurlRedirectServiceIfNeeded(
+  url: string,
+  services?: string[],
+): string {
+  const potentialUrl = extractLemmyLinkFromPotentialFediRedirectService(
+    url,
+    services,
+  );
 
   if (potentialUrl) return potentialUrl;
 
@@ -192,8 +190,8 @@ function findLemmyFedilinkFromQuirkUrl(link: string): string | undefined {
 function findLemmyCommentIdFromUrl(url: URL): number | undefined {
   const { pathname } = url;
 
-  if (COMMENT_VIA_POST_PATH.test(pathname))
-    return +pathname.match(COMMENT_VIA_POST_PATH)![1]!;
+  if (POTENTIAL_OBJECTS.LEMMY_COMMENT_VIA_POST_PATH.test(pathname))
+    return +pathname.match(POTENTIAL_OBJECTS.LEMMY_COMMENT_VIA_POST_PATH)![1]!;
 }
 
 function findPiefedCommentIdFromUrl(url: URL): number | undefined {
@@ -201,8 +199,8 @@ function findPiefedCommentIdFromUrl(url: URL): number | undefined {
 
   const slug = `${pathname}${hash}`;
 
-  if (PIEFED_COMMENT_PATH_AND_HASH.test(slug))
-    return +slug.match(PIEFED_COMMENT_PATH_AND_HASH)![1]!;
+  if (POTENTIAL_OBJECTS.PIEFED_COMMENT_PATH_AND_HASH.test(slug))
+    return +slug.match(POTENTIAL_OBJECTS.PIEFED_COMMENT_PATH_AND_HASH)![1]!;
 }
 
 function isNotFoundError(error: unknown): boolean {

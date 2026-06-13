@@ -33,8 +33,8 @@ export const MAX_DEFAULT_COMMENT_DEPTH = 6;
 /**
  * @param item Community, Person, etc
  */
-export function getItemActorName(item: Pick<Community, "actor_id">) {
-  return new URL(item.actor_id).hostname;
+export function getItemActorName(item: Pick<Community, "ap_id">) {
+  return new URL(item.ap_id).hostname;
 }
 
 export function checkIsMod(communityHandle: string, site: GetSiteResponse) {
@@ -46,14 +46,12 @@ export function checkIsMod(communityHandle: string, site: GetSiteResponse) {
 /**
  * @param item Community, Person, etc
  */
-export function getHandle(
-  item: Pick<Community, "name" | "actor_id" | "local">,
-) {
+export function getHandle(item: Pick<Community, "name" | "ap_id" | "local">) {
   return item.local ? item.name : getRemoteHandle(item);
 }
 
 export function getRemoteHandle(
-  item: Pick<Community, "name" | "actor_id" | "local">,
+  item: Pick<Community, "name" | "ap_id" | "local">,
 ) {
   return `${item.name}@${getItemActorName(item)}`;
 }
@@ -80,6 +78,14 @@ export function getRemoteHandleFromHandle(
   if (handle.includes("@")) return handle;
 
   return `${handle}@${connectedInstance}`;
+}
+
+export function getUsernameFromRemoteHandle(handle: string): string {
+  return handle.split("@")[0]!;
+}
+
+export function getInstanceFromRemoteHandle(handle: string): string {
+  return handle.split("@")[1]!;
 }
 
 export function canModify(comment: Comment) {
@@ -158,14 +164,14 @@ export function buildCommentsTreeWithMissing(
 }
 
 function childHasMissing(node: CommentNodeI) {
-  let missing = node.comment_view.counts.child_count;
+  let missing = node.comment_view.comment.child_count;
 
   for (const child of node.children) {
     missing--;
 
     // the child is responsible for showing missing indicator
     // if the child has missing comments
-    missing -= child.comment_view.counts.child_count;
+    missing -= child.comment_view.comment.child_count;
 
     childHasMissing(child);
   }
@@ -353,9 +359,9 @@ export function isCommunity(item: Community | Person): item is Community {
 
 const getPublishedDate = (item: PostView | CommentView) => {
   if (isPost(item)) {
-    return item.post.published;
+    return item.post.published_at;
   } else {
-    return item.comment.published;
+    return item.comment.published_at;
   }
 };
 

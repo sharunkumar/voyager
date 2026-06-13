@@ -1,11 +1,5 @@
 import { noop } from "es-toolkit";
-import {
-  createContext,
-  use,
-  useEffect,
-  experimental_useEffectEvent as useEffectEvent,
-  useState,
-} from "react";
+import { createContext, use, useEffect, useEffectEvent, useState } from "react";
 
 import { AnyFeed, serializeFeedName } from "#/features/feed/helpers";
 import {
@@ -83,6 +77,8 @@ export default function PostAppearanceProvider({
   useEffect(() => {
     const abortController = new AbortController();
 
+    // See https://react.dev/learn/you-might-not-need-an-effect#fetching-data
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     initAsyncPostAppearance(abortController.signal);
 
     return () => abortController.abort();

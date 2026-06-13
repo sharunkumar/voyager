@@ -5,7 +5,7 @@ if [ -d "src/features/tips/inAppPurchase__stub" ]; then
     pnpm uninstall capacitor-tips
 
     # Removes the proprietary google play app purchase libs
-    npx cap update
+    pnpm cap update
 
     # Remove and rename files
     rm -rf src/features/tips/inAppPurchase

@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-key */
 import Route from "#/routes/common/Route";
 import CommunitiesExplorePage from "#/routes/pages/search/CommunitiesExplorePage";
 import RandomCommunityPage from "#/routes/pages/search/RandomCommunityPage";
@@ -14,10 +13,10 @@ export default [
     <RandomCommunityPage />
   </Route>,
   <Route exact path="/search/posts/:search">
-    <SearchPostsResultsPage type="Posts" />
+    <SearchPostsResultsPage type="posts" />
   </Route>,
   <Route exact path="/search/comments/:search">
-    <SearchPostsResultsPage type="Comments" />
+    <SearchPostsResultsPage type="comments" />
   </Route>,
   <Route exact path="/search/communities/:search">
     <SearchCommunitiesPage />

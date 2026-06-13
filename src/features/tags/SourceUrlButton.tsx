@@ -2,13 +2,12 @@ import { IonButton, IonIcon } from "@ionic/react";
 import { albumsOutline, chatboxOutline } from "ionicons/icons";
 
 import useLemmyUrlHandler, {
-  COMMENT_PATH,
-  POST_PATH,
+  ObjectType,
 } from "#/features/shared/useLemmyUrlHandler";
-import { getPathname } from "#/helpers/url";
 
-interface SourceUrlButtonProps
-  extends React.ComponentPropsWithoutRef<typeof IonButton> {
+interface SourceUrlButtonProps extends React.ComponentPropsWithoutRef<
+  typeof IonButton
+> {
   sourceUrl: string | undefined;
   dismiss: () => void;
 }
@@ -18,17 +17,20 @@ export default function SourceUrlButton({
   dismiss,
   ...rest
 }: SourceUrlButtonProps) {
-  const { redirectToLemmyObjectIfNeeded } = useLemmyUrlHandler();
+  const { redirectToLemmyObjectIfNeeded, determineObjectTypeFromUrl } =
+    useLemmyUrlHandler();
 
   if (!sourceUrl) return;
 
-  const icon = determineIcon(determineType(sourceUrl));
+  const type = determineObjectTypeFromUrl(sourceUrl);
+  const icon = determineIcon(type);
 
   if (!icon) return;
 
   return (
     <IonButton
       {...rest}
+      aria-label="Open source link"
       href={sourceUrl}
       target="_blank"
       rel="noopener noreferrer"
@@ -50,15 +52,7 @@ export default function SourceUrlButton({
   );
 }
 
-function determineType(sourceUrl: string) {
-  const pathname = getPathname(sourceUrl);
-  if (!pathname) return;
-
-  if (POST_PATH.test(pathname)) return "post";
-  if (COMMENT_PATH.test(pathname)) return "comment";
-}
-
-function determineIcon(type: ReturnType<typeof determineType>) {
+function determineIcon(type: ObjectType | undefined) {
   switch (type) {
     case "post":
       return albumsOutline;

@@ -1,17 +1,56 @@
 name: e2e
 
-on: workflow_dispatch
+on:
+  push:
+    branches:
+      - main
+      - release/*
+  pull_request:
+    branches:
+      - main
+      - release/*
+  workflow_dispatch:
+
+# A newer run for the same ref supersedes an in-progress one.
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   playwright:
+    name: e2e (${{ matrix.project }})
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      # Report every browser independently — don't cancel the others when one fails.
+      fail-fast: false
+      matrix:
+        include:
+          - project: chromium
+            browser: chromium
+            artifact: chromium
+          - project: firefox
+            browser: firefox
+            artifact: firefox
+          - project: webkit
+            browser: webkit
+            artifact: webkit
+          - project: Mobile Chrome
+            browser: chromium
+            artifact: mobile-chrome
+          - project: Mobile Safari
+            browser: webkit
+            artifact: mobile-safari
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - name: Install Node.js
+        uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version-file: .tool-versions
           cache: pnpm
 
       - name: Install dependencies
@@ -19,15 +58,22 @@ jobs:
 
       - name: Build project
         run: pnpm build
-        env:
-          VITE_FORCE_LEMMY_INSECURE: 1
-          VITE_CUSTOM_LEMMY_SERVERS: localhost:8536
 
-      - name: Install Playwright dependencies
-        run: npx playwright install --with-deps
+      - name: Install Playwright browser
+        run: pnpm playwright install --with-deps ${{ matrix.browser }}
 
       - name: Run Playwright tests
-        run: |
-          docker compose -f e2e/ci/docker-compose.yml up -d
-          sleep 10
-          pnpm run test:e2e
+        # The specs are fully page.route-mocked (no real Lemmy server needed).
+        run: pnpm exec playwright test --project="${{ matrix.project }}"
+
+      - name: Upload report
+        # On failure this includes traces/screenshots from test-results/
+        uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-${{ matrix.artifact }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+          if-no-files-found: ignore

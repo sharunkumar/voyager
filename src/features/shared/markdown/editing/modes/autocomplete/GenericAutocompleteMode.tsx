@@ -18,10 +18,10 @@ interface GenericAutocompleteModeProps<I> extends AutocompleteModeProps {
   /**
    * Return a search with candidates for a given query
    *
-   * @param q Search query
+   * @param searchTerm Search query
    * @returns Matches for the search
    */
-  fetchFn: (q: string) => Promise<I[]>;
+  fetchFn: (searchTerm: string) => Promise<I[]>;
 
   /**
    * Builds the markdown to replace incomplete user input with
@@ -32,14 +32,14 @@ interface GenericAutocompleteModeProps<I> extends AutocompleteModeProps {
 }
 
 export default function GenericAutocompleteMode<
-  I extends Pick<Community, "id" | "actor_id" | "local" | "name">,
+  I extends Pick<Community, "id" | "ap_id" | "local" | "name">,
 >({
   fetchFn,
   buildMd,
   match,
   prefix,
   index,
-  textareaRef,
+  controller,
 }: GenericAutocompleteModeProps<I>) {
   const [items, setItems] = useState<I[]>([]);
 
@@ -61,13 +61,10 @@ export default function GenericAutocompleteMode<
   function select(item: I) {
     const md = `${buildMd(item)} `;
 
-    textareaRef.current?.focus();
+    controller.focus();
 
-    textareaRef.current?.setSelectionRange(
-      index,
-      index + prefix.length + match.length,
-    );
-    document.execCommand("insertText", false, md);
+    controller.setSelection(index, index + prefix.length + match.length);
+    controller.insertText(md);
   }
 
   return (

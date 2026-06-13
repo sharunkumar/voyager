@@ -1,21 +1,20 @@
 // @ts-check
 
 import eslint from "@eslint/js";
+import vitestPlugin from "@vitest/eslint-plugin";
 import eslintConfigPrettier from "eslint-config-prettier";
+import jsxA11yPlugin from "eslint-plugin-jsx-a11y";
 import perfectionistPlugin from "eslint-plugin-perfectionist";
-import reactPlugin from "eslint-plugin-react";
-import reactHooksPlugin from "eslint-plugin-react-hooks";
-import vitestPlugin from "eslint-plugin-vitest";
+import reactHooks from "eslint-plugin-react-hooks";
+import { defineConfig } from "eslint/config";
+import globals from "globals";
 import tseslint from "typescript-eslint";
 
-export default tseslint.config(
+export default defineConfig(
   eslint.configs.recommended,
   tseslint.configs.recommended,
   eslintConfigPrettier,
-  reactPlugin.configs.flat.recommended,
-  reactPlugin.configs.flat["jsx-runtime"],
-  // @ts-expect-error -- TODO fix this
-  reactHooksPlugin.configs["flat/recommended"],
+  reactHooks.configs.flat["recommended-latest"],
   {
     plugins: {
       perfectionist: perfectionistPlugin,
@@ -28,11 +27,11 @@ export default tseslint.config(
       "perfectionist/sort-imports": [
         "warn",
         {
-          newlinesBetween: "always",
+          newlinesBetween: 1,
           partitionByComment: true,
           type: "natural",
           ignoreCase: false,
-          tsconfigRootDir: ".",
+          tsconfig: { rootDir: "." },
           sortSideEffects: true,
           groups: [
             "builtin",
@@ -41,13 +40,27 @@ export default tseslint.config(
             ["parent", "sibling", "index"],
             "css-modules",
           ],
-          customGroups: {
-            value: {
-              ["css-modules"]: ["\\.module\\.css$"],
+          customGroups: [
+            {
+              groupName: "css-modules",
+              elementNamePattern: "\\.module\\.css$",
             },
-          },
+          ],
         },
       ],
+    },
+  },
+  {
+    plugins: {
+      "jsx-a11y": jsxA11yPlugin,
+    },
+    rules: {
+      "jsx-a11y/alt-text": "warn",
+      "jsx-a11y/anchor-has-content": "warn",
+      "jsx-a11y/aria-props": "warn",
+      "jsx-a11y/aria-role": "warn",
+      "jsx-a11y/no-redundant-roles": "warn",
+      "jsx-a11y/role-has-required-aria-props": "warn",
     },
   },
   {
@@ -115,24 +128,19 @@ export default tseslint.config(
           caughtErrorsIgnorePattern: "^_",
         },
       ],
-
-      "react/prop-types": "off",
-      "react/jsx-fragments": ["warn", "syntax"],
-      "react/jsx-curly-brace-presence": ["warn", "never"],
-      "react/no-unknown-property": [
-        "error",
-        {
-          ignore: ["css"],
-        },
-      ],
-      "react/function-component-definition": [
-        "error",
-        { namedComponents: "function-declaration", unnamedComponents: [] },
-      ],
     },
   },
   {
-    ...vitestPlugin.configs.recommended,
     files: ["**/*.test.ts", "**/*.test.tsx"],
+    ...vitestPlugin.configs.recommended,
+  },
+  {
+    files: ["scripts/**"],
+    languageOptions: {
+      globals: globals.node,
+    },
+    rules: {
+      "no-console": "off",
+    },
   },
 );

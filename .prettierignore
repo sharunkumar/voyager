@@ -1,5 +1,5 @@
 dist/
-pnpm-lock.yaml
 ios/
 android/
 vite.config.ts.timestamp-*
+pnpm-lock.yaml

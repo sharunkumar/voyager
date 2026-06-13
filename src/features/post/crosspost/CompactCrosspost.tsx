@@ -2,6 +2,7 @@ import { IonIcon, IonSkeletonText } from "@ionic/react";
 import { arrowUpSharp, chatbubbleOutline, repeat } from "ionicons/icons";
 import { PostView } from "threadiverse";
 
+import Vote from "#/features/labels/vote/Vote";
 import { cx } from "#/helpers/css";
 import { formatNumber } from "#/helpers/number";
 
@@ -31,18 +32,18 @@ export default function CompactCrosspost(props: CrosspostProps) {
           ) : (
             <IonSkeletonText className={styles.communityIonSkeletonText} />
           )}
-          <div className={styles.stat}>
-            <IonIcon icon={arrowUpSharp} />{" "}
-            {crosspost ? (
-              formatNumber(crosspost.counts.score)
-            ) : (
+          {crosspost ? (
+            <Vote item={crosspost} disabled />
+          ) : (
+            <div className={styles.stat}>
+              <IonIcon icon={arrowUpSharp} />{" "}
               <IonSkeletonText className={styles.statIonSkeletonText} />
-            )}
-          </div>
+            </div>
+          )}
           <div className={styles.stat}>
             <IonIcon icon={chatbubbleOutline} />{" "}
             {crosspost ? (
-              formatNumber(crosspost.counts.comments)
+              formatNumber(crosspost.post.comments)
             ) : (
               <IonSkeletonText className={styles.statIonSkeletonText} />
             )}

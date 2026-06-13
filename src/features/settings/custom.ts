@@ -9,7 +9,7 @@ export function custom(s: SettingsState): SettingsState {
     lemmyv0: "Top",
     lemmyv1: "Top",
     piefed: "Top",
-  }
+  };
   s.general.enableHapticFeedback = false;
   s.general.posts.autoHideRead = true;
   s.general.posts.showHideReadButton = true;

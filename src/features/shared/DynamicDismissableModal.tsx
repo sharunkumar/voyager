@@ -1,6 +1,6 @@
 import { IonModal, useIonActionSheet } from "@ionic/react";
 import { noop } from "es-toolkit";
-import React, { createContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useState } from "react";
 import { Prompt, useLocation } from "react-router";
 
 import { isNative } from "#/helpers/device";
@@ -53,16 +53,13 @@ export function DynamicDismissableModal({
     HTMLElement | undefined | null
   >();
 
-  // If transitioning to open and presentingElement is not set, initialize
-  if (isOpen && presentingElement === undefined) {
-    setPresentingElement(document.querySelector("ion-tabs"));
+  const [oldIsOpen, setOldIsOpen] = useState(isOpen);
+
+  if (oldIsOpen !== isOpen) {
+    setOldIsOpen(isOpen);
+
+    if (isOpen) setPresentingElement(document.querySelector("ion-tabs"));
   }
-
-  const isOpenRef = useRef(isOpen);
-
-  useEffect(() => {
-    isOpenRef.current = isOpen;
-  });
 
   const onDismissAttemptCb = async () => {
     if (document.activeElement instanceof HTMLElement)
@@ -93,15 +90,17 @@ export function DynamicDismissableModal({
   const [oldPathname, setOldPathname] = useState(location.pathname);
 
   const _dismiss = () => {
-    setCanDismiss(true);
-    setIsOpen(false);
+    // changing location (e.g. back button) w/ confirm discard changes prompt
+    // causes bad Ionic state. Wait for Ionic state to settle before dismiss
+    queueMicrotask(() => {
+      setCanDismiss(true);
+      setIsOpen(false);
+    });
   };
 
   if (oldPathname !== location.pathname) {
-    queueMicrotask(() => {
-      setOldPathname(location.pathname);
-      _dismiss();
-    });
+    setOldPathname(location.pathname);
+    _dismiss();
   }
 
   // Close tab
@@ -149,18 +148,25 @@ export function DynamicDismissableModal({
         canDismiss={canDismiss ? canDismiss : onDismissAttemptCb}
         onDidDismiss={() => {
           setIsOpen(false);
-          setPresentingElement(undefined);
 
-          // in case onDidDismiss incorrectly called by Ionic, don't clear data
-          if (textRecovery && canDismissRef_.current) clearRecoveredText();
+          // in case onDidDismiss incorrectly called by Ionic, don't proceed
+          if (!canDismissRef_.current) return;
 
-          if (canDismissRef_.current) dispatch(onHandledPendingImages());
+          if (textRecovery) clearRecoveredText();
+
+          dispatch(onHandledPendingImages());
+        }}
+        onIonDragEnd={(e) => {
+          if (e.detail.snapBreakpoint !== 0) return;
+          if (!(document.activeElement instanceof HTMLElement)) return;
+
+          document.activeElement.blur();
         }}
         presentingElement={presentingElement ?? undefined}
         onWillDismiss={() => {
-          if (document.activeElement instanceof HTMLElement) {
-            document.activeElement.blur();
-          }
+          if (!(document.activeElement instanceof HTMLElement)) return;
+
+          document.activeElement.blur();
         }}
       >
         <DynamicDismissableModalContext value={{ dismiss, setCanDismiss }}>

@@ -1,12 +1,7 @@
 import { IonIcon } from "@ionic/react";
 import { play, volumeHigh, volumeOff } from "ionicons/icons";
 import { pause } from "ionicons/icons";
-import React, {
-  useEffect,
-  experimental_useEffectEvent as useEffectEvent,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useEffectEvent, useRef, useState } from "react";
 
 import VideoActionsProgress from "./VideoActionsProgress";
 
@@ -148,7 +143,11 @@ function VideoActions({ videoRef }: VideoActionsProps) {
   return (
     <div className={styles.container}>
       <div className={styles.buttons}>
-        <button className={styles.playerButton} onClick={togglePlayPause}>
+        <button
+          className={styles.playerButton}
+          aria-label={isPlaying || wasPlayingBeforeScrub ? "Pause" : "Play"}
+          onClick={togglePlayPause}
+        >
           <IonIcon
             slot="icon-only"
             // For some reason, Chrome Webview requires a rerender for icon to update??
@@ -157,7 +156,11 @@ function VideoActions({ videoRef }: VideoActionsProps) {
           />
         </button>
 
-        <button className={styles.playerButton} onClick={toggleMute}>
+        <button
+          className={styles.playerButton}
+          aria-label={isMuted ? "Unmute" : "Mute"}
+          onClick={toggleMute}
+        >
           <IonIcon
             slot="icon-only"
             // For some reason, Chrome Webview requires a rerender for icon to update??

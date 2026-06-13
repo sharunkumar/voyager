@@ -8,23 +8,25 @@ import {
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { Link } from "react-router-dom";
-import { PrivateMessageView } from "threadiverse";
 import { VListHandle } from "virtua";
 
 import { TabContext } from "#/core/TabContext";
 import { jwtPayloadSelector } from "#/features/auth/authSelectors";
 import ConversationsMoreActions from "#/features/feed/ConversationsMoreActions";
 import FeedLoadMoreFailed from "#/features/feed/endItems/FeedLoadMoreFailed";
-import { syncMessages } from "#/features/inbox/inboxSlice";
+import {
+  Message as MessageEntry,
+  syncMessages,
+} from "#/features/inbox/inboxSlice";
 import Message from "#/features/inbox/messages/Message";
 import SendMessageBox from "#/features/inbox/SendMessageBox";
 import AppHeader from "#/features/shared/AppHeader";
 import { getUser } from "#/features/user/userSlice";
 import { AppPage } from "#/helpers/AppPage";
-import AppVList from "#/helpers/AppVList";
 import { getHandle } from "#/helpers/lemmy";
 import { useBuildGeneralBrowseLink } from "#/helpers/routes";
 import useKeyboardOpen from "#/helpers/useKeyboardOpen";
+import { AppVirtualizer } from "#/helpers/virtua";
 import FeedContent from "#/routes/pages/shared/FeedContent";
 import { AppBackButton } from "#/routes/twoColumn/AppBackButton";
 import { useAppDispatch, useAppSelector } from "#/store";
@@ -34,7 +36,7 @@ import sharedStyles from "#/features/shared/shared.module.css";
 import styles from "./ConversationPage.module.css";
 
 function useMessages(
-  allMessages: PrivateMessageView[],
+  allMessages: MessageEntry[],
   myUserId: number | undefined,
   handle: string,
 ) {
@@ -42,14 +44,14 @@ function useMessages(
     () =>
       allMessages
         .filter((m) =>
-          m.private_message.creator_id === myUserId
-            ? getHandle(m.recipient).toLowerCase() === handle.toLowerCase()
-            : getHandle(m.creator).toLowerCase() === handle.toLowerCase(),
+          m.view.private_message.creator_id === myUserId
+            ? getHandle(m.view.recipient).toLowerCase() === handle.toLowerCase()
+            : getHandle(m.view.creator).toLowerCase() === handle.toLowerCase(),
         )
         .sort(
           (a, b) =>
-            Date.parse(b.private_message.published) -
-            Date.parse(a.private_message.published),
+            Date.parse(b.view.private_message.published_at) -
+            Date.parse(a.view.private_message.published_at),
         )
         .reverse(),
     [allMessages, handle, myUserId],
@@ -80,27 +82,45 @@ export default function ConversationPage() {
 
   const buildGeneralBrowseLink = useBuildGeneralBrowseLink();
 
-  const loadUser = useCallback(async () => {
+  const abortRef = useRef<AbortController | null>(null);
+
+  const loadUser = useCallback(() => {
     if (userByHandle[handle.toLowerCase()]) return;
-    if (loadingUser) return;
+
+    abortRef.current?.abort();
+    const abortController = new AbortController();
+    abortRef.current = abortController;
+    const { signal } = abortController;
 
     setLoadingUser(true);
 
     // TODO replace with await when React Compiler doesn't bail
-    return dispatch(getUser(handle))
+    return dispatch(getUser(handle, signal))
       .catch((error) => {
+        if (signal.aborted) throw error;
+
         setError(true);
         throw error;
       })
       .then(() => {
+        if (signal.aborted) return;
+
         setError(false);
       })
       .finally(() => {
+        if (signal.aborted) return;
+
         setLoadingUser(false);
       });
-  }, [dispatch, handle, loadingUser, userByHandle]);
+  }, [dispatch, handle, userByHandle]);
 
-  loadUser();
+  useEffect(() => {
+    // See https://react.dev/learn/you-might-not-need-an-effect#fetching-data
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadUser();
+
+    return () => abortRef.current?.abort();
+  }, [loadUser]);
 
   useEffect(() => {
     dispatch(syncMessages());
@@ -134,35 +154,35 @@ export default function ConversationPage() {
 
     if (typeof myUserId === "number" && them)
       return (
-        <AppVList
-          className={styles.container}
-          ref={virtuaRef}
-          style={{ flex: 1 }}
-          reverse
-          onScroll={(offset) => {
-            // Wait for viewport resize to settle (iOS keyboard open/close)
-            requestAnimationFrame(() => {
+        <div className={styles.container}>
+          <div style={{ flexGrow: 1 }} />
+          <AppVirtualizer
+            ref={virtuaRef}
+            onScroll={(offset) => {
+              // Wait for viewport resize to settle (iOS keyboard open/close)
               requestAnimationFrame(() => {
-                if (!virtuaRef.current) return;
-                shouldStickToBottom.current =
-                  offset -
-                    virtuaRef.current.scrollSize +
-                    virtuaRef.current.viewportSize >=
-                  // FIXME: The sum may not be 0 because of sub-pixel value when browser's window.devicePixelRatio has decimal value
-                  -1.5;
+                requestAnimationFrame(() => {
+                  if (!virtuaRef.current) return;
+                  shouldStickToBottom.current =
+                    offset -
+                      virtuaRef.current.scrollSize +
+                      virtuaRef.current.viewportSize >=
+                    // FIXME: The sum may not be 0 because of sub-pixel value when browser's window.devicePixelRatio has decimal value
+                    -1.5;
+                });
               });
-            });
-          }}
-        >
-          {messages.map((message, index) => (
-            <div
-              className={styles.messageContainer}
-              key={message.private_message.id}
-            >
-              <Message message={message} first={index === 0} />
-            </div>
-          ))}
-        </AppVList>
+            }}
+          >
+            {messages.map((message, index) => (
+              <div
+                className={styles.messageContainer}
+                key={message.view.private_message.id}
+              >
+                <Message message={message} first={index === 0} />
+              </div>
+            ))}
+          </AppVirtualizer>
+        </div>
       );
 
     return <IonSpinner className={sharedStyles.pageSpinner} />;

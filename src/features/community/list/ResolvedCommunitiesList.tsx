@@ -21,6 +21,7 @@ import {
 import { jwtSelector } from "#/features/auth/authSelectors";
 import { cx } from "#/helpers/css";
 import { getHandle } from "#/helpers/lemmy";
+import { findStartIndex } from "#/helpers/virtua";
 import { isSafariFeedHackEnabled } from "#/routes/pages/shared/FeedContent";
 import { useAppSelector } from "#/store";
 
@@ -30,8 +31,6 @@ import Item from "./Item";
 import useShowModeratorFeed from "./useShowModeratorFeed";
 
 import styles from "./ResolvedCommunitiesList.module.css";
-
-const OVERSCAN_AMOUNT = 3;
 
 interface SeparatorItem {
   type: "separator";
@@ -116,7 +115,7 @@ function ResolvedCommunitiesList({
   }, [communities]);
 
   const { items, throughFavoritesCount } = useMemo(() => {
-    const favoriteItems: (FavoriteItem | SeparatorItem)[] = favorites?.length
+    const favoriteItems: (FavoriteItem | SeparatorItem)[] = favorites.length
       ? [
           { type: "separator", value: "Favorites" },
           ...favoritesAsCommunitiesIfFound.map(
@@ -167,7 +166,7 @@ function ResolvedCommunitiesList({
     };
   }, [
     communitiesGroupedByLetter,
-    favorites?.length,
+    favorites.length,
     favoritesAsCommunitiesIfFound,
     jwt,
     moderates,
@@ -188,7 +187,7 @@ function ResolvedCommunitiesList({
 
   const updateActiveIndex = useCallback(() => {
     if (!virtuaRef.current) return;
-    const start = virtuaRef.current.findStartIndex();
+    const start = findStartIndex(virtuaRef.current);
     const activeStickyIndex =
       [...stickyIndexes].reverse().find((index) => start >= index) ?? -1;
     setActiveIndex(activeStickyIndex);
@@ -211,14 +210,12 @@ function ResolvedCommunitiesList({
         <Virtualizer
           shift={shift}
           ref={virtuaRef}
-          overscan={OVERSCAN_AMOUNT}
           onScroll={(offset) => {
             onListAtTopChange?.(offset < 10);
 
             if (virtuaRef.current) {
               setShift(
-                virtuaRef.current.findStartIndex() >
-                  throughFavoritesCount + OVERSCAN_AMOUNT, // overscan
+                findStartIndex(virtuaRef.current) > throughFavoritesCount,
               );
             } else {
               setShift(false);

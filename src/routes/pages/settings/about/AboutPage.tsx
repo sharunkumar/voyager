@@ -194,7 +194,7 @@ export default function AboutPage() {
             }}
           >
             <IconBg color="color(display-p3 0.7 0 1)" size="1" slot="start">
-              <IonIcon icon={getShareIcon(true)} />
+              <IonIcon icon={getShareIcon()} />
             </IconBg>
             <IonLabel>Share Voyager</IonLabel>
           </IonItemInAppExternalLink>

@@ -4,7 +4,7 @@ import { compact, differenceBy, sortBy, uniqBy } from "es-toolkit";
 import React, {
   useCallback,
   useEffect,
-  experimental_useEffectEvent as useEffectEvent,
+  useEffectEvent,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -18,7 +18,6 @@ import { useFeedSortParams } from "#/features/feed/sort/useFeedSort";
 import { useRangeChange } from "#/features/feed/useRangeChange";
 import { getPost } from "#/features/post/postSlice";
 import { defaultCommentDepthSelector } from "#/features/settings/settingsSlice";
-import AppVList from "#/helpers/AppVList";
 import { scrollIntoView, useScrollIntoViewWorkaround } from "#/helpers/dom";
 import {
   buildCommentsTreeWithMissing,
@@ -27,10 +26,11 @@ import {
 import useAppToast from "#/helpers/useAppToast";
 import useClient from "#/helpers/useClient";
 import usePreservePositionFromBottomInScrollView from "#/helpers/usePreservePositionFromBottomInScrollView";
-import { IndexedVirtuaItem } from "#/helpers/virtua";
+import { AppVList, IndexedVirtuaItem } from "#/helpers/virtua";
 import { isSafariFeedHackEnabled } from "#/routes/pages/shared/FeedContent";
 import { useAppDispatch, useAppSelector } from "#/store";
 
+import { type CommentHighlight } from "../Comment";
 import { receivedComments } from "../commentSlice";
 import { VgerCommentSortType } from "../CommentSort";
 import { CommentsContext } from "./CommentsContext";
@@ -57,6 +57,12 @@ interface CommentsProps {
   ref: React.RefObject<CommentsHandle | undefined>;
 
   virtualEnabled?: boolean;
+
+  /**
+   * Comments published after this timestamp are highlighted as unread. Snapshot
+   * of the post's read_comments_at at open (Lemmy v1 only; undefined otherwise).
+   */
+  unreadAfter?: string;
 }
 
 export default function Comments({
@@ -68,6 +74,7 @@ export default function Comments({
   threadCommentId,
   ref,
   virtualEnabled,
+  unreadAfter,
 }: CommentsProps) {
   const dispatch = useAppDispatch();
   const [cursor, setCursor] = useState<PageCursor | undefined>();
@@ -105,9 +112,12 @@ export default function Comments({
     getCommentContextDepthForPath(commentPath),
   );
 
-  useEffect(() => {
+  const [oldCommentPath, setOldCommentPath] = useState(commentPath);
+  if (oldCommentPath !== commentPath) {
+    setOldCommentPath(commentPath);
+
     setMaxContext(getCommentContextDepthForPath(commentPath));
-  }, [commentPath]);
+  }
 
   const parentCommentId = (() => {
     if (commentPath) return +commentPath.split(".")[1]!;
@@ -240,7 +250,7 @@ export default function Comments({
           post_id: reqPostId,
           parent_id: parentCommentId,
           ...sortParams,
-          type_: "All",
+          type_: "all",
           limit: 60,
           max_depth: maxDepth,
           page_cursor: currentPage,
@@ -320,6 +330,9 @@ export default function Comments({
   const fetchCommentsEvent = useEffectEvent(fetchComments);
 
   useEffect(() => {
+    // Data fetching synchronized to comments state.
+    // See https://react.dev/learn/you-might-not-need-an-effect#fetching-data
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCommentsEvent(true);
   }, [sort, commentPath, postId, client, threadCommentId]);
 
@@ -356,9 +369,9 @@ export default function Comments({
           if (parent) {
             newComments.splice(parentIndex, 1, {
               ...parent,
-              counts: {
-                ...parent.counts,
-                child_count: parent.counts.child_count + 1,
+              comment: {
+                ...parent.comment,
+                child_count: parent.comment.child_count + 1,
               },
             });
           }
@@ -396,10 +409,21 @@ export default function Comments({
   }
 
   const allComments = useMemo(() => {
+    // The two highlight modes are mutually exclusive (a thread/permalink view
+    // sets highlightedCommentId; the full post view passes unreadAfter), so
+    // collapse them into one discriminated `highlight` for the tree.
+    const highlight = ((): CommentHighlight | undefined => {
+      if (highlightedCommentId != null)
+        return { type: "commentInThread", commentId: highlightedCommentId };
+      if (unreadAfter != null)
+        return { type: "unread", after: new Date(unreadAfter) };
+      return undefined;
+    })();
+
     const tree = commentTree.map((comment, index) => (
       <CommentTree
         comment={comment}
-        highlightedCommentId={highlightedCommentId}
+        highlight={highlight}
         key={comment.comment_view.comment.id}
         first={index === 0}
         rootIndex={index + 1} /* Plus header index = 0 */
@@ -426,6 +450,7 @@ export default function Comments({
   }, [
     commentTree,
     highlightedCommentId,
+    unreadAfter,
     commentPath,
     maxContext,
     preservePositionFromBottomInScrollView,
@@ -438,15 +463,16 @@ export default function Comments({
           fetchMore={fetchComments}
           loading={loading}
           pluralType="comments"
+          key="load-more-failed"
         />
       );
 
     if (loading && !comments.length)
-      return <IonSpinner className={styles.spinner} />;
+      return <IonSpinner className={styles.spinner} key="spinner" />;
 
     if (!comments.length)
       return (
-        <div className={styles.empty}>
+        <div className={styles.empty} key="empty">
           <div>No Comments</div>
           <aside>It&apos;s quiet... too quiet...</aside>
         </div>
@@ -474,7 +500,7 @@ export default function Comments({
         ...allComments,
         renderFooter(),
         bottomPadding ? (
-          <div style={{ height: `${bottomPadding}px` }} />
+          <div style={{ height: `${bottomPadding}px` }} key="bottom-padding" />
         ) : undefined,
       ]),
     [allComments, bottomPadding, header, renderFooter],
@@ -506,7 +532,6 @@ export default function Comments({
             ref={virtuaRef}
             style={{ height: "100%" }}
             item={IndexedVirtuaItem}
-            overscan={1}
             onScroll={(offset) => {
               onScroll();
               setIsListAtTop(offset < 6);

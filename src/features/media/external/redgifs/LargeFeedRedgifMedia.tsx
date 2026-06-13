@@ -16,8 +16,10 @@ import {
 
 import styles from "./LargeFeedRedgifMedia.module.css";
 
-interface RedgifProps
-  extends Omit<ComponentProps<typeof LargeFeedMedia>, "src"> {
+interface RedgifProps extends Omit<
+  ComponentProps<typeof LargeFeedMedia>,
+  "src"
+> {
   url: string;
 }
 
@@ -47,7 +49,7 @@ export default function LargeFeedRedgifMedia({ url, ...rest }: RedgifProps) {
               e.stopPropagation();
               dispatch(enable());
             }}
-            onTouchStart={() => stopIonicTapClick()}
+            onTouchStart={stopIonicTapClick}
             size="default"
           >
             Ok
@@ -57,7 +59,7 @@ export default function LargeFeedRedgifMedia({ url, ...rest }: RedgifProps) {
               e.stopPropagation();
               dispatch(setEmbedExternalMedia(false));
             }}
-            onTouchStart={() => stopIonicTapClick()}
+            onTouchStart={stopIonicTapClick}
             size="default"
             fill="clear"
             color="dark"
@@ -70,10 +72,7 @@ export default function LargeFeedRedgifMedia({ url, ...rest }: RedgifProps) {
 
   if (!src)
     return (
-      <MediaPlaceholder
-        state="loading"
-        onTouchStart={() => stopIonicTapClick()}
-      />
+      <MediaPlaceholder state="loading" onTouchStart={stopIonicTapClick} />
     );
 
   return <LargeFeedMedia {...rest} src={src} />;

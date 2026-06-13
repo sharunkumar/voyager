@@ -6,7 +6,6 @@ import { SaveButton } from "#/features/post/shared/SaveButton";
 import { VoteButton } from "#/features/post/shared/VoteButton";
 
 import { ActionButton } from "./ActionButton";
-import ShareButton from "./ShareButton";
 
 import styles from "./PostActions.module.css";
 
@@ -20,7 +19,7 @@ export default function PostActions({ post, onReply }: PostActionsProps) {
     <div className={styles.container}>
       <VoteButton type="up" post={post} />
       <VoteButton type="down" post={post} />
-      <ActionButton onClick={onReply}>
+      <ActionButton aria-label="Reply" onClick={onReply}>
         <IonIcon icon={arrowUndoOutline} />
       </ActionButton>
       <SaveButton post={post} />

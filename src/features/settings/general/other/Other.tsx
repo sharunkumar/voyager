@@ -4,12 +4,14 @@ import { ListHeader } from "#/features/settings/shared/formatting";
 
 import BackupSettings from "./backup/BackupSettings";
 import ClearCache from "./ClearCache";
+import ConfirmLeaveFeedPrompt from "./ConfirmLeaveFeedPrompt";
 import DefaultFeed from "./DefaultFeed";
 import Haptics from "./Haptics";
 import LinkHandler from "./LinkHandler";
 import NoSubscribedInFeed from "./NoSubscribedInFeed";
 import OpenNativeApps from "./OpenNativeApps";
 import ProfileTabLabel from "./ProfileTabLabel";
+import RichMarkdownEditor from "./RichMarkdownEditor";
 import Share from "./Share";
 import Thumbnailinator from "./Thumbnailinator";
 
@@ -28,6 +30,8 @@ export default function Other() {
         <NoSubscribedInFeed />
         <Share />
         <Thumbnailinator />
+        <RichMarkdownEditor />
+        <ConfirmLeaveFeedPrompt />
         <ClearCache />
         <BackupSettings />
       </IonList>
